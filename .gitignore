@@ -135,3 +135,45 @@ cython_debug/
 
 # VS Code
 .vscode/
+
+# ==============================================================================
+# Bagian Node.js / Frontend (React, Vue, dll.)
+# ==============================================================================
+
+# Folder dependensi utama yang TIDAK BOLEH di-commit
+# Ini akan meng-ignore folder node_modules di mana pun ia berada, termasuk di dalam /frontend
+node_modules/
+
+# File log dari package manager
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# Folder build hasil kompilasi frontend
+/frontend/build
+/frontend/dist
+/dist
+
+# File konfigurasi editor spesifik
+.idea
+
+
+# ==============================================================================
+# File-file sistem operasi (OS)
+# ==============================================================================
+
+# macOS
+.DS_Store
+.AppleDouble
+.LSOverride
+
+# Windows
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+
+docs/all_data.zip
+docs/all_data.sql
+*.sql
+*.zip

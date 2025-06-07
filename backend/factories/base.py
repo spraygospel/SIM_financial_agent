@@ -13,6 +13,7 @@ from sqlalchemy.orm import Session, class_mapper
 from contextlib import contextmanager
 
 
+
 class DependencyResolver:
     def __init__(self, models_module):
         self._dependency_graph = defaultdict(set)
@@ -95,6 +96,9 @@ class MainTestDataFactory:
         self.master = MasterDataFactory(self)
         self.purchase = PurchaseFactory(self)
         self.inventory = InventoryFactory(self)
+        self.sales = SalesFactory(self)
+        self.finance = FinanceFactory(self)
+        self.production = ProductionFactory(self)
         # Tambahkan modul lain di sini nanti, misal: self.sales = SalesFactory(self)
 
     def register_builder(self, model_name: str, builder_func: callable):
@@ -160,6 +164,9 @@ class BaseModuleFactory(ABC):
 from .master_data import MasterDataFactory
 from .purchase import PurchaseFactory
 from .inventory import InventoryFactory
+from .sales import SalesFactory
+from .finance import FinanceFactory
+from .production import ProductionFactory
 
 @contextmanager
 def test_session_scope(engine):

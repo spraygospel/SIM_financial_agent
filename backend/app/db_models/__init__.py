@@ -16,6 +16,8 @@ from .master_data_models import *
 from .sales_models import *
 from .inventory_models import *
 from .purchase_models import *
+from .finance_models import *
+from .production_models import *
 # Tambahkan impor untuk modul model lain di sini saat dibuat
 
 # 3. Panggil configure_mappers() untuk menyelesaikan semua relasi
@@ -41,8 +43,14 @@ __all__ = [
     # Sales Models
     'ArRequestListH', 'CustomerPaymentD', 'CustomerPaymentH', 'Arbook',
     'GoodsIssueH', 'SalesInvoiceD', 'SalesInvoiceH', 'SalesOrderD', 'SalesOrderH',
+    'SalesReturnH', 'SalesReturnD',
     # Inventory Models
     'Stock', 'StockBalance', 'GoodsIssueD', 'GoodsReceiptD',
     # Purchase Models
     'GoodsReceiptH', 'PurchaseOrderH',
+    # Finance Models
+    'GeneralJournalH', 'GeneralJournalD',
+    # Production Models
+    'JobOrder', 'MaterialUsageH', 'MaterialUsageD', 'JobResultH', 'JobResultD',
+
 ]

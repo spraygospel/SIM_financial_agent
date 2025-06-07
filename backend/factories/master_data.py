@@ -29,6 +29,9 @@ class MasterDataFactory(BaseModuleFactory):
         self.main_factory.register_builder("MasterMaterialType", self._build_master_material_type)
         self.main_factory.register_builder("MasterMaterial", self._build_master_material)
         self.main_factory.register_builder("MasterLocation", self._build_master_location)
+        #sales builders
+        self.main_factory.register_builder("MasterEmployeeH", self._build_master_employee_h)
+        self.main_factory.register_builder("MasterSales", self._build_master_sales)
 
     def _build_master_country(self, params):
         now = datetime.datetime.now(datetime.timezone.utc)
@@ -183,19 +186,32 @@ class MasterDataFactory(BaseModuleFactory):
 
     def _build_master_customer(self, params):
         now = datetime.datetime.now(datetime.timezone.utc)
-        country = params.get('mastercountry')
-        currency = params.get('mastercurrency')
-        group = params.get('mastercustomergroup')
-        price_list = params.get('masterpricelisttype')
-        sales_area3 = params.get('mastersalesarea3')
+        country = params.get('mastercountry') or self.main_factory.create('MasterCountry')
+        currency = params.get('mastercurrency') or self.main_factory.create('MasterCurrency')
+        group = params.get('mastercustomergroup') or self.main_factory.create('MasterCustomerGroup')
+        price_list = params.get('masterpricelisttype') or self.main_factory.create('MasterPriceListType')
+        
+        # PERBAIKAN UTAMA: Gunakan flush bertahap untuk hirarki SalesArea
+        sales_area1 = self.main_factory.create("MasterSalesArea1")
+        self.session.flush() # Simpan SalesArea1
+
+        sales_area2 = self.main_factory.create("MasterSalesArea2", mastersalesarea1=sales_area1)
+        self.session.flush() # Simpan SalesArea2
+
+        sales_area3 = self.main_factory.create("MasterSalesArea3", mastersalesarea2=sales_area2)
+        self.session.flush() # Simpan SalesArea3
+        
         trans_type1 = self.main_factory.create("MasterTransactionType", Type=self.main_factory.get_unique_value("T", 20))
         trans_type2 = self.main_factory.create("MasterTransactionType", Type=self.main_factory.get_unique_value("T", 20))
 
         return db_models.MasterCustomer(
             Code=params.get('Code', self.main_factory.get_unique_value('C', 10)),
-            Name=params.get('Name', 'Customer'), Country=country.Code, CustomerGroup=group.Code,
-            PriceListType=price_list.Code, SalesArea1=sales_area3.Area1, SalesArea2=sales_area3.Area2,
-            SalesArea3=sales_area3.Code, Currency=currency.Code, TransactionType=trans_type1.Type,
+            Name='Customer', Country=country.Code, CustomerGroup=group.Code,
+            PriceListType=price_list.Code, 
+            SalesArea1=sales_area3.Area1, 
+            SalesArea2=sales_area3.Area2,
+            SalesArea3=sales_area3.Code, 
+            Currency=currency.Code, TransactionType=trans_type1.Type,
             TransactionType2=trans_type2.Type, Address='', Address2='', City='', Phone='', Fax='', Email='',
             Contact='', Mobile='', WhatsAppSession='', WhatsAppNo='', TaxNumber='', TOP=0,
             Limit=Decimal('0.0'), CutPPh=False, IsBlacklisted=False, IsDeleted=False,
@@ -233,13 +249,24 @@ class MasterDataFactory(BaseModuleFactory):
         )
     def _build_master_material(self, params):
         now = datetime.datetime.now(datetime.timezone.utc)
-        smallest_unit = self.main_factory.create("MasterUnit")
-        sold_unit = self.main_factory.create("MasterUnit")
-        sku_unit = self.main_factory.create("MasterUnit")
-        group1 = params.get('mastermaterialgroup1')
-        group3 = self.main_factory.create("MasterMaterialGroup3") 
-        m_type = params.get('mastermaterialtype')
-        currency = params.get('mastercurrency')
+        
+        # Buat dependensi secara eksplisit
+        smallest_unit = params.get('mastersmallestunit') or self.main_factory.create("MasterUnit")
+        sold_unit = params.get('mastersoldunit') or self.main_factory.create("MasterUnit")
+        sku_unit = params.get('masterskuunit') or self.main_factory.create("MasterUnit")
+        
+        # PERBAIKAN UTAMA: Gunakan flush bertahap
+        group1 = self.main_factory.create("MasterMaterialGroup1")
+        self.session.flush() # Simpan group1 ke DB
+
+        group2 = self.main_factory.create("MasterMaterialGroup2", mastermaterialgroup1=group1)
+        self.session.flush() # Simpan group2 ke DB
+
+        group3 = self.main_factory.create("MasterMaterialGroup3", mastermaterialgroup2=group2)
+        self.session.flush() # Simpan group3 ke DB
+        
+        m_type = params.get('mastermaterialtype') or self.main_factory.create('MasterMaterialType')
+        currency = params.get('mastercurrency') or self.main_factory.create('MasterCurrency')
         tt1 = self.main_factory.create("MasterTransactionType", Type=self.main_factory.get_unique_value("T", 20))
         tt2 = self.main_factory.create("MasterTransactionType", Type=self.main_factory.get_unique_value("T", 20))
         tt3 = self.main_factory.create("MasterTransactionType", Type=self.main_factory.get_unique_value("T", 20))
@@ -247,13 +274,18 @@ class MasterDataFactory(BaseModuleFactory):
         tt5 = self.main_factory.create("MasterTransactionType", Type=self.main_factory.get_unique_value("T", 20))
 
         return db_models.MasterMaterial(
-            Code=params.get('Code', self.main_factory.get_unique_value('M', 20)), Name='Material', SmallestUnit=smallest_unit.Code, SoldUnit=sold_unit.Code, SKUUnit=sku_unit.Code,
-            Group1=group1.Code, Group2=group3.Group2, 
-            Group3=group3.Code, Type=m_type.Code, Currency=currency.Code, TransactionType1=tt1.Type, TransactionType2=tt2.Type, TransactionType3=tt3.Type,
+            Code=params.get('Code', self.main_factory.get_unique_value('M', 20)), Name='Material', 
+            SmallestUnit=smallest_unit.Code, SoldUnit=sold_unit.Code, SKUUnit=sku_unit.Code,
+            Group1=group3.Group1, 
+            Group2=group3.Group2, 
+            Group3=group3.Code,
+            Type=m_type.Code, Currency=currency.Code, 
+            TransactionType1=tt1.Type, TransactionType2=tt2.Type, TransactionType3=tt3.Type,
             TransactionType4=tt4.Type, TransactionType5=tt5.Type, NameInPO='', IsBatch=True, IsService=False, IsAsset=False, IsPPh=False,
             HS='', Barcode='', MinStock=0, MaxStock=0, DefaultPrice=0, Info='',
             CreatedBy='test', CreatedDate=now, ChangedBy='test', ChangedDate=now
         )
+    
     def _build_master_material_type(self, params):
         now = datetime.datetime.now(datetime.timezone.utc)
         return db_models.MasterMaterialType(
@@ -281,6 +313,39 @@ class MasterDataFactory(BaseModuleFactory):
             City=params.get('City', ''),
             Latitude=params.get('Latitude', Decimal('0.0')),
             Longitude=params.get('Longitude', Decimal('0.0')),
+            CreatedBy='test',
+            CreatedDate=now,
+            ChangedBy='test',
+            ChangedDate=now
+        )
+    def _build_master_employee_h(self, params):
+        now = datetime.datetime.now(datetime.timezone.utc)
+        return db_models.MasterEmployeeH(
+            EmployeeNo=params.get('EmployeeNo', self.main_factory.get_unique_value('E', 10)),
+            Name=params.get('Name', 'Employee ' + self.main_factory.get_unique_value('N')),
+            Gender='M',
+            BirthDate=now.date() - datetime.timedelta(days=365*25), # Umur 25 tahun
+            Religion='Other',
+            IsActive=True,
+            JoinDate=now.date(),
+            ResignReason='',
+            Information='',
+            CreatedBy='test',
+            CreatedDate=now,
+            ChangedBy='test',
+            ChangedDate=now
+        )
+    def _build_master_sales(self, params):
+        now = datetime.datetime.now(datetime.timezone.utc)
+        employee = params.get('masteremployeeh') or self.main_factory.create('MasterEmployeeH')
+        
+        return db_models.MasterSales(
+            Code=employee.EmployeeNo, # Gunakan EmployeeNo sebagai Code
+            Name=params.get('Name', employee.Name), # Ambil nama dari employee
+            Address=params.get('Address', ''),
+            City=params.get('City', ''),
+            Phone=params.get('Phone', ''),
+            Mobile=params.get('Mobile', ''),
             CreatedBy='test',
             CreatedDate=now,
             ChangedBy='test',

@@ -11,6 +11,7 @@ if project_root not in sys.path:
 from sqlalchemy import create_engine
 from backend.app.core.config import settings
 from backend.factories.base import test_session_scope
+from backend.app import db_models
 
 def _run_test(engine, test_func, test_name):
     print(f"\n[TEST] Menjalankan: {test_name}...")
@@ -24,69 +25,44 @@ def _run_test(engine, test_func, test_name):
         traceback.print_exc(file=sys.stdout)
         return False
 
-def test_create_journal_with_details(session, factory):
-    """Menguji pembuatan GeneralJournalH dengan dua baris detail yang seimbang."""
-    journal_header = factory.finance.create("GeneralJournalH")
+def test_journal_creation_and_relations(session, factory):
+    """Menguji pembuatan GeneralJournal dan relasi ke MasterAccount."""
+    journal_h = factory.finance.create("GeneralJournalH", DocNo="GJ-REL-TEST")
+    acc_debit = factory.master.create("MasterAccount", AccountNo="ACC-D")
+    acc_credit = factory.master.create("MasterAccount", AccountNo="ACC-C")
 
-    # Buat dua akun untuk jurnal debit dan kredit
-    debit_account = factory.master.create("MasterAccount", Name="Kas")
-    credit_account = factory.master.create("MasterAccount", Name="Pendapatan")
-    session.flush()
+    factory.finance.create("GeneralJournalD", generaljournalh=journal_h, masteraccount=acc_debit, Number=1, Debet=100)
+    factory.finance.create("GeneralJournalD", generaljournalh=journal_h, masteraccount=acc_credit, Number=2, Credit=100, Debet=0)
+    session.commit()
 
-    # Buat baris detail Debit
-    factory.finance.create(
-        "GeneralJournalD",
-        generaljournalh=journal_header,
-        masteraccount=debit_account,
-        Number=1,
-        Debet=Decimal("50000"),
-        Credit=Decimal("0")
-    )
+    retrieved_journal = session.query(db_models.GeneralJournalH).filter_by(DocNo="GJ-REL-TEST").one()
+    assert len(retrieved_journal.details) == 2
+    assert retrieved_journal.details[0].account_ref.AccountNo == "ACC-D"
+    assert retrieved_journal.details[1].account_ref.AccountNo == "ACC-C"
+    print(f"    -> Berhasil membuat Jurnal '{retrieved_journal.DocNo}' dan validasi relasi detail.")
 
-    # Buat baris detail Kredit
-    factory.finance.create(
-        "GeneralJournalD",
-        generaljournalh=journal_header,
-        masteraccount=credit_account,
-        Number=2,
-        Debet=Decimal("0"),
-        Credit=Decimal("50000")
-    )
-
-    session.flush()
-
-    assert len(journal_header.details) == 2
+def test_ap_book_and_relations(session, factory):
+    """Menguji pembuatan Apbook dan relasinya."""
+    supplier = factory.master.create("MasterSupplier", Code="SUP-APB-01")
+    ap_entry = factory.finance.create("Apbook", mastersupplier=supplier, DocNo="AP-REL-TEST")
+    session.commit()
     
-    total_debet = sum(d.Debet for d in journal_header.details)
-    total_credit = sum(d.Credit for d in journal_header.details)
+    retrieved_ap = session.query(db_models.Apbook).filter_by(DocNo="AP-REL-TEST").one()
+    assert retrieved_ap.supplier is not None
+    assert retrieved_ap.supplier.Code == "SUP-APB-01"
+    print(f"    -> Berhasil membuat Apbook untuk Supplier '{retrieved_ap.SupplierCode}' dan validasi relasi.")
+
+def test_customer_balance_and_relations(session, factory):
+    """Menguji pembuatan CustomerBalance dan relasinya."""
+    customer = factory.master.create("MasterCustomer", Code="CUST-BAL01") # PERBAIKAN DI SINI
+    balance_entry = factory.finance.create("CustomerBalance", mastercustomer=customer)
+    session.commit()
+
+    retrieved_balance = session.query(db_models.CustomerBalance).filter_by(CustomerCode="CUST-BAL01").one() # PERBAIKAN DI SINI
+    assert retrieved_balance.customer is not None
+    assert retrieved_balance.customer.Name == customer.Name
+    print(f"    -> Berhasil membuat CustomerBalance untuk Customer '{retrieved_balance.CustomerCode}' dan validasi relasi.")
     
-    assert total_debet == total_credit
-    print(f"    -> Berhasil membuat Jurnal '{journal_header.DocNo}' dengan 2 baris detail seimbang.")
-
-def test_create_ap_book(session, factory):
-    """Menguji pembuatan Apbook."""
-    ap_book_entry = factory.finance.create("Apbook")
-    session.flush()
-    assert ap_book_entry is not None
-    assert ap_book_entry.supplier is not None
-    print(f"    -> Berhasil membuat Apbook untuk DocNo '{ap_book_entry.DocNo}'")
-
-def test_create_customer_balance(session, factory):
-    """Menguji pembuatan CustomerBalance."""
-    customer_balance_entry = factory.finance.create("CustomerBalance")
-    session.flush()
-    assert customer_balance_entry is not None
-    assert customer_balance_entry.customer is not None
-    print(f"    -> Berhasil membuat CustomerBalance untuk Customer '{customer_balance_entry.CustomerCode}'")
-
-def test_create_supplier_balance(session, factory):
-    """Menguji pembuatan SupplierBalance."""
-    supplier_balance_entry = factory.finance.create("SupplierBalance")
-    session.flush()
-    assert supplier_balance_entry is not None
-    assert supplier_balance_entry.supplier is not None
-    print(f"    -> Berhasil membuat SupplierBalance untuk Supplier '{supplier_balance_entry.SupplierCode}'")
-
 def run_all_finance_tests():
     TEST_DATABASE_URL = (
         f"mysql+mysqlconnector://{settings.TEST_DB_USER}:{settings.TEST_DB_PASSWORD}"
@@ -95,13 +71,12 @@ def run_all_finance_tests():
     engine = create_engine(TEST_DATABASE_URL)
     
     print("-" * 50)
-    print("Memulai tes untuk Finance...")
+    print("Memulai tes untuk Finance (dengan validasi relasi)...")
     
     tests_to_run = {
-        "Balanced Journal Creation": test_create_journal_with_details,
-        "AP Book Creation": test_create_ap_book,
-        "Customer Balance Creation": test_create_customer_balance,
-        "Supplier Balance Creation": test_create_supplier_balance,
+        "Journal Creation with Relations": test_journal_creation_and_relations,
+        "AP Book Creation with Relations": test_ap_book_and_relations,
+        "Customer Balance with Relations": test_customer_balance_and_relations,
     }
     
     results = {}

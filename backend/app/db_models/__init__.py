@@ -19,6 +19,7 @@ from .purchase_models import *
 from .finance_models import *
 from .production_models import *
 from .hr_models import *
+from .system_models import *
 # Tambahkan impor untuk modul model lain di sini saat dibuat
 
 # 3. Panggil configure_mappers() untuk menyelesaikan semua relasi
@@ -65,6 +66,8 @@ __all__ = [
 
     # HR Models
     'HrChangeShiftH', 'HrChangeShiftD', 'HrOvertimeH', 'HrOvertimeD',
+    'HrAttendance', 'HrPayroll',
+    'User', 'Role', 'Menu', 'MenuList',
 ]
 
 ALL_DEFINED_MODELS = {

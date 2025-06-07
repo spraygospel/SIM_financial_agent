@@ -379,6 +379,10 @@ class MasterSupplier(Base):
     currency_ref = relationship("MasterCurrency")
     transaction_type1_ref = relationship("MasterTransactionType", foreign_keys=[TransactionType])
     transaction_type2_ref = relationship("MasterTransactionType", foreign_keys=[TransactionType2])
+    purchase_orders = relationship("PurchaseOrderH", foreign_keys="[PurchaseOrderH.SupplierCode]", back_populates="supplier_ref")
+    tax_to_purchase_orders = relationship("PurchaseOrderH", foreign_keys="[PurchaseOrderH.SupplierTaxTo]", back_populates="supplier_tax_to_ref")
+    purchase_returns = relationship("PurchaseReturnH", foreign_keys="[PurchaseReturnH.SupplierCode]", back_populates="supplier_ref")
+    tax_to_purchase_returns = relationship("PurchaseReturnH", foreign_keys="[PurchaseReturnH.SupplierTaxTo]", back_populates="supplier_tax_to_ref")
 
 class MasterCustomer(Base):
     __tablename__ = 'mastercustomer'

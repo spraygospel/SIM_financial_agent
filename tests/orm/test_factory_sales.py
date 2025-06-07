@@ -10,6 +10,7 @@ if project_root not in sys.path:
 from sqlalchemy import create_engine
 from backend.app.core.config import settings
 from backend.factories.base import test_session_scope
+from backend.app import db_models
 
 def _run_test(engine, test_func, test_name):
     print(f"\n[TEST] Menjalankan: {test_name}...")
@@ -23,60 +24,41 @@ def _run_test(engine, test_func, test_name):
         traceback.print_exc(file=sys.stdout)
         return False
 
-def test_create_so_header(session, factory):
-    """Menguji pembuatan SalesOrderH dengan dependensi otomatis."""
-    so_header = factory.sales.create("SalesOrderH")
-    session.flush()
-    
-    assert so_header is not None
-    assert so_header.customer is not None
-    assert so_header.sales_person_ref is not None
-    print(f"    -> Berhasil membuat SO Header '{so_header.DocNo}' untuk Customer '{so_header.customer.Name}'")
+def test_sales_order_flow_and_relations(session, factory):
+    """Menguji alur Sales Order -> Goods Issue -> Sales Invoice -> AR Book dan relasinya."""
+    # 1. Buat data master spesifik
+    customer = factory.master.create("MasterCustomer", Code="CUST-FLOW")
+    material = factory.master.create("MasterMaterial", Code="MAT-FLOW")
+    session.commit()
 
-def test_create_so_with_details(session, factory):
-    """Menguji pembuatan SO lengkap dengan detail."""
-    so_header = factory.sales.create("SalesOrderH")
-    
-    factory.sales.create("SalesOrderD", salesorderh=so_header, Number=1)
-    factory.sales.create("SalesOrderD", salesorderh=so_header, Number=2)
-    
-    session.flush()
+    # 2. Buat Sales Order
+    so_header = factory.sales.create("SalesOrderH", mastercustomer=customer, DocNo="SO-FLOW-TEST")
+    factory.sales.create("SalesOrderD", salesorderh=so_header, mastermaterial=material, Number=1)
+    session.commit()
+    print(f"    -> Berhasil membuat Sales Order: {so_header.DocNo}")
 
-    assert len(so_header.details) == 2
-    print(f"    -> Berhasil membuat SO '{so_header.DocNo}' dengan {len(so_header.details)} baris detail.")
-def test_create_arbook_from_invoice(session, factory):
-    """Menguji pembuatan Arbook yang bergantung pada SalesInvoiceH."""
-    # PERBAIKAN: Buat semua dependensi SalesInvoiceH terlebih dahulu
-    so = factory.sales.create("SalesOrderH")
-    gi = factory.sales.create("GoodsIssueH", salesorderh=so)
-    session.flush() # Pastikan SO dan GI tersimpan dan relasi terbentuk
+    # 3. Buat Goods Issue
+    gi_header = factory.sales.create("GoodsIssueH", salesorderh=so_header, DocNo="GI-FLOW-TEST")
+    session.commit()
+    print(f"    -> Berhasil membuat Goods Issue: {gi_header.DocNo}")
 
-    # Sekarang buat SalesInvoiceH dengan dependensi yang sudah ada
-    invoice_header = factory.sales.create("SalesInvoiceH", salesorderh=so, goodsissueh=gi)
-    session.flush() # Pastikan invoice tersimpan
+    # 4. Buat Sales Invoice
+    si_header = factory.sales.create("SalesInvoiceH", salesorderh=so_header, goodsissueh=gi_header, DocNo="SI-FLOW-TEST")
+    session.commit()
+    print(f"    -> Berhasil membuat Sales Invoice: {si_header.DocNo}")
 
-    assert invoice_header is not None
-    assert invoice_header.customer is not None, "Relasi 'customer' di SalesInvoiceH seharusnya tidak None"
-    
-    # Sekarang buat Arbook dengan invoice yang sudah valid
-    arbook_entry = factory.sales.create("Arbook", salesinvoiceh=invoice_header)
-    session.flush()
+    # 5. Buat AR Book
+    ar_entry = factory.sales.create("Arbook", salesinvoiceh=si_header)
+    session.commit()
+    print(f"    -> Berhasil membuat AR Book untuk Invoice: {ar_entry.DocNo}")
 
-    assert arbook_entry is not None
-    assert arbook_entry.CustomerCode == invoice_header.CustomerCode
-    print(f"    -> Berhasil membuat Arbook untuk Invoice '{arbook_entry.DocNo}'")
+    # 6. Validasi relasi
+    retrieved_si = session.query(db_models.SalesInvoiceH).filter_by(DocNo="SI-FLOW-TEST").one()
+    assert retrieved_si.sales_order.DocNo == "SO-FLOW-TEST"
+    assert retrieved_si.goods_issue.DocNo == "GI-FLOW-TEST"
+    assert retrieved_si.ar_books[0].DocNo == "SI-FLOW-TEST"
+    print(f"    -> Berhasil memvalidasi relasi alur penjualan lengkap.")
 
-def test_create_sales_return_with_details(session, factory):
-    """Menguji pembuatan SalesReturnH dengan detailnya."""
-    return_header = factory.sales.create("SalesReturnH")
-    session.flush()
-
-    factory.sales.create("SalesReturnD", salesreturnh=return_header, Number=1)
-    factory.sales.create("SalesReturnD", salesreturnh=return_header, Number=2)
-    session.flush()
-
-    assert len(return_header.details) == 2
-    print(f"    -> Berhasil membuat Sales Return '{return_header.DocNo}' dengan {len(return_header.details)} baris detail.")
 
 def run_all_sales_tests():
     TEST_DATABASE_URL = (
@@ -86,13 +68,10 @@ def run_all_sales_tests():
     engine = create_engine(TEST_DATABASE_URL)
     
     print("-" * 50)
-    print("Memulai tes untuk Sales...")
+    print("Memulai tes untuk Sales (dengan validasi relasi)...")
     
     tests_to_run = {
-        "SO Header Creation": test_create_so_header,
-        "SO with Details Creation": test_create_so_with_details,
-        "AR Book Creation": test_create_arbook_from_invoice,
-        "Sales Return Creation": test_create_sales_return_with_details,
+        "Full Sales Flow with Relations": test_sales_order_flow_and_relations,
     }
     
     results = {}

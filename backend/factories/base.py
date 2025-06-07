@@ -101,6 +101,7 @@ class MainTestDataFactory:
         self.finance = FinanceFactory(self)
         self.production = ProductionFactory(self)
         self.hr = HrFactory(self)
+        self.system = SystemFactory(self)
         # Tambahkan modul lain di sini nanti, misal: self.sales = SalesFactory(self)
 
     def register_builder(self, model_name: str, builder_func: callable):
@@ -174,6 +175,7 @@ from .sales import SalesFactory
 from .finance import FinanceFactory
 from .production import ProductionFactory
 from .hr import HrFactory
+from .system import SystemFactory
 
 @contextmanager
 def test_session_scope(engine):

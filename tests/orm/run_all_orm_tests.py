@@ -18,6 +18,7 @@ from tests.orm.test_factory_sales import run_all_sales_tests
 from tests.orm.test_factory_production import run_all_production_tests
 from tests.orm.test_factory_hr import run_all_hr_tests
 from tests.orm.test_factory_finance import run_all_finance_tests
+from tests.orm.test_factory_system import run_all_system_tests
 
 def main(show_untested=False):
     print("="*20 + " MEMULAI SEMUA TES ORM " + "="*20)
@@ -31,9 +32,15 @@ def main(show_untested=False):
         ("Production", run_all_production_tests),
         ("Finance", run_all_finance_tests),
         ("HR", run_all_hr_tests),
+        ("System", run_all_system_tests),
     ]
 
-    all_ok = all(run_func() for _, run_func in test_groups)
+    all_ok = True
+    for name, run_func in test_groups:
+        # PERBAIKAN: Hanya ambil status boolean
+        success = run_func() 
+        if not success:
+            all_ok = False
 
     # 2. Setelah semua tes selesai, buat satu factory HANYA untuk melacak model
     print("\n" + "="*20 + " MENGHITUNG CAKUPAN TES " + "="*20)
@@ -55,6 +62,7 @@ def main(show_untested=False):
                 if group_name == "Production": factory.production._register_builders()
                 if group_name == "Finance": factory.finance._register_builders()
                 if group_name == "HR": factory.hr._register_builders()
+                if group_name == "system": factory.system._register_builders()
             
             # Ambil semua model yang builder-nya sudah terdaftar
             successfully_tested_models = {

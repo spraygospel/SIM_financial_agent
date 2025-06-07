@@ -60,3 +60,44 @@ class HrOvertimeD(Base):
     Duration = Column(Numeric(18, 4), nullable=False)
     header = relationship("HrOvertimeH", back_populates="details")
     employee_ref = relationship("MasterEmployeeH")
+
+class HrAttendance(Base):
+    __tablename__ = 'hrattendance'
+    AttendanceDate = Column(Date, primary_key=True)
+    EmployeeNo = Column(String(20), ForeignKey('masteremployeeh.EmployeeNo'), primary_key=True)
+    WorkingStartTime = Column(DateTime, nullable=True)
+    WorkingEndTime = Column(DateTime, nullable=True)
+    Break1StartTime = Column(DateTime, nullable=True)
+    Break1EndTime = Column(DateTime, nullable=True)
+    Break2StartTime = Column(DateTime, nullable=True)
+    Break2EndTime = Column(DateTime, nullable=True)
+    Shift = Column(String(20), nullable=False)
+    WorkingDuration = Column(Numeric(18, 4), nullable=False)
+    Break1Duration = Column(Numeric(18, 4), nullable=False)
+    Break2Duration = Column(Numeric(18, 4), nullable=False)
+    NettoWorkingDuration = Column(Numeric(18, 4), nullable=False)
+    StartEarlyMinute = Column(Numeric(18, 4), nullable=False)
+    StartLateMinute = Column(Numeric(18, 4), nullable=False)
+    EndEarlyMinute = Column(Numeric(18, 4), nullable=False)
+    EndLateMinute = Column(Numeric(18, 4), nullable=False)
+    Overtime = Column(Numeric(18, 4), nullable=False)
+    IsValid = Column(BIT, nullable=False)
+    DocNo = Column(String(15), nullable=False)
+    Problem = Column(String(255), nullable=False)
+    CreatedBy = Column(String(16), nullable=False)
+    CreatedDate = Column(DateTime, nullable=False)
+
+    employee_ref = relationship("MasterEmployeeH")
+
+class HrPayroll(Base):
+    __tablename__ = 'hrpayroll'
+    PayrollDate = Column(Date, primary_key=True)
+    RootComponent = Column(String(50), primary_key=True)
+    EmployeeNo = Column(String(20), ForeignKey('masteremployeeh.EmployeeNo'), primary_key=True)
+    Component = Column(String(50), primary_key=True)
+    IsFinal = Column(BIT, primary_key=True)
+    Value = Column(Numeric(18, 4), nullable=True)
+    CreatedBy = Column(String(16), nullable=False)
+    CreatedDate = Column(DateTime, nullable=False)
+
+    employee_ref = relationship("MasterEmployeeH")

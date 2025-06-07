@@ -23,17 +23,30 @@ class PurchaseFactory(BaseModuleFactory):
     def _build_purchase_order_h(self, params):
         now = datetime.datetime.now(datetime.timezone.utc)
         supplier = params.get('mastersupplier') or self.main_factory.create('MasterSupplier')
+        currency = supplier.currency_ref or self.main_factory.create('MasterCurrency')
         
         return db_models.PurchaseOrderH(
             DocNo=params.get('DocNo', self.main_factory.get_unique_value("PO", 15)),
+            Series='PO', 
+            TransactionType='', 
+            DocDate=now.date(), 
             SupplierCode=supplier.Code,
-            Currency=supplier.Currency,
-            Series='PO', TransactionType='', DocDate=now.date(), DeliveryDate=now.date() + datetime.timedelta(days=7),
-            TOP=30, DiscPercent=Decimal('0.0'), TaxStatus='Include', TaxPercent=Decimal('11.0'),
-            ExchangeRate=Decimal('1.0'), JODocNo='', Trip='', SIDocNo='', TotalGross=Decimal('0.0'),
-            TotalDisc=Decimal('0.0'), TaxValue=Decimal('0.0'), TotalNetto=Decimal('0.0'), CutPPh=False,
-            PPhPercent=Decimal('0.0'), PPhValue=Decimal('0.0'), SendTo='', Information='', Status='OPEN',
-            IsApproved=False, PrintCounter=0, IsSalesReturn=False,
+            # PERBAIKAN: Isi SupplierTaxTo dengan nilai yang valid
+            SupplierTaxTo=params.get('SupplierTaxTo', supplier.Code),
+            DeliveryDate=now.date() + datetime.timedelta(days=7),
+            TOP=30, 
+            DiscPercent=Decimal('0.0'), 
+            TaxStatus='Include', 
+            TaxPercent=Decimal('11.0'), 
+            Currency=currency.Code, 
+            ExchangeRate=Decimal('1.0'), 
+            JODocNo='', Trip='', SIDocNo='', 
+            TotalGross=Decimal('0.0'), TotalDisc=Decimal('0.0'), TaxValue=Decimal('0.0'), TotalNetto=Decimal('0.0'), 
+            CutPPh=False, PPhPercent=Decimal('0.0'), PPhValue=Decimal('0.0'), 
+            SendTo='', Information='', Status='OPEN',
+            IsApproved=False, 
+            PrintCounter=0, 
+            IsSalesReturn=False,
             CreatedBy='test', CreatedDate=now, ChangedBy='test', ChangedDate=now
         )
 

@@ -27,7 +27,8 @@ class FinanceFactory(BaseModuleFactory):
     def _build_general_journal_d(self, params):
         header = params.get('generaljournalh') or self.main_factory.create('GeneralJournalH')
         account = params.get('masteraccount') or self.main_factory.create('MasterAccount')
-        currency = account.currency_ref
+        # PERBAIKAN: Buat/dapatkan currency secara eksplisit, jangan andalkan relasi
+        currency = params.get('mastercurrency') or self.main_factory.create('MasterCurrency', Code=account.Currency)
 
         return db_models.GeneralJournalD(
             DocNo=header.DocNo,

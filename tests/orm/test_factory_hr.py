@@ -10,6 +10,7 @@ if project_root not in sys.path:
 from sqlalchemy import create_engine
 from backend.app.core.config import settings
 from backend.factories.base import test_session_scope
+from backend.app import db_models
 
 def _run_test(engine, test_func, test_name):
     print(f"\n[TEST] Menjalankan: {test_name}...")
@@ -23,21 +24,30 @@ def _run_test(engine, test_func, test_name):
         traceback.print_exc(file=sys.stdout)
         return False
 
-def test_create_hr_documents(session, factory):
-    """Menguji pembuatan dokumen-dokumen HR."""
+def test_hr_documents_and_relations(session, factory):
+    """Menguji pembuatan dokumen-dokumen HR dan relasinya ke MasterEmployeeH."""
+    employee = factory.master.create("MasterEmployeeH", EmployeeNo="EMP-HR-01")
+    session.commit()
+    
     # 1. Uji Change Shift
-    change_shift_h = factory.hr.create("HrChangeShiftH")
-    factory.hr.create("HrChangeShiftD", hrchangeshifth=change_shift_h)
-    session.flush()
-    assert len(change_shift_h.details) == 1
-    print(f"    -> Berhasil membuat Change Shift '{change_shift_h.DocNo}'")
+    change_shift_h = factory.hr.create("HrChangeShiftH", DocNo="CSH-REL-TEST")
+    factory.hr.create("HrChangeShiftD", hrchangeshifth=change_shift_h, masteremployeeh=employee)
+    session.commit()
+
+    retrieved_cs = session.query(db_models.HrChangeShiftH).filter_by(DocNo="CSH-REL-TEST").one()
+    assert len(retrieved_cs.details) == 1
+    assert retrieved_cs.details[0].employee_ref.EmployeeNo == "EMP-HR-01"
+    print(f"    -> Berhasil membuat Change Shift '{retrieved_cs.DocNo}' dan validasi relasi.")
 
     # 2. Uji Overtime
-    overtime_h = factory.hr.create("HrOvertimeH")
-    factory.hr.create("HrOvertimeD", hrovertimeh=overtime_h)
-    session.flush()
-    assert len(overtime_h.details) == 1
-    print(f"    -> Berhasil membuat Overtime '{overtime_h.DocNo}'")
+    overtime_h = factory.hr.create("HrOvertimeH", DocNo="OT-REL-TEST")
+    factory.hr.create("HrOvertimeD", hrovertimeh=overtime_h, masteremployeeh=employee)
+    session.commit()
+
+    retrieved_ot = session.query(db_models.HrOvertimeH).filter_by(DocNo="OT-REL-TEST").one()
+    assert len(retrieved_ot.details) == 1
+    assert retrieved_ot.details[0].employee_ref.EmployeeNo == "EMP-HR-01"
+    print(f"    -> Berhasil membuat Overtime '{retrieved_ot.DocNo}' dan validasi relasi.")
 
 def run_all_hr_tests():
     TEST_DATABASE_URL = (
@@ -47,10 +57,10 @@ def run_all_hr_tests():
     engine = create_engine(TEST_DATABASE_URL)
     
     print("-" * 50)
-    print("Memulai tes untuk HR...")
+    print("Memulai tes untuk HR (dengan validasi relasi)...")
     
     tests_to_run = {
-        "HR Document Creation": test_create_hr_documents,
+        "HR Document with Relations": test_hr_documents_and_relations,
     }
     
     results = {}

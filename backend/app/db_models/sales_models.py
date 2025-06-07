@@ -116,7 +116,7 @@ class SalesOrderD(Base):
     QtyBooked = Column(Numeric(18, 4), nullable=False)
     PromoQty = Column(Numeric(18, 4), nullable=False)
     header = relationship("SalesOrderH", back_populates="details")
-    material = relationship("MasterMaterial")
+    material_ref = relationship("MasterMaterial") # Ganti nama menjadi 'material_ref'
     unit_ref = relationship("MasterUnit")
 
 class SalesInvoiceH(Base):

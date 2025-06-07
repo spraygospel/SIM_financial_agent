@@ -11,6 +11,7 @@ class PurchaseOrderH(Base):
     TransactionType = Column(String(20), nullable=False)
     DocDate = Column(Date, nullable=False)
     SupplierCode = Column(String(10), ForeignKey('mastersupplier.Code'), nullable=False)
+    SupplierTaxTo = Column(String(10), ForeignKey('mastersupplier.Code'), nullable=False)
     DeliveryDate = Column(Date, nullable=False)
     TOP = Column(Integer, nullable=False)
     DiscPercent = Column(Numeric(18, 4), nullable=False)
@@ -43,7 +44,8 @@ class PurchaseOrderH(Base):
     ChangedBy = Column(String(16), nullable=False)
     ChangedDate = Column(DateTime, nullable=False)
 
-    supplier_ref = relationship("MasterSupplier")
+    supplier_ref = relationship("MasterSupplier", foreign_keys=[SupplierCode], back_populates="purchase_orders")
+    supplier_tax_to_ref = relationship("MasterSupplier", foreign_keys=[SupplierTaxTo], back_populates="tax_to_purchase_orders")
     currency_ref = relationship("MasterCurrency")
     details = relationship("PurchaseOrderD", back_populates="header", cascade="all, delete-orphan")
     goods_receipts = relationship("GoodsReceiptH", back_populates="purchase_order")

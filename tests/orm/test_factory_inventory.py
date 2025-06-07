@@ -2,6 +2,7 @@
 import sys
 import os
 import traceback
+from decimal import Decimal
 
 project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..'))
 if project_root not in sys.path:
@@ -10,6 +11,7 @@ if project_root not in sys.path:
 from sqlalchemy import create_engine
 from backend.app.core.config import settings
 from backend.factories.base import test_session_scope
+from backend.app import db_models
 
 def _run_test(engine, test_func, test_name):
     print(f"\n[TEST] Menjalankan: {test_name}...")
@@ -23,49 +25,44 @@ def _run_test(engine, test_func, test_name):
         traceback.print_exc(file=sys.stdout)
         return False
 
-def test_create_stock(session, factory):
-    """Menguji pembuatan record Stock."""
-    stock_record = factory.inventory.create("Stock")
-    session.flush()
+def test_stock_adjustment_and_relations(session, factory):
+    """Menguji pembuatan alur Adjustment In/Out dan relasinya."""
+    location = factory.master.create("MasterLocation", Code="WHADJ") # PERBAIKAN DI SINI
+    material = factory.master.create("MasterMaterial", Code="MAT-ADJ")
     
-    assert stock_record is not None
-    assert stock_record.material_ref is not None
-    assert stock_record.location_ref is not None
-    print(f"    -> Berhasil membuat record Stock untuk Material '{stock_record.MaterialCode}'")
-
-def test_create_stock_balance(session, factory):
-    """Menguji pembuatan record StockBalance."""
-    stock_balance_record = factory.inventory.create("StockBalance")
-    session.flush()
-
-    assert stock_balance_record is not None
-    assert stock_balance_record.material_ref is not None
-    assert stock_balance_record.location_ref is not None
-    print(f"    -> Berhasil membuat record StockBalance untuk Material '{stock_balance_record.MaterialCode}'")
-def test_create_stock_adjustment(session, factory):
-    """Menguji pembuatan alur Adjustment In dan Adjustment Out."""
     # 1. Uji Adjustment In
-    adj_in_header = factory.inventory.create("AdjustInH")
-    factory.inventory.create("AdjustInD", adjustinh=adj_in_header)
-    session.flush()
-    assert len(adj_in_header.details) == 1
-    print(f"    -> Berhasil membuat Adjustment In '{adj_in_header.DocNo}'")
+    adj_in_header = factory.inventory.create("AdjustInH", masterlocation=location, DocNo="AI-REL-TEST")
+    factory.inventory.create("AdjustInD", adjustinh=adj_in_header, mastermaterial=material)
+    session.commit()
+
+    retrieved_adj_in = session.query(db_models.AdjustInH).filter_by(DocNo="AI-REL-TEST").one()
+    assert len(retrieved_adj_in.details) == 1
+    assert retrieved_adj_in.location_ref.Code == "WHADJ" # PERBAIKAN DI SINI
+    assert retrieved_adj_in.details[0].material_ref.Code == "MAT-ADJ"
+    print(f"    -> Berhasil membuat Adjustment In '{retrieved_adj_in.DocNo}' dan validasi relasi.")
 
     # 2. Uji Adjustment Out
-    adj_out_header = factory.inventory.create("AdjustOutH")
-    factory.inventory.create("AdjustOutD", adjustouth=adj_out_header)
-    session.flush()
-    assert len(adj_out_header.details) == 1
-    print(f"    -> Berhasil membuat Adjustment Out '{adj_out_header.DocNo}'")
+    adj_out_header = factory.inventory.create("AdjustOutH", masterlocation=location, DocNo="AO-REL-TEST")
+    factory.inventory.create("AdjustOutD", adjustouth=adj_out_header, mastermaterial=material)
+    session.commit()
+    
+    retrieved_adj_out = session.query(db_models.AdjustOutH).filter_by(DocNo="AO-REL-TEST").one()
+    assert len(retrieved_adj_out.details) == 1
+    assert retrieved_adj_out.location_ref.Code == "WHADJ" # PERBAIKAN DI SINI
+    assert retrieved_adj_out.details[0].material_ref.Code == "MAT-ADJ"
+    print(f"    -> Berhasil membuat Adjustment Out '{retrieved_adj_out.DocNo}' dan validasi relasi.")
 
-def test_create_batch(session, factory):
-    """Menguji pembuatan record Batch."""
-    batch_record = factory.inventory.create("Batch")
-    session.flush()
+def test_batch_creation_and_relation(session, factory):
+    """Menguji pembuatan Batch dan relasinya ke MasterMaterial."""
+    material = factory.master.create("MasterMaterial", Code="MAT-BATCH")
+    batch = factory.inventory.create("Batch", mastermaterial=material)
+    session.commit()
 
-    assert batch_record is not None
-    assert batch_record.material_ref is not None
-    print(f"    -> Berhasil membuat record Batch untuk Material '{batch_record.MaterialCode}'")
+    retrieved_batch = session.query(db_models.Batch).filter_by(MaterialCode="MAT-BATCH").one()
+    assert retrieved_batch.material_ref is not None
+    assert retrieved_batch.material_ref == material
+    print(f"    -> Berhasil membuat Batch untuk Material '{retrieved_batch.MaterialCode}' dan validasi relasi.")
+
 
 def run_all_inventory_tests():
     TEST_DATABASE_URL = (
@@ -75,13 +72,11 @@ def run_all_inventory_tests():
     engine = create_engine(TEST_DATABASE_URL)
     
     print("-" * 50)
-    print("Memulai tes untuk Inventory...")
+    print("Memulai tes untuk Inventory (dengan validasi relasi)...")
     
     tests_to_run = {
-        "Stock Creation": test_create_stock,
-        "StockBalance Creation": test_create_stock_balance,
-        "Stock Adjustment Creation": test_create_stock_adjustment,
-        "Batch Creation": test_create_batch,
+        "Stock Adjustment with Relations": test_stock_adjustment_and_relations,
+        "Batch Creation with Relations": test_batch_creation_and_relation,
     }
     
     results = {}

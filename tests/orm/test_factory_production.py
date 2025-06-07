@@ -10,6 +10,7 @@ if project_root not in sys.path:
 from sqlalchemy import create_engine
 from backend.app.core.config import settings
 from backend.factories.base import test_session_scope
+from backend.app import db_models
 
 def _run_test(engine, test_func, test_name):
     print(f"\n[TEST] Menjalankan: {test_name}...")
@@ -23,33 +24,36 @@ def _run_test(engine, test_func, test_name):
         traceback.print_exc(file=sys.stdout)
         return False
 
-def test_create_production_flow(session, factory):
-    """Menguji alur produksi: JobOrder -> MaterialUsage -> JobResult."""
-    # 1. Buat Job Order
-    job_order = factory.production.create("JobOrder")
-    session.flush() # PERBAIKAN: Flush untuk menyimpan Job Order
-    assert job_order is not None
-    print(f"    -> Berhasil membuat Job Order: {job_order.DocNo}")
+def test_production_flow_and_relations(session, factory):
+    """Menguji alur produksi dan validasi relasi dua arahnya."""
+    # 1. Buat data prasyarat
+    job_order = factory.production.create("JobOrder", DocNo="JO-REL-TEST")
+    session.commit()
 
-    # 2. Buat Material Usage berdasarkan Job Order tersebut
-    usage_header = factory.production.create("MaterialUsageH", joborder=job_order)
-    factory.production.create("MaterialUsageD", materialusageh=usage_header)
-    session.flush() # PERBAIKAN: Flush untuk menyimpan Material Usage
-    assert len(usage_header.details) == 1
-    print(f"    -> Berhasil membuat Material Usage: {usage_header.DocNo}")
+    # 2. Buat Material Usage dan validasi relasinya
+    usage_header = factory.production.create("MaterialUsageH", joborder=job_order, DocNo="MU-REL-TEST")
+    factory.production.create("MaterialUsageD", materialusageh=usage_header, Number=1)
+    session.commit()
 
-    # 3. Buat Job Result berdasarkan Job Order yang sama
-    result_header = factory.production.create("JobResultH", joborder=job_order)
-    session.flush() # PERBAIKAN: Flush untuk menyimpan Job Result Header
+    retrieved_usage = session.query(db_models.MaterialUsageH).filter_by(DocNo="MU-REL-TEST").one()
+    assert retrieved_usage.job_order_ref is not None, "Relasi MU -> JO tidak boleh None"
+    assert retrieved_usage.job_order_ref.DocNo == "JO-REL-TEST"
+    print(f"    -> Berhasil membuat Material Usage '{retrieved_usage.DocNo}' dan memvalidasi relasi ke Job Order.")
 
-    # 4. Buat Job Result Detail
-    factory.production.create("JobResultD", jobresulth=result_header)
-    session.flush() # PERBAIKAN: Flush untuk menyimpan Job Result Detail
+    # 3. Buat Job Result dan validasi relasinya
+    result_header = factory.production.create("JobResultH", joborder=job_order, DocNo="JR-REL-TEST")
+    factory.production.create("JobResultD", jobresulth=result_header, Number=1)
+    session.commit()
 
-    assert len(result_header.details) == 1
-    # Verifikasi bahwa material di JobResultD sama dengan material di JobOrder
-    assert result_header.details[0].MaterialCode == job_order.MaterialCode
-    print(f"    -> Berhasil membuat Job Result: {result_header.DocNo}")
+    retrieved_result = session.query(db_models.JobResultH).filter_by(DocNo="JR-REL-TEST").one()
+    retrieved_jo = session.query(db_models.JobOrder).filter_by(DocNo="JO-REL-TEST").one()
+
+    assert retrieved_result.job_order_ref == retrieved_jo
+    assert retrieved_result in retrieved_jo.job_results, "Relasi balik JO -> JR harus benar"
+    assert len(retrieved_result.details) == 1
+    assert retrieved_result.details[0].header == retrieved_result
+    print(f"    -> Berhasil membuat Job Result '{retrieved_result.DocNo}' dan memvalidasi relasi dua arahnya.")
+
 
 def run_all_production_tests():
     TEST_DATABASE_URL = (
@@ -59,10 +63,10 @@ def run_all_production_tests():
     engine = create_engine(TEST_DATABASE_URL)
     
     print("-" * 50)
-    print("Memulai tes untuk Production...")
+    print("Memulai tes untuk Production (dengan validasi relasi)...")
     
     tests_to_run = {
-        "Full Production Flow Creation": test_create_production_flow,
+        "Production Flow with Relations": test_production_flow_and_relations,
     }
     
     results = {}

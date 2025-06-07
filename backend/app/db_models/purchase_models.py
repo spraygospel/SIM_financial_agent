@@ -1,0 +1,71 @@
+# backend/app/db_models/purchase_models.py
+from sqlalchemy import Column, String, Date, Integer, Numeric, ForeignKey, DateTime
+from sqlalchemy.dialects.mysql import BIT
+from sqlalchemy.orm import relationship
+from .base import Base
+
+class PurchaseOrderH(Base):
+    __tablename__ = 'purchaseorderh'
+    DocNo = Column(String(15), primary_key=True)
+    Series = Column(String(3), nullable=False)
+    TransactionType = Column(String(20), nullable=False)
+    DocDate = Column(Date, nullable=False)
+    SupplierCode = Column(String(10), ForeignKey('mastersupplier.Code'), nullable=False)
+    DeliveryDate = Column(Date, nullable=False)
+    TOP = Column(Integer, nullable=False)
+    DiscPercent = Column(Numeric(18, 4), nullable=False)
+    TaxStatus = Column(String(10), nullable=False)
+    TaxPercent = Column(Numeric(18, 4), nullable=False)
+    Currency = Column(String(3), ForeignKey('mastercurrency.Code'), nullable=False)
+    ExchangeRate = Column(Numeric(18, 4), nullable=False)
+    JODocNo = Column(String(15), nullable=False)
+    Trip = Column(String(20), nullable=False)
+    SIDocNo = Column(String(15), nullable=False)
+    TotalGross = Column(Numeric(18, 4), nullable=False)
+    TotalDisc = Column(Numeric(18, 4), nullable=False)
+    TaxValue = Column(Numeric(18, 4), nullable=False)
+    TotalNetto = Column(Numeric(18, 4), nullable=False)
+    CutPPh = Column(BIT, nullable=False)
+    PPhPercent = Column(Numeric(18, 4), nullable=False)
+    PPhValue = Column(Numeric(18, 4), nullable=False)
+    SendTo = Column(String(50), nullable=False)
+    Information = Column(String(255), nullable=False)
+    Status = Column(String(20), nullable=False)
+    IsApproved = Column(BIT, nullable=False)
+    ApprovedBy = Column(String(16), nullable=True)
+    ApprovedDate = Column(DateTime, nullable=True)
+    PrintCounter = Column(Integer, nullable=False)
+    PrintedBy = Column(String(16), nullable=True)
+    PrintedDate = Column(DateTime, nullable=True)
+    IsSalesReturn = Column(BIT, nullable=False)
+    CreatedBy = Column(String(16), nullable=False)
+    CreatedDate = Column(DateTime, nullable=False)
+    ChangedBy = Column(String(16), nullable=False)
+    ChangedDate = Column(DateTime, nullable=False)
+
+    supplier_ref = relationship("MasterSupplier")
+    currency_ref = relationship("MasterCurrency")
+    details = relationship("PurchaseOrderD", back_populates="header", cascade="all, delete-orphan")
+    goods_receipts = relationship("GoodsReceiptH", back_populates="purchase_order")
+
+class PurchaseOrderD(Base):
+    __tablename__ = 'purchaseorderd'
+    DocNo = Column(String(15), ForeignKey('purchaseorderh.DocNo'), primary_key=True)
+    Number = Column(Integer, primary_key=True)
+    MaterialCode = Column(String(20), ForeignKey('mastermaterial.Code'), nullable=False)
+    Info = Column(String(1024), nullable=False)
+    Unit = Column(String(5), ForeignKey('masterunit.Code'), nullable=False)
+    Qty = Column(Numeric(18, 4), nullable=False)
+    Price = Column(Numeric(18, 4), nullable=False)
+    Gross = Column(Numeric(18, 4), nullable=False)
+    DiscPercent = Column(Numeric(18, 4), nullable=False)
+    DiscPercent2 = Column(Numeric(18, 4), nullable=False)
+    DiscPercent3 = Column(Numeric(18, 4), nullable=False)
+    DiscValue = Column(Numeric(18, 4), nullable=False)
+    DiscNominal = Column(Numeric(18, 4), nullable=False)
+    Netto = Column(Numeric(18, 4), nullable=False)
+    QtyReceived = Column(Numeric(18, 4), nullable=False)
+
+    header = relationship("PurchaseOrderH", back_populates="details")
+    material_ref = relationship("MasterMaterial")
+    unit_ref = relationship("MasterUnit")

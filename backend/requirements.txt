@@ -1,0 +1,14 @@
+fastapi
+uvicorn[standard] # Untuk menjalankan server FastAPI
+pydantic
+langgraph
+# Untuk LLM (DeepSeek via OpenAI SDK)
+openai 
+# Untuk koneksi ke MySQL
+mysql-connector-python
+# Untuk Graphiti (jika ada Python client atau dibutuhkan langsung)
+graphiti-core 
+# Library lain yang mungkin dibutuhkan segera:
+python-dotenv # Untuk membaca file .env
+# Tambahkan library MCP Python SDK jika sudah tersedia
+# mcp (atau nama paket MCP SDK Python Anda)

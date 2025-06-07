@@ -29,6 +29,10 @@ class MasterDataFactory(BaseModuleFactory):
         self.main_factory.register_builder("MasterMaterialType", self._build_master_material_type)
         self.main_factory.register_builder("MasterMaterial", self._build_master_material)
         self.main_factory.register_builder("MasterLocation", self._build_master_location)
+        self.main_factory.register_builder("MasterBank", self._build_master_bank)
+        self.main_factory.register_builder("MasterCollector", self._build_master_collector)
+        self.main_factory.register_builder("MasterCustomerPartner", self._build_master_customer_partner)
+        self.main_factory.register_builder("MasterUnitConversion", self._build_master_unit_conversion)
         #sales builders
         self.main_factory.register_builder("MasterEmployeeH", self._build_master_employee_h)
         self.main_factory.register_builder("MasterSales", self._build_master_sales)
@@ -350,4 +354,40 @@ class MasterDataFactory(BaseModuleFactory):
             CreatedDate=now,
             ChangedBy='test',
             ChangedDate=now
+        )
+    def _build_master_bank(self, params):
+        now = datetime.datetime.now(datetime.timezone.utc)
+        return db_models.MasterBank(
+            Code=params.get('Code', self.main_factory.get_unique_value('B', 5)),
+            Name=params.get('Name', 'Bank Default'),
+            CreatedBy='test', CreatedDate=now, ChangedBy='test', ChangedDate=now
+        )
+
+    def _build_master_collector(self, params):
+        now = datetime.datetime.now(datetime.timezone.utc)
+        return db_models.MasterCollector(
+            Code=params.get('Code', self.main_factory.get_unique_value('COL', 10)),
+            Name=params.get('Name', 'Collector Default'),
+            Address='', City='', Phone='', Mobile='',
+            CreatedBy='test', CreatedDate=now, ChangedBy='test', ChangedDate=now
+        )
+
+    def _build_master_customer_partner(self, params):
+        customer = params.get('main_customer') or self.main_factory.create('MasterCustomer')
+        partner = params.get('partner_customer') or self.main_factory.create('MasterCustomer')
+        return db_models.MasterCustomerPartner(
+            CustomerCode=customer.Code,
+            PartnerCode=partner.Code,
+            PartnerFunc=params.get('PartnerFunc', 'SHIP_TO')
+        )
+
+    def _build_master_unit_conversion(self, params):
+        now = datetime.datetime.now(datetime.timezone.utc)
+        material = params.get('mastermaterial') or self.main_factory.create('MasterMaterial')
+        unit = params.get('masterunit') or self.main_factory.create('MasterUnit')
+        return db_models.MasterUnitConversion(
+            MaterialCode=material.Code,
+            Unit=unit.Code,
+            Content=Decimal('1.0'), Weight=0, Volume=0, IsInactive=False,
+            CreatedBy='test', CreatedDate=now, ChangedBy='test', ChangedDate=now
         )

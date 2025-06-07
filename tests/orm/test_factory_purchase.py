@@ -46,6 +46,17 @@ def test_create_po_with_details(session, factory):
     assert len(po_header.details) == 3
     print(f"    -> Berhasil membuat PO '{po_header.DocNo}' dengan {len(po_header.details)} baris detail.")
 
+def test_create_purchase_return_with_details(session, factory):
+    """Menguji pembuatan PurchaseReturnH dengan detailnya."""
+    return_header = factory.purchase.create("PurchaseReturnH")
+    session.flush()
+
+    factory.purchase.create("PurchaseReturnD", purchasereturnh=return_header, Number=1)
+    session.flush()
+
+    assert len(return_header.details) == 1
+    print(f"    -> Berhasil membuat Purchase Return '{return_header.DocNo}' dengan {len(return_header.details)} baris detail.")
+
 def run_all_purchase_tests():
     TEST_DATABASE_URL = (
         f"mysql+mysqlconnector://{settings.TEST_DB_USER}:{settings.TEST_DB_PASSWORD}"
@@ -59,6 +70,7 @@ def run_all_purchase_tests():
     tests_to_run = {
         "PO Header Creation": test_create_po_header,
         "PO with Details Creation": test_create_po_with_details,
+        "Purchase Return Creation": test_create_purchase_return_with_details, 
     }
     
     results = {}

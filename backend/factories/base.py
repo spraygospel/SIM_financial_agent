@@ -91,6 +91,7 @@ class MainTestDataFactory:
         self._created_objects = defaultdict(list)
         self._unique_counters = defaultdict(int)
         self._dependency_resolver = DependencyResolver(models_module)
+        self.successfully_built_models = set()
 
         # Inisialisasi module factories
         self.master = MasterDataFactory(self)
@@ -99,6 +100,7 @@ class MainTestDataFactory:
         self.sales = SalesFactory(self)
         self.finance = FinanceFactory(self)
         self.production = ProductionFactory(self)
+        self.hr = HrFactory(self)
         # Tambahkan modul lain di sini nanti, misal: self.sales = SalesFactory(self)
 
     def register_builder(self, model_name: str, builder_func: callable):
@@ -123,6 +125,7 @@ class MainTestDataFactory:
     def clear_cache(self):
         self._created_objects.clear()
         self._unique_counters.clear()
+        self.successfully_built_models.clear()
 
     def create(self, model_name: str, **overrides: Any) -> Any:
         reuse_strategy = overrides.pop('_reuse', 'create_new')
@@ -144,6 +147,9 @@ class MainTestDataFactory:
         
         self.session.add(instance)
         self._created_objects[model_name].append(instance)
+
+        # TAMBAHKAN LOGIKA PELACAKAN DI SINI
+        self.successfully_built_models.add(self.get_model_class(model_name).__tablename__)
 
         return instance
 
@@ -167,6 +173,7 @@ from .inventory import InventoryFactory
 from .sales import SalesFactory
 from .finance import FinanceFactory
 from .production import ProductionFactory
+from .hr import HrFactory
 
 @contextmanager
 def test_session_scope(engine):

@@ -63,6 +63,30 @@ def test_create_journal_with_details(session, factory):
     assert total_debet == total_credit
     print(f"    -> Berhasil membuat Jurnal '{journal_header.DocNo}' dengan 2 baris detail seimbang.")
 
+def test_create_ap_book(session, factory):
+    """Menguji pembuatan Apbook."""
+    ap_book_entry = factory.finance.create("Apbook")
+    session.flush()
+    assert ap_book_entry is not None
+    assert ap_book_entry.supplier is not None
+    print(f"    -> Berhasil membuat Apbook untuk DocNo '{ap_book_entry.DocNo}'")
+
+def test_create_customer_balance(session, factory):
+    """Menguji pembuatan CustomerBalance."""
+    customer_balance_entry = factory.finance.create("CustomerBalance")
+    session.flush()
+    assert customer_balance_entry is not None
+    assert customer_balance_entry.customer is not None
+    print(f"    -> Berhasil membuat CustomerBalance untuk Customer '{customer_balance_entry.CustomerCode}'")
+
+def test_create_supplier_balance(session, factory):
+    """Menguji pembuatan SupplierBalance."""
+    supplier_balance_entry = factory.finance.create("SupplierBalance")
+    session.flush()
+    assert supplier_balance_entry is not None
+    assert supplier_balance_entry.supplier is not None
+    print(f"    -> Berhasil membuat SupplierBalance untuk Supplier '{supplier_balance_entry.SupplierCode}'")
+
 def run_all_finance_tests():
     TEST_DATABASE_URL = (
         f"mysql+mysqlconnector://{settings.TEST_DB_USER}:{settings.TEST_DB_PASSWORD}"
@@ -75,6 +99,9 @@ def run_all_finance_tests():
     
     tests_to_run = {
         "Balanced Journal Creation": test_create_journal_with_details,
+        "AP Book Creation": test_create_ap_book,
+        "Customer Balance Creation": test_create_customer_balance,
+        "Supplier Balance Creation": test_create_supplier_balance,
     }
     
     results = {}

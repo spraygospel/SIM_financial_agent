@@ -42,6 +42,30 @@ def test_create_stock_balance(session, factory):
     assert stock_balance_record.material_ref is not None
     assert stock_balance_record.location_ref is not None
     print(f"    -> Berhasil membuat record StockBalance untuk Material '{stock_balance_record.MaterialCode}'")
+def test_create_stock_adjustment(session, factory):
+    """Menguji pembuatan alur Adjustment In dan Adjustment Out."""
+    # 1. Uji Adjustment In
+    adj_in_header = factory.inventory.create("AdjustInH")
+    factory.inventory.create("AdjustInD", adjustinh=adj_in_header)
+    session.flush()
+    assert len(adj_in_header.details) == 1
+    print(f"    -> Berhasil membuat Adjustment In '{adj_in_header.DocNo}'")
+
+    # 2. Uji Adjustment Out
+    adj_out_header = factory.inventory.create("AdjustOutH")
+    factory.inventory.create("AdjustOutD", adjustouth=adj_out_header)
+    session.flush()
+    assert len(adj_out_header.details) == 1
+    print(f"    -> Berhasil membuat Adjustment Out '{adj_out_header.DocNo}'")
+
+def test_create_batch(session, factory):
+    """Menguji pembuatan record Batch."""
+    batch_record = factory.inventory.create("Batch")
+    session.flush()
+
+    assert batch_record is not None
+    assert batch_record.material_ref is not None
+    print(f"    -> Berhasil membuat record Batch untuk Material '{batch_record.MaterialCode}'")
 
 def run_all_inventory_tests():
     TEST_DATABASE_URL = (
@@ -56,6 +80,8 @@ def run_all_inventory_tests():
     tests_to_run = {
         "Stock Creation": test_create_stock,
         "StockBalance Creation": test_create_stock_balance,
+        "Stock Adjustment Creation": test_create_stock_adjustment,
+        "Batch Creation": test_create_batch,
     }
     
     results = {}

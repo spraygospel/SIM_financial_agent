@@ -318,3 +318,36 @@ class SalesReturnD(Base):
     header = relationship("SalesReturnH", back_populates="details")
     material_ref = relationship("MasterMaterial")
     unit_ref = relationship("MasterUnit")
+
+class SalesInvoiceDP(Base):
+    __tablename__ = 'salesinvoicedp'
+    DocNo = Column(String(15), ForeignKey('salesinvoiceh.DocNo'), primary_key=True)
+    DPDocNo = Column(String(16), primary_key=True)
+    Usage = Column(Numeric(18, 4), nullable=False)
+
+class SalesInvoiceGI(Base):
+    __tablename__ = 'salesinvoicegi'
+    DocNo = Column(String(15), ForeignKey('salesinvoiceh.DocNo'), primary_key=True)
+    GIDocNo = Column(String(15), primary_key=True)
+
+class SalesOrderRD(Base):
+    __tablename__ = 'salesorderrd'
+    DocNo = Column(String(15), ForeignKey('salesorderh.DocNo'), primary_key=True)
+    Number = Column(Integer, primary_key=True)
+    SupplierCode = Column(String(10), primary_key=True)
+    RebateCode = Column(String(10), nullable=False)
+    RebatePercent = Column(Numeric(18, 4), nullable=False)
+    DocValue = Column(Numeric(18, 4), nullable=False)
+    RebateValue = Column(Numeric(18, 4), nullable=False)
+
+class SalesOrderRS(Base):
+    __tablename__ = 'salesorderrs'
+    DocNo = Column(String(15), ForeignKey('salesorderh.DocNo'), primary_key=True)
+    SupplierCode = Column(String(10), primary_key=True)
+
+class SalesOrderSch(Base):
+    __tablename__ = 'salesordersch'
+    DocNo = Column(String(15), ForeignKey('salesorderh.DocNo'), primary_key=True)
+    Number = Column(Integer, primary_key=True)
+    DeliveryDate = Column(Date, primary_key=True)
+    Qty = Column(Numeric(18, 4), nullable=False)

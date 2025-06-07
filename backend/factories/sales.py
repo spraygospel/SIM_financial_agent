@@ -10,10 +10,21 @@ class SalesFactory(BaseModuleFactory):
         self.main_factory.register_builder("SalesOrderH", self._build_sales_order_h)
         self.main_factory.register_builder("SalesOrderD", self._build_sales_order_d)
         self.main_factory.register_builder("Arbook", self._build_ar_book)
+        self.main_factory.register_builder("ArRequestListH", self._build_ar_request_list_h)
         self.main_factory.register_builder("SalesInvoiceH", self._build_sales_invoice_h)
+        self.main_factory.register_builder("SalesInvoiceD", self._build_sales_invoice_d)
         self.main_factory.register_builder("GoodsIssueH", self._build_goods_issue_h)
         self.main_factory.register_builder("SalesReturnH", self._build_sales_return_h)
         self.main_factory.register_builder("SalesReturnD", self._build_sales_return_d)
+        self.main_factory.register_builder("CustomerPaymentH", self._build_customer_payment_h)
+        self.main_factory.register_builder("CustomerPaymentD", self._build_customer_payment_d)
+
+        self.main_factory.register_builder("SalesInvoiceDP", self._build_sales_invoice_dp)
+        self.main_factory.register_builder("SalesInvoiceGI", self._build_sales_invoice_gi)
+        self.main_factory.register_builder("SalesOrderRD", self._build_sales_order_rd)
+        self.main_factory.register_builder("SalesOrderRS", self._build_sales_order_rs)
+        self.main_factory.register_builder("SalesOrderSch", self._build_sales_order_sch)
+        
 
     def _build_sales_order_h(self, params):
         now = datetime.datetime.now(datetime.timezone.utc)
@@ -158,3 +169,70 @@ class SalesFactory(BaseModuleFactory):
             DiscPercent=0, DiscPercent2=0, DiscPercent3=0, DiscValue=0, DiscNominal=0,
             Netto=Decimal('0.0'), Cost=Decimal('0.0')
         )
+    def _build_ar_request_list_h(self, params):
+        now = datetime.datetime.now(datetime.timezone.utc)
+        collector = params.get('mastercollector') or self.main_factory.create('MasterCollector')
+        return db_models.ArRequestListH(
+            DocNo=params.get('DocNo', self.main_factory.get_unique_value('ARL', 15)),
+            Series='ARL', DocDate=now.date(), CollectorCode=collector.Code,
+            TotalCustomer=0, TotalDocument=0, TotalValue=0, Information='', Status='OPEN',
+            PrintCounter=0, CreatedBy='test', CreatedDate=now, ChangedBy='test', ChangedDate=now
+        )
+
+    def _build_customer_payment_h(self, params):
+        now = datetime.datetime.now(datetime.timezone.utc)
+        ar_req_list = params.get('arrequestlisth') or self.main_factory.create('ArRequestListH')
+        return db_models.CustomerPaymentH(
+            DocNo=params.get('DocNo', self.main_factory.get_unique_value('CP', 15)),
+            Series='CUP', DocDate=now.date(), ARReqListNo=ar_req_list.DocNo,
+            TotalCustomer=0, TotalDocument=0, TotalPayment=0, Information='', Status='OPEN',
+            CreatedBy='test', CreatedDate=now, ChangedBy='test', ChangedDate=now
+        )
+
+    def _build_customer_payment_d(self, params):
+        header = params.get('customerpaymenth') or self.main_factory.create('CustomerPaymentH')
+        customer = params.get('mastercustomer') or self.main_factory.create('MasterCustomer')
+        trans_type = params.get('mastertransactiontype') or self.main_factory.create('MasterTransactionType')
+        currency = customer.currency_ref
+        return db_models.CustomerPaymentD(
+            DocNo=header.DocNo, TransactionType=trans_type.Type, CustomerCode=customer.Code,
+            ARDocNo=params.get('ARDocNo', self.main_factory.get_unique_value('ARD', 16)),
+            DC='D', Currency=currency.Code, Payment=0, ExchangeRate=1, PaymentLocal=0,
+            TaxPrefix='', TaxNo='', Information=''
+        )
+
+    def _build_sales_invoice_d(self, params):
+        header = params.get('salesinvoiceh') or self.main_factory.create('SalesInvoiceH')
+        material = params.get('mastermaterial') or self.main_factory.create('MasterMaterial')
+        unit = material.smallest_unit_ref
+        return db_models.SalesInvoiceD(
+            DocNo=header.DocNo,
+            Number=params.get('Number', self.main_factory.get_unique_value('Line', 3)),
+            MaterialCode=material.Code,
+            TagNo=params.get('TagNo', self.main_factory.get_unique_value('T', 10)),
+            Unit=unit.Code, Info='', Qty=1, Price=0, Gross=0, DiscPercent=0,
+            DiscPercent2=0, DiscPercent3=0, DiscValue=0, DiscNominal=0, Netto=0, Cost=0
+        )
+    def _build_sales_invoice_dp(self, params):
+        header = params.get('salesinvoiceh') or self.main_factory.create('SalesInvoiceH')
+        return db_models.SalesInvoiceDP(DocNo=header.DocNo, DPDocNo='DP-DUMMY', Usage=1000)
+
+    def _build_sales_invoice_gi(self, params):
+        header = params.get('salesinvoiceh') or self.main_factory.create('SalesInvoiceH')
+        gi_header = self.main_factory.create('GoodsIssueH')
+        return db_models.SalesInvoiceGI(DocNo=header.DocNo, GIDocNo=gi_header.DocNo)
+
+    def _build_sales_order_rd(self, params):
+        so_detail = params.get('salesorderd') or self.main_factory.create('SalesOrderD')
+        supplier = params.get('mastersupplier') or self.main_factory.create('MasterSupplier')
+        return db_models.SalesOrderRD(DocNo=so_detail.DocNo, Number=so_detail.Number, SupplierCode=supplier.Code, RebateCode='', RebatePercent=0, DocValue=0, RebateValue=0)
+
+    def _build_sales_order_rs(self, params):
+        header = params.get('salesorderh') or self.main_factory.create('SalesOrderH')
+        supplier = params.get('mastersupplier') or self.main_factory.create('MasterSupplier')
+        return db_models.SalesOrderRS(DocNo=header.DocNo, SupplierCode=supplier.Code)
+
+    def _build_sales_order_sch(self, params):
+        now = datetime.datetime.now(datetime.timezone.utc)
+        so_detail = params.get('salesorderd') or self.main_factory.create('SalesOrderD')
+        return db_models.SalesOrderSch(DocNo=so_detail.DocNo, Number=so_detail.Number, DeliveryDate=now.date(), Qty=1)

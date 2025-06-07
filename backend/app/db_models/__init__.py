@@ -18,6 +18,7 @@ from .inventory_models import *
 from .purchase_models import *
 from .finance_models import *
 from .production_models import *
+from .hr_models import *
 # Tambahkan impor untuk modul model lain di sini saat dibuat
 
 # 3. Panggil configure_mappers() untuk menyelesaikan semua relasi
@@ -39,18 +40,33 @@ __all__ = [
     'MasterEmployeeH', 'MasterSales', 'MasterLocation', 'MasterCustomer', 'MasterMaterial',
     'MasterAccountGroup', 'MasterDepartment', 'MasterCustomerPartner',
     'MasterMaterialGroup2', 'MasterMaterialGroup3', 'MasterSalesArea2', 'MasterSalesArea3',
-    'MasterSupplier', 'MasterUnitConversion', 'MasterBank', 'MasterCollector',
+    'MasterSupplier', 'MasterUnitConversion', 'MasterBank', 'MasterCollector', 'MasterProvince',
+
     # Sales Models
     'ArRequestListH', 'CustomerPaymentD', 'CustomerPaymentH', 'Arbook',
     'GoodsIssueH', 'SalesInvoiceD', 'SalesInvoiceH', 'SalesOrderD', 'SalesOrderH',
-    'SalesReturnH', 'SalesReturnD',
+    'SalesReturnH', 'SalesReturnD', 'SalesInvoiceDP', 'SalesInvoiceGI',
+    'SalesOrderRD', 'SalesOrderRS', 'SalesOrderSch',
+
     # Inventory Models
-    'Stock', 'StockBalance', 'GoodsIssueD', 'GoodsReceiptD',
+    'Stock', 'StockBalance', 'GoodsIssueD', 'GoodsReceiptD', 'AdjustInH', 'AdjustInD',
+    'AdjustOutH', 'AdjustOutD', 'Batch', 'DeliveryReturnH', 'DeliveryReturnD',
+    
     # Purchase Models
-    'GoodsReceiptH', 'PurchaseOrderH',
+    'GoodsReceiptH', 'PurchaseOrderH', 'PurchaseOrderD', 'PurchaseReturnH', 'PurchaseReturnD',
+    'PurchaseCostH', 'PurchaseCostD', 'PurchaseInvoiceC', 'PurchaseInvoiceDP', 'PurchaseInvoiceGR',
+    
     # Finance Models
-    'GeneralJournalH', 'GeneralJournalD',
+    'GeneralJournalH', 'GeneralJournalD', 'Apbook', 'CustomerBalance', 
+    'SupplierBalance', 'CustomerDPBalance', 'SupplierDPBalance',
+
     # Production Models
     'JobOrder', 'MaterialUsageH', 'MaterialUsageD', 'JobResultH', 'JobResultD',
 
+    # HR Models
+    'HrChangeShiftH', 'HrChangeShiftD', 'HrOvertimeH', 'HrOvertimeD',
 ]
+
+ALL_DEFINED_MODELS = {
+    mapper.local_table.name: mapper.class_ for mapper in Base.registry.mappers
+}

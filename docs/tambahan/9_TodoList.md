@@ -1,222 +1,526 @@
-**To-Do List (Revisi 5 - Paling Lengkap): Implementasi ORM (SQLAlchemy) untuk AI Agent**
+### **Dokumen Perencanaan: To-do List - Pembangunan Komponen Database (v1.2)**
 
-**Versi Dokumen**: 4.0
-**Tanggal**: (Tanggal saat ini)
+**Versi:** 1.2
+**Status:** In Progress
 
-**Pendahuluan**:
-Dokumen ini adalah panduan pengembangan terperinci untuk MVP AI Agent, dengan penekanan kuat pada implementasi Object-Relational Mapper (ORM) menggunakan SQLAlchemy. Strategi utamanya adalah mendefinisikan dan menguji model ORM secara menyeluruh untuk tabel-tabel yang relevan dengan MVP sebelum merefactor logika eksekusi query. Pengujian dilakukan secara bertahap untuk setiap set model dan relasi yang didefinisikan.
-
----
-
-**STEP 0: Persiapan Struktur Proyek dan Lingkungan (Dasar ORM)**
-*   **Status**: ✅ **SELESAI**
-    *   **0.1**: Verifikasi direktori `backend/app/db_models/` sudah ada.
-    *   **0.2**: Verifikasi file `backend/app/db_models/base.py` sudah dibuat dan berisi `Base = declarative_base()`.
-    *   **0.3**: Verifikasi file-file Python kosong untuk kategori model (`master_data_models.py`, `sales_models.py`, `inventory_models.py`, `purchase_models.py`, `production_models.py`, `finance_models.py`, `hr_models.py`, `logistics_models.py`, `system_models.py`) sudah dibuat di `backend/app/db_models/`.
-    *   **0.4**: Verifikasi file `backend/app/db_models/__init__.py` sudah dibuat (berisi impor awal untuk `Base` dan model-model yang sudah didefinisikan).
-    *   **0.5**: **TESTING (STEP 0)**: Verifikasi impor dasar dari struktur package `db_models` berhasil (telah dilakukan dengan `python test_orm_definitions.py`).
+**Filosofi:** Setiap komponen fondasi data harus dibangun dan divalidasi secara terpisah sebelum diintegrasikan. Pengujian di setiap langkah adalah kunci untuk memastikan keandalan data, yang merupakan dasar dari seluruh sistem AI Agent.
 
 ---
 
-**STEP 1: Definisi dan Pengujian Model Database SQLAlchemy (Komprehensif untuk Cakupan MVP)**
-*Tujuan: Mendefinisikan semua model ORM yang relevan untuk skenario query MVP (penjualan, piutang, dan tabel pendukungnya) dengan relasi yang akurat, dan mengujinya secara iteratif.*
-*Panduan Umum untuk Setiap Sub-Langkah di STEP 1:*
-    *   Untuk setiap model baru: definisikan kolom (urut abjad), `ForeignKey` (sesuai `sim_testgeluran_schema_report.txt`), `ForeignKeyConstraint` (untuk FK komposit), `relationship` (dengan `back_populates` yang konsisten, dan `primaryjoin` atau `foreign_keys` eksplisit untuk relasi kompleks/komposit). Gunakan `metadata.txt` untuk komentar dan konfirmasi relasi logis. Atribut (kolom dan relasi) diurutkan secara alfabetis.
-    *   Setelah setiap set model signifikan didefinisikan atau direvisi, update `backend/app/db_models/__init__.py` dengan mengimpor kelas model baru dan menambahkannya ke list `__all__`.
-    *   Segera lakukan **TESTING** menggunakan `python test_orm_definitions.py` (untuk cek impor & konfigurasi mapper awal). Jika `test_orm_definitions.py` menjadi terlalu besar, buat file tes ORM per kategori (misalnya, `tests/db/test_orm_master_data.py`) yang melakukan query sederhana dan menguji relasi baru terhadap database `sim_testgeluran` sampel.
+### **Fase 1: Penyiapan dan Validasi Database Sumber (MySQL)**
 
-*   **1.1**: **Selesaikan dan Uji Model untuk Master Data (`master_data_models.py`)**:
-    *   **Status**: ⏳ **SEDANG DIKERJAKAN**
-    *   **1.1.1**: **Finalisasi Model Master Dasar dan Relasinya yang Sudah Dimulai**:
-        *   Review dan finalisasi `MasterCountry`, `MasterCity`, `MasterUnit`, `MasterCurrency`.
-        *   Selesaikan dan uji `MasterAccountGroup` beserta relasi `accounts` ke `MasterAccount`.
-        *   Selesaikan dan uji `MasterDepartment`.
-        *   Selesaikan dan uji `MasterAccount` beserta relasi `account_group_ref` ke `MasterAccountGroup`, `department_ref` ke `MasterDepartment`, `currency_ref` ke `MasterCurrency`, dan relasi self-referential `ParentNo` (gunakan `remote_side` dan dua `relationship` terpisah jika diimplementasikan).
-        *   Selesaikan dan uji `MasterTransactionType` beserta relasi `master_account_ref` ke `MasterAccount`.
-        *   **Selesaikan dan uji relasi komposit antara `MasterMaterialGroup1` (`material_group2_children`), `MasterMaterialGroup2` (`group1_as_parent`, `material_group3_children`), dan `MasterMaterialGroup3` (`group2_parent_ref`) secara tuntas menggunakan `ForeignKeyConstraint` dan `primaryjoin`/`foreign_keys` yang tepat.** (Ini adalah fokus kita saat ini dan beberapa iterasi terakhir).
-        *   Selesaikan dan uji `MasterMaterialType`.
-        *   Selesaikan dan uji `MasterEmployeeH`.
-        *   Selesaikan dan uji `MasterSales` beserta relasi `employee_data_ref` ke `MasterEmployeeH`.
-        *   Selesaikan dan uji `MasterLocation` beserta relasi `country_location_ref` ke `MasterCountry`.
-        *   **Selesaikan dan uji relasi komposit antara `MasterSalesArea1` (`sales_area2_children`), `MasterSalesArea2` (`area1_parent_ref`, `sales_area3_children`), dan `MasterSalesArea3` (`area2_ref`) secara tuntas menggunakan `ForeignKeyConstraint` dan `primaryjoin`/`foreign_keys` yang tepat.** (Ini adalah error terakhir yang kita hadapi).
-        *   Selesaikan dan uji `MasterCustomer` beserta semua relasi ke `MasterCountry`, `MasterCurrency`, `MasterCustomerGroup`, `MasterPriceListType`, `MasterSalesArea1`, `MasterTransactionType`.
-        *   Selesaikan dan uji `MasterMaterial` beserta semua relasi ke `MasterUnit`, `MasterMaterialGroup1`, `MasterMaterialType`, `MasterCurrency`, `MasterTransactionType`, dan self-referential `Substitute`.
-        *   Selesaikan dan uji `MasterCustomerPartner` beserta relasi kompositnya ke `MasterCustomer`.
-        *   Selesaikan dan uji `MasterUnitConversion` beserta relasinya ke `MasterMaterial` dan `MasterUnit`.
-        *   Selesaikan dan uji `MasterSupplier` beserta relasinya ke `MasterCountry`, `MasterCurrency`, `MasterCity`, `MasterTransactionType`.
-        *   File terkait: `backend/app/db_models/master_data_models.py` (direview, disempurnakan, diuji)
-    *   **1.1.2**: **Implementasi dan Uji Model Master Data Tambahan** (berdasarkan `metadata.txt` dan relevansi MVP):
-        *   Contoh: `MasterBank`, `MasterCollector`, `MasterVehicle`, `MasterVehicleType`, `MasterRoute`, `MasterPaymentType` (jika ada), `MasterSeriesDocument` (jika diperlukan untuk relasi).
-        *   Definisikan kolom dan relasi, urutkan atribut.
-        *   File terkait: `backend/app/db_models/master_data_models.py` (ditambahkan)
-    *   **1.1.3**: Update `backend/app/db_models/__init__.py` untuk semua model master.
-        *   File terkait: `backend/app/db_models/__init__.py` (diperbarui)
-    *   **1.1.4**: **TESTING (Master Data Models)**:
-        *   Jalankan `python test_orm_definitions.py` setelah setiap perubahan signifikan.
-        *   Buat/Update `tests/db/test_orm_master_data.py`: Tambahkan tes untuk query sederhana (`.first()`, `.count()`) pada setiap model master baru/yang direvisi. Tambahkan tes yang secara spesifik menguji setiap `relationship` penting dengan melakukan join atau mengakses atribut relasi.
+**Tujuan:** Memastikan database `sim_testgeluran` siap dengan skema yang benar dan berisi data sampel yang relevan untuk pengujian.
 
-*   **1.2**: **Definisi dan Uji Model untuk Sales & Piutang (`sales_models.py`)**:
-    *   **Status**: ⚪ **BELUM DIMULAI/DIREVIEW ULANG SECARA MENYELURUH SETELAH FONDASI MASTER STABIL**
-    *   **1.2.1**: **Implementasi dan Uji Model Sales & Piutang Kunci**:
-        *   Definisikan/Review `ArRequestListH` (relasi ke `MasterCollector`, `CustomerPaymentH`).
-        *   Definisikan/Review `GoodsIssueH` (relasi ke `SalesOrderH`, `MasterCustomer`, `MasterLocation`).
-        *   Definisikan/Review `SalesOrderH` (relasi ke `MasterCustomer`, `MasterSales`, `MasterCurrency`, `GoodsIssueH`, `SalesInvoiceH`, `SalesOrderD`).
-        *   Definisikan/Review `SalesOrderD` (relasi ke `SalesOrderH`, `MasterMaterial`, `MasterUnit`).
-        *   Definisikan/Review `SalesInvoiceH` (relasi ke `SalesOrderH`, `GoodsIssueH`, `MasterCustomer`, `MasterSales`, `MasterCurrency`, `MasterLocation`, `SalesInvoiceD`, `Arbook`).
-        *   Definisikan/Review `SalesInvoiceD` (relasi ke `SalesInvoiceH`, `MasterMaterial`, `MasterUnit`).
-        *   Definisikan/Review `Arbook` (relasi ke `MasterCustomer`, `MasterTransactionType`, `MasterCurrency`, dan `SalesInvoiceH`).
-        *   Definisikan/Review `CustomerPaymentH` (relasi ke `ArRequestListH`, `CustomerPaymentD`).
-        *   Definisikan/Review `CustomerPaymentD` (relasi ke `CustomerPaymentH`, `MasterTransactionType`, `MasterCustomer`, `MasterCurrency`; perhatikan relasi `ARDocNo`).
-        *   File terkait: `backend/app/db_models/sales_models.py` (dibuat/diisi/direview)
-    *   **1.2.2**: Implementasikan Model Sales & Piutang Tambahan jika relevan untuk MVP (misalnya, `ArDownpayment`, `SalesReturnH/D`).
-        *   File terkait: `backend/app/db_models/sales_models.py` (ditambahkan)
-    *   **1.2.3**: Pastikan semua atribut diurutkan secara alfabetis.
-    *   **1.2.4**: Update `backend/app/db_models/__init__.py`.
-    *   **1.2.5**: **TESTING (Sales Models)**:
-        *   Jalankan `python test_orm_definitions.py`.
-        *   Buat/Update `tests/db/test_orm_sales.py`: Tes query sederhana per model, tes semua relasi penting (ke master data dan antar model sales).
+*   **1.1. Finalisasi dan Validasi Model ORM**
+    *   **Aktivitas:** Melakukan tinjauan mendalam pada semua file model ORM (`orm_*.py`) untuk memastikan kesesuaian 100% dengan skema fisik yang diinginkan.
+    *   **Detail:**
+        *   a. Verifikasi setiap `Column` (tipe data, `nullable`, `primary_key`) di `orm_*.py` terhadap definisi di `schema_export.txt`.
+        *   b. Periksa kembali definisi `relationship()` antar model. Pastikan `foreign_keys`, `back_populates`, dan nama relasinya logis dan konsisten.
+    *   **File yang Diubah/Divalidasi:** `backend/mcp_servers/mysql_server/db_models/orm_*.py`.
 
-*   **1.3**: **Definisi dan Uji Model untuk Inventaris (`inventory_models.py`)**:
-    *   **Status**: ⚪ **BELUM DIMULAI**
-    *   **1.3.1**: Implementasikan model ORM untuk tabel inventaris kunci: `GoodsIssueD`, `GoodsReceiptH`, `GoodsReceiptD`, `StockBalance`, `Stock`, `Batch`, `AdjustInH/D`, `AdjustOutH/D`, `StockTransferH/D`, dll. Definisikan relasi. Atribut diurutkan.
-        *   File terkait: `backend/app/db_models/inventory_models.py` (dibuat/diisi)
-    *   **1.3.2**: Update `backend/app/db_models/__init__.py`.
-    *   **1.3.3**: **TESTING (Inventory Models)**:
-        *   Jalankan `python test_orm_definitions.py`.
-        *   Buat/Update `tests/db/test_orm_inventory.py`: Tes query dan relasi.
+*   **1.2. Pembuatan Data Sampel Berbasis Skenario**
+    *   **Aktivitas:** Membuat file `data.sql` yang secara strategis dirancang untuk menguji fungsionalitas inti AI agent.
+    *   **Detail:** Data sampel **wajib** mencakup:
+        *   Customer dengan piutang yang sudah jatuh tempo (`arbook.DueDate` < hari ini).
+        *   Customer dengan piutang yang belum jatuh tempo.
+        *   Customer yang sudah lunas (`arbook.PaymentValueLocal` >= `arbook.DocValueLocal`).
+        *   Beberapa transaksi untuk satu `mastercustomer`.
+        *   Data dari setidaknya dua periode/bulan yang berbeda untuk menguji filter tanggal.
+        *   Data yang akan memerlukan `JOIN` untuk menjawab query (misalnya, `arbook` yang memiliki `CustomerCode` yang ada di `mastercustomer`).
+    *   **File yang Dibuat:** `data_samples/data.sql`.
 
-*   **1.4 - 1.x (Prioritas Lebih Rendah untuk MVP Awal, kecuali ada dependensi kuat dari query utama penjualan/piutang)**:
-    *   **Purchase Models (`purchase_models.py`)**
-    *   **Production Models (`production_models.py`)**
-    *   **Finance Models (GL Umum) (`finance_models.py`)**
-    *   (Lakukan Definisi Model, Update `__init__.py`, TESTING untuk masing-masing jika diperlukan)
+*   **1.3. Implementasi Skrip Inisialisasi Database Berbasis ORM**
+    *   **Aktivitas:** Membuat skrip Python yang mengotomatiskan pembuatan skema dan pengisian data, menggunakan ORM sebagai satu-satunya sumber kebenaran untuk struktur.
+    *   **Detail:**
+        *   a. Skrip membaca `settings` dari `backend.app.core.config` untuk koneksi.
+        *   b. Skrip membuat *engine* SQLAlchemy.
+        *   c. **(Penting)** Skrip menjalankan `Base.metadata.create_all(engine)`. Ini akan membuat semua tabel di database MySQL **berdasarkan definisi di file `orm_*.py`**, bukan dari `schema.sql`.
+        *   d. Setelah skema dibuat, skrip membaca dan mengeksekusi perintah `INSERT` dari `data_samples/data.sql`.
+    *   **File yang Dibuat:** `scripts/initialize_db_mysql.py`.
 
-*   **1.8**: **Final Review dan Pengujian Impor serta Relasi Model ORM Menyeluruh untuk Cakupan MVP**:
-    *   **Status**: ⚪ **BELUM DIMULAI**
-    *   **1.8.1**: Lakukan review menyeluruh terhadap semua definisi model dan relasi yang dibuat untuk cakupan query MVP.
-    *   **1.8.2**: Jalankan `python test_orm_definitions.py` dan semua file tes ORM spesifik (`test_orm_master_data.py`, `test_orm_sales.py`, `test_orm_inventory.py`, dll.). Pastikan semua tes berhasil.
+*   **1.4. Pengujian Fase 1: Validasi Database MySQL**
+    *   **Aktivitas:** Menjalankan pengujian untuk memverifikasi bahwa database operasional telah berhasil disiapkan.
+    *   **Langkah Pengujian:**
+        *   a. Jalankan skrip `python scripts/initialize_db_mysql.py`. Pastikan tidak ada error.
+        *   b. Gunakan *database client* (DBeaver, MySQL Workbench) untuk terhubung ke database `sim_testgeluran`.
+        *   c. **Verifikasi Skema:** Pastikan semua tabel dari `orm_*.py` telah dibuat, dan periksa tipe data beberapa kolom kunci secara acak untuk memastikan kesesuaian.
+        *   d. **Verifikasi Data:** Jalankan `SELECT COUNT(*) FROM arbook;` dan `SELECT * FROM mastercustomer LIMIT 5;`. Pastikan data sampel telah terisi dengan benar.
+        *   e. **Kriteria Sukses:** Database MySQL siap digunakan, strukturnya sinkron dengan kode ORM, dan berisi data yang memadai untuk pengujian.
 
 ---
 
-**STEP 2: Konfigurasi dan Inisialisasi Engine serta Session SQLAlchemy**
-*   **Status**: ✅ **SELESAI** (file `session.py` sudah dibuat dan tes koneksi dasar berhasil).
-    *   **2.1 - 2.4**: Implementasi `DATABASE_URL`, `engine`, `SessionLocal`, `get_db_session()`.
-    *   **2.5**: **TESTING (STEP 2 Lanjutan)**:
-        *   **2.5.1**: (Sudah direncanakan) Buat direktori `tests/db/` dan file tes ORM spesifik per kategori (misalnya, `test_orm_master_data.py`, `test_orm_sales.py`).
-        *   **2.5.2**: (Akan dilakukan setelah STEP 1.8 selesai) Di setiap file tes ORM per kategori, tulis dan jalankan tes yang melakukan query representatif (SELECT, FILTER sederhana, JOIN melalui relasi) pada model-model di kategori tersebut menggunakan sesi DB asli ke `sim_testgeluran` sampel. Verifikasi tipe data hasil dan tidak adanya error eksekusi.
+### **Fase 2: Pembangunan dan Validasi Knowledge Graph (Neo4j)**
+
+**Tujuan:** Mengubah skema MySQL yang sudah divalidasi menjadi *knowledge graph* yang kaya makna dan memastikan hasilnya akurat.
+
+*   **2.1. Peninjauan Skrip Sinkronisasi dan Pemetaan Semantik**
+    *   **Aktivitas:** Memastikan skrip `sync_mysql_to_graphiti.py` siap untuk dijalankan dan pemetaan semantik sudah benar.
+    *   **Detail:**
+        *   a. Tinjau kembali `graphiti_semantic_mapping.json` untuk beberapa tabel kunci (`arbook`, `mastercustomer`, `salesorderh`). Pastikan `purpose`, `classification`, dan `relationships` sudah logis.
+        *   b. Tinjau skrip `sync_mysql_to_graphiti.py` untuk memastikan ia membaca file pemetaan dengan benar dan menghasilkan query Cypher yang tepat.
+    *   **File yang Divalidasi:** `scripts/sync_mysql_to_graphiti.py`, `data_samples/graphiti_semantic_mapping.json`.
+
+*   **2.2. Eksekusi Sinkronisasi Skema ke Neo4j**
+    *   **Aktivitas:** Menjalankan skrip untuk mempopulasi Neo4j.
+    *   **Langkah Eksekusi:**
+        *   a. Pastikan Fase 1 telah selesai dan layanan Neo4j sedang berjalan.
+        *   b. Jalankan `python scripts/sync_mysql_to_graphiti.py`. Pastikan skrip berjalan tanpa error.
+
+*   **2.3. Pengujian Fase 2: Validasi Mendalam Knowledge Graph**
+    *   **Aktivitas:** Menggunakan Neo4j Browser untuk memverifikasi integritas dan kebenaran *knowledge graph* yang dihasilkan.
+    *   **Langkah Pengujian:**
+        *   a. **Uji Keberadaan Node:** Jalankan `MATCH (n:DatabaseTable) RETURN count(n) as table_count` dan `MATCH (n:DatabaseColumn) RETURN count(n) as column_count`.
+        *   b. **Uji Atribut Semantik:** Jalankan `MATCH (t:DatabaseTable {table_name: 'mastercustomer'}) RETURN t.purpose, t.business_category`.
+        *   c. **Uji Relasi `:HAS_COLUMN`:** Jalankan `MATCH (t:DatabaseTable {table_name: 'arbook'})-[:HAS_COLUMN]->(c:DatabaseColumn) RETURN c.column_name, c.classification`.
+        *   d. **Uji Relasi `:REFERENCES` (Krusial):** Jalankan `MATCH (c1:DatabaseColumn {table_name_prop: 'arbook', column_name: 'CustomerCode'})-[r:REFERENCES]->(c2:DatabaseColumn) RETURN c1.table_name_prop as from_table, c2.column_name as to_column, c2.table_name_prop as to_table`.
+        *   e. **Kriteria Sukses:** Hasil dari semua query Cypher di atas sesuai dengan yang diharapkan dari pemetaan semantik, terutama relasi antar tabel.
 
 ---
 
-**STEP 3: Refactoring `execute_query_node` untuk Menggunakan ORM**
-*   **Status**: ⚪ **BELUM DIMULAI**
-    *   **3.1**: Rencanakan struktur fungsi baru `_build_and_execute_orm_query(plan: DatabaseOperation, db_session: Session, models_map: dict)` di `execute_query.py`. `models_map` akan memetakan nama tabel string ke objek kelas model SQLAlchemy.
-        *   File terkait: `backend/app/langgraph_workflow/nodes/execute_query.py`
-    *   **3.2**: Modifikasi fungsi `execute_query_node` utama untuk:
-        *   Mendapatkan sesi SQLAlchemy (misalnya, dengan memanggil `get_db_session()` atau menerimanya dari `agent_service`).
-        *   Membuat `models_map` yang berisi semua model ORM yang sudah diimpor dari `backend.app.db_models`.
-        *   Memanggil `_build_and_execute_orm_query` untuk setiap operasi dalam `database_operations_plan` dan `raw_data_operation_plan`.
-        *   Menangani penutupan sesi SQLAlchemy.
-        *   File terkait: `backend/app/langgraph_workflow/nodes/execute_query.py`
-    *   **3.3**: Implementasikan logika detail di `_build_and_execute_orm_query` untuk:
-        *   **3.3.1**: Menerjemahkan `plan.select_columns` menjadi argumen untuk `db_session.query(*selectable_entities)`. Tangani alias (`.label()`) dan fungsi agregasi (`func.sum()`, `func.count()`, dll.). Dapatkan objek model dari `models_map` berdasarkan `main_table`.
-        *   **3.3.2**: Menerapkan `JOIN` (`.join(TargetModel, join_condition, isouter=...)`) berdasarkan `plan.joins`. Dapatkan `TargetModel` dari `models_map`. Bangun `join_condition` secara dinamis dari `on_conditions`.
-        *   **3.3.3**: Menerapkan `FILTER` (`.filter(filter_expression)`) berdasarkan `plan.filters` dan struktur `LogicalFilterGroup`/`FilterCondition`. Gunakan `and_`, `or_` SQLAlchemy.
-        *   **3.3.4**: Menerapkan `GROUP BY` (`.group_by(*group_by_expressions)`) berdasarkan `plan.group_by_columns`.
-        *   **3.3.5**: Menerapkan `HAVING` (`.having(having_expression)`) berdasarkan `plan.having_conditions`.
-        *   **3.3.6**: Menerapkan `ORDER BY` (`.order_by(*order_by_expressions)`) berdasarkan `plan.order_by_clauses`. Tangani `asc` dan `desc`.
-        *   **3.3.7**: Menerapkan `LIMIT` (`.limit()`) dan `OFFSET` (`.offset()`).
-        *   File terkait: `backend/app/langgraph_workflow/nodes/execute_query.py`
-    *   **3.4**: Implementasikan eksekusi query ORM (`.all()`, `.first()`, `.scalar_one_or_none()`) dan konversi hasilnya (list of RowProxy atau objek model) menjadi format `List[Dict[str, Any]]` atau nilai tunggal yang diharapkan oleh `AgentState`.
-        *   File terkait: `backend/app/langgraph_workflow/nodes/execute_query.py`
-    *   **3.5**: Hapus fungsi lama `_build_sql_from_operation` dan semua referensinya.
-        *   File terkait: `backend/app/langgraph_workflow/nodes/execute_query.py`
-    *   **3.6**: **TESTING (STEP 3)**:
-        *   Buat file `tests/nodes/test_execute_query_orm.py`.
-        *   Tulis unit test ekstensif untuk fungsi `_build_and_execute_orm_query` dengan *mock* `db_session` dan berbagai `DatabaseOperationPlan` untuk setiap klausa SQL. Verifikasi objek query SQLAlchemy yang dibangun (sebelum eksekusi) sudah benar.
-        *   Tulis integration test untuk `execute_query_node` secara keseluruhan, memanggilnya dengan `AgentState` yang berisi `DatabaseOperationPlan` representatif untuk query penjualan dan piutang. Gunakan sesi DB asli ke `sim_testgeluran` sampel. Verifikasi `financial_calculations`, `raw_query_results`, dan `query_execution_status` di `AgentState` output.
+### **Fase 3: Perencanaan Evolusi Skema**
+
+**Tujuan:** Mempersiapkan proyek untuk perubahan skema di masa depan agar tidak perlu melakukan perubahan manual yang berisiko.
+
+*   **3.1. Inisialisasi dan Konfigurasi Alembic**
+    *   **Aktivitas:** Mengintegrasikan Alembic sebagai alat manajemen migrasi skema database MySQL.
+    *   **Detail:**
+        *   a. Install Alembic (`pip install alembic`).
+        *   b. Jalankan `alembic init` di `backend/mcp_servers/mysql_server/` untuk membuat struktur direktori Alembic.
+        *   c. Konfigurasi file `alembic.ini` untuk menunjuk ke URL database dari `config.py`.
+        *   d. Modifikasi `alembic/env.py` agar ia mengimpor `Base` dari `db_models` dan menyetel `target_metadata = Base.metadata`.
+    *   **File yang Dibuat/Diubah:** `backend/mcp_servers/mysql_server/alembic.ini`, `backend/mcp_servers/mysql_server/alembic/env.py`.
+
+*   **3.2. Pengujian Fase 3: Validasi Konfigurasi Alembic**
+    *   **Aktivitas:** Memastikan Alembic dapat mendeteksi model ORM kita dan menghasilkan skrip migrasi.
+    *   **Langkah Pengujian:**
+        *   a. Hapus database `sim_testgeluran` (jika memungkinkan di lingkungan dev) atau gunakan database tes kosong.
+        *   b. Jalankan `alembic revision --autogenerate -m "Initial schema from models"`.
+        *   c. Periksa file migrasi yang baru dibuat di `alembic/versions/`. Pastikan isinya adalah serangkaian perintah `op.create_table()` untuk semua model ORM kita.
+        *   d. Jalankan `alembic upgrade head`.
+        *   e. **Kriteria Sukses:** Database yang tadinya kosong sekarang memiliki semua tabel yang dibuat oleh Alembic. Ini membuktikan sistem migrasi kita siap untuk digunakan.
 
 ---
 
-**STEP 4: Pengujian End-to-End Awal dengan ORM**
-*   **Status**: ⚪ **BELUM DIMULAI**
-    *   **4.1**: Jalankan alur kerja LangGraph secara end-to-end (melalui API `POST /api/v1/query` menggunakan Postman/Insomnia atau tes API otomatis) untuk skenario query penjualan sederhana dan piutang customer sederhana.
-    *   **4.2**: Analisis log, `DatabaseOperationPlan` yang dihasilkan `plan_execution_node`, dan output `AgentState` dari `execute_query_node` (yang kini menggunakan ORM) dan `replace_placeholders_node`.
-    *   **4.3**: Identifikasi dan perbaiki bug pada penerjemahan `DatabaseOperationPlan` ke ORM, eksekusi query ORM, atau pada pemrosesan hasil.
-    *   **4.4**: **TESTING (STEP 4)**:
-        *   E2E test untuk beberapa query dasar (agregasi tunggal, filter tanggal, join sederhana).
-        *   Verifikasi `final_narrative`, `data_table_for_display`, dan `executive_summary` yang dihasilkan akurat.
-        *   Periksa log untuk memastikan tidak ada error tak terduga dari SQLAlchemy atau node-node lain.
+
+### **Dokumen Perencanaan: To-do List - Pembangunan Backend & AI Agent (v3.0 - Detail & Bertahap)**
+
+**Versi:** 3.0
+**Status:** Not Started
+
+**Filosofi:** Mengikuti pendekatan **"Kerangka Berjalan"** secara ketat. Kita akan membangun pipa data end-to-end yang paling sederhana terlebih dahulu, lalu secara bertahap mengganti komponen "dummy" dengan logika cerdas yang sesungguhnya. Setiap fase diakhiri dengan pengujian integrasi yang jelas.
 
 ---
 
-**STEP 5: Penyesuaian `plan_execution_node` dan Prompt LLM (Optimalisasi untuk ORM)**
-*   **Status**: ⚪ **BELUM DIMULAI**
-    *   **5.1**: Berdasarkan pengalaman di STEP 3 & 4, evaluasi apakah struktur `DatabaseOperationPlan` saat ini sudah optimal untuk diterjemahkan ke query ORM atau apakah ada penyederhanaan yang bisa dilakukan pada `DatabaseOperationPlan` (dan pada prompt LLM di `plan_execution_node`) karena ORM kini menangani banyak detail SQL. (Contoh: LLM mungkin hanya perlu menyebutkan nama relasi untuk join).
-    *   **5.2**: Jika diputuskan untuk menyesuaikan `DatabaseOperationPlan`, perbarui definisi `DatabaseOperationPlan` dan sub-komponennya di `backend/app/schemas/agent_state.py`.
-    *   **5.3**: Perbarui template prompt LLM (di `backend/app/langgraph_workflow/nodes/planning_prompts/`) untuk menghasilkan `DatabaseOperationPlan` dengan struktur baru/yang dioptimalkan.
-    *   **5.4**: Sesuaikan logika di `_build_and_execute_orm_query` di `execute_query_node` untuk mengakomodasi struktur `DatabaseOperationPlan` yang baru (jika ada perubahan).
-    *   **5.5**: **TESTING (STEP 5)**:
-        *   Uji ulang `plan_execution_node` untuk memastikan ia menghasilkan `DatabaseOperationPlan` sesuai format baru.
-        *   Uji ulang `execute_query_node` dengan `DatabaseOperationPlan` format baru.
-        *   Uji ulang E2E untuk query-query yang relevan.
+### **Fase 1: Pembangunan "Pipa Lurus" (Konektivitas Dasar)**
+
+**Tujuan:** Membuktikan bahwa semua komponen server (API, LangGraph, MCP Server) dapat dinyalakan dan saling berkomunikasi dalam alur yang paling sederhana. Ini adalah pemasangan semua "pipa" utama tanpa ada "filter" atau "katup cerdas" di dalamnya.
+
+*   **1.1. Inisialisasi Proyek & Konfigurasi**
+    *   **Aktivitas:** Buat struktur folder lengkap sesuai rencana. Buat file `config.py` untuk memuat semua variabel lingkungan dari `.env`.
+    *   **File Dibuat:** Struktur folder, `backend/app/core/config.py`.
+
+*   **1.2. Implementasi MCP Server "Ping"**
+    *   **Aktivitas:** Buat `mysql_server` paling minimalis yang **tidak terhubung ke database**. Implementasikan satu tool `@mcp.tool()` bernama `ping()` yang hanya mengembalikan `{"status": "pong"}`.
+    *   **File Dibuat:** `backend/mcp_servers/mysql_server/main.py`, `backend/mcp_servers/mysql_server/tools.py`.
+
+*   **1.3. Implementasi API & Service "Pass-through"**
+    *   **Aktivitas:**
+        *   a. Buat endpoint `GET /api/v1/session/start` yang mengembalikan `session_id` dan daftar `suggested_queries` yang di-*hardcode*.
+        *   b. Buat endpoint `POST /api/v1/query` yang hanya meneruskan permintaan ke `agent_service`.
+    *   **File Dibuat:** `backend/app/main.py`, `backend/app/api/v1/endpoints/query.py`, `backend/app/services/agent_service.py`.
+
+*   **1.4. Implementasi LangGraph "Pipa Lurus"**
+    *   **Aktivitas:** Buat alur kerja LangGraph paling sederhana:
+        *   a. `AgentState` hanya berisi `final_response: str`.
+        *   b. Node `call_ping_tool`: Berperan sebagai MCP Client untuk memanggil tool `ping()` di `mysql_server`.
+        *   c. Node `format_ping_response`: Mengambil hasil "pong" dan menyimpannya ke `final_response`.
+    *   **File Dibuat:** `backend/app/schemas/agent_state.py` (versi minimal), `backend/app/langgraph_workflow/graph.py`, `nodes/call_ping_tool.py`, `nodes/format_ping_response.py`.
+
+*   **1.5. Pengujian Fase 1: Uji Coba Pipa Lurus**
+    *   **Aktivitas:** Jalankan server backend utama dan `mysql_server`.
+    *   **Langkah Pengujian:**
+        *   a. Panggil `GET /api/v1/session/start`, pastikan mendapatkan `session_id`.
+        *   b. Panggil `POST /api/v1/query`.
+        *   c. **Kriteria Sukses:** Respons yang diterima adalah JSON `{ "final_response": "pong" }`. Ini membuktikan seluruh kerangka komunikasi dari API hingga MCP server berfungsi.
 
 ---
 
-**STEP 6: Implementasi Dukungan untuk Query Lebih Kompleks dengan ORM (Skenario MVP)**
-*   **Status**: ⚪ **BELUM DIMULAI**
-    *   **6.1**: Fokus pada implementasi dan pengujian skenario query MVP yang lebih kompleks (misalnya, piutang customer dengan berbagai filter dan agregasi, analisis penjualan dengan multiple join dan group by, query yang memerlukan subquery jika `DatabaseOperationPlan` bisa merepresentasikannya) menggunakan ORM.
-    *   **6.2**: Lakukan pengujian E2E untuk semua skenario query piutang customer dan analisis penjualan yang telah ditentukan sebagai target MVP.
-    *   **6.3**: Iterasi pada prompt LLM (`plan_execution_node`) dan logika `_build_and_execute_orm_query` (`execute_query_node`) sampai semua skenario query target MVP berhasil diimplementasikan dan menghasilkan data yang akurat.
-    *   **6.4**: **TESTING (STEP 6)**:
-        *   E2E test menyeluruh untuk semua skenario query utama MVP.
-        *   Validasi akurasi data output secara ketat terhadap database sampel.
-        *   Pastikan penanganan error (misalnya, jika LLM menghasilkan rencana yang tidak bisa diterjemahkan ORM dengan benar) berfungsi dengan baik dan menghasilkan pesan error yang informatif bagi pengguna.
+### **Fase 2: Aktivasi "Mesin Data" & "Sistem Loker"**
+
+**Tujuan:** Mengganti tool `ping()` dengan eksekusi query database nyata dan mengaktifkan sistem penyimpanan sementara menggunakan `DataHandle`.
+
+*   **2.1. Implementasi Penuh `mysql_server`**
+    *   **Aktivitas:** Ganti tool `ping()` dengan `execute_operation_plan`. Implementasikan `DynamicQueryBuilder` yang menerjemahkan `DatabaseOperationPlan` menjadi query ORM.
+    *   **File Diubah/Dibuat:** `backend/mcp_servers/mysql_server/tools.py` (Revisi), `query_builder.py` (Baru).
+
+*   **2.2. Implementasi `graphiti_server` untuk Penyimpanan Data**
+    *   **Aktivitas:** Buat `graphiti_server` dengan tool `store_session_data` dan `retrieve_session_data`.
+    *   **File Dibuat:** `backend/mcp_servers/graphiti_server/main.py`, `tools.py`.
+
+*   **2.3. Upgrade LangGraph dengan Eksekusi & Penyimpanan Data**
+    *   **Aktivitas:**
+        *   a. Ganti node `call_ping_tool` menjadi `execute_and_store_data_node`.
+        *   b. Node ini sekarang memanggil `execute_operation_plan` di `mysql_server` (dengan `DatabaseOperationPlan` yang masih di-*hardcode*).
+        *   c. Kemudian, ia memanggil `store_session_data` di `graphiti_server` untuk menyimpan hasilnya.
+        *   d. Perbarui `AgentState` untuk menyimpan `DataHandle` yang diterima.
+    *   **File Diubah:** `backend/app/langgraph_workflow/nodes/` (file node baru), `graph.py`.
+
+*   **2.4. Pengujian Fase 2: Uji Coba Aliran Data & Penyimpanan**
+    *   **Aktivitas:** Jalankan semua server.
+    *   **Langkah Pengujian:**
+        *   a. Uji `mysql_server` dan `graphiti_server` secara terpisah dengan `mcp inspector`.
+        *   b. Jalankan alur end-to-end melalui API `POST /api/v1/query`.
+        *   c. **Kriteria Sukses:** Respons dari API berisi objek `DataHandle` yang valid. Verifikasi di Neo4j Browser bahwa node `:SessionData` yang sesuai telah dibuat.
 
 ---
 
-**STEP 7: Pengembangan Frontend (React.js)**
-*   **Status**: ⚪ **BELUM DIMULAI**
-    *   **7.1**: Implementasikan komponen UI React dasar: `QueryInterface` (input teks untuk query pengguna, tombol submit), `ResultsDisplay` (untuk menampilkan `final_narrative` dan `data_table_for_display`), `ExecutiveSummaryDisplay`, `WarningsDisplay`, `DataSourceInfoDisplay`.
-        *   File terkait: `frontend/src/components/`
-    *   **7.2**: Implementasikan logika di `frontend/src/services/agentApi.js` untuk mengirim request `POST /api/v1/query` ke backend FastAPI dan menerima respons.
-    *   **7.3**: Hubungkan komponen-komponen di `frontend/src/App.js` atau `AIAgentDashboard.js` untuk alur dasar: input query -> kirim ke backend -> tampilkan hasil (narasi, tabel, ringkasan, peringatan, info sumber data).
-    *   **7.4**: Implementasikan komponen UI monitoring (jika diputuskan untuk MVP awal, meskipun bisa ditunda): `SessionHeader`, `ContextUsageMeter`, `ProcessMonitor`, `PerformanceAnalytics`, `FallbackTracker` dengan data statis atau *mocked* terlebih dahulu.
-    *   **7.5**: Styling dasar untuk semua komponen UI agar mudah digunakan.
-    *   **7.6**: **TESTING (STEP 7)**:
-        *   Unit test untuk komponen React individual menggunakan Jest & React Testing Library (misalnya, apakah input ter-render, apakah tabel menampilkan data mock dengan benar).
-        *   Integration test Frontend: Tes pengiriman query dari `QueryInterface` dan penampilan hasil di `ResultsDisplay` dengan *mocking* API call ke backend (menggunakan `msw` atau library serupa).
-        *   Tes manual UI dasar.
+### **Fase 3: Pemasangan "Otak Perencana"**
+
+**Tujuan:** Memberikan kemampuan pada agent untuk secara dinamis membuat rencana query berdasarkan input pengguna dan `intent`.
+
+*   **3.1. Implementasi Konsultasi Skema di `graphiti_server`**
+    *   **Aktivitas:** Tambahkan tool `get_relevant_schema` ke `graphiti_server`.
+    *   **File Diubah:** `backend/mcp_servers/graphiti_server/tools.py`.
+
+*   **3.2. Implementasi Node Perencanaan Cerdas**
+    *   **Aktivitas:** Buat node-node inti untuk proses berpikir agent.
+        *   a. `router.py`: Memanggil LLM untuk menentukan `intent`.
+        *   b. `consult_schema.py`: Memanggil `get_relevant_schema`.
+        *   c. `plan_execution.py`: Memanggil LLM untuk membuat `DatabaseOperationPlan` berdasarkan `intent` dan skema.
+    *   **File Dibuat:** `nodes/router.py`, `nodes/consult_schema.py`, `nodes/plan_execution.py`.
+
+*   **3.3. Integrasi Alur Perencanaan ke Graph Utama**
+    *   **Aktivitas:**
+        *   a. Perbarui `graph.py` untuk menambahkan node-node baru ini.
+        *   b. Jadikan `router` sebagai *entry point*.
+        *   c. Rangkai alurnya: `router` -> `consult_schema` -> `plan_execution` -> `execute_and_store_data_node`.
+        *   d. Hapus `DatabaseOperationPlan` yang di-*hardcode*.
+    *   **File Diubah:** `backend/app/langgraph_workflow/graph.py`.
+
+*   **3.4. Pengujian Fase 3: Uji Coba Penalaran Dinamis**
+    *   **Aktivitas:** Uji kemampuan agent untuk membuat rencana dari nol.
+    *   **Langkah Pengujian:**
+        *   a. Kirim query bahasa natural ke API (`POST /api/v1/query`), misalnya "tampilkan 5 customer dari Jakarta".
+        *   b. **Kriteria Sukses:** Agent harus berhasil menghasilkan `DatabaseOperationPlan` yang benar, mengeksekusinya, dan mengembalikan `DataHandle` dari hasil query yang sudah difilter.
 
 ---
 
-**STEP 8: Integrasi End-to-End Penuh (Backend + Frontend) dan Pemolesan MVP**
-*   **Status**: ⚪ **BELUM DIMULAI**
-    *   **8.1**: Hubungkan Frontend React.js yang sudah berfungsi dengan Backend FastAPI yang sudah menggunakan ORM dan telah diuji.
-    *   **8.2**: Jika menggunakan SSE/WebSocket untuk update status real-time, implementasikan koneksi dan logika update di komponen UI monitoring Frontend. Jika tidak, pastikan informasi monitoring (jika ada) dari respons API final ditampilkan dengan benar.
-    *   **8.3**: Lakukan pengujian E2E menyeluruh dari UI Frontend: masukkan berbagai query (sukses, error, data tidak ada), verifikasi tampilan hasil, narasi, tabel, ringkasan, peringatan, dan info sumber data.
-    *   **8.4**: Perbaiki *bug* yang ditemukan pada integrasi Frontend-Backend dan lakukan pemolesan UI/UX berdasarkan feedback.
-    *   **8.5**: Pastikan penanganan error dari backend ditampilkan dengan pesan yang ramah dan informatif di frontend.
-    *   **8.6**: Buat atau lengkapi dokumentasi `README.md` yang menjelaskan cara setup lengkap (backend & frontend) dan menjalankan proyek.
-    *   **8.7**: **TESTING (STEP 8)**:
-        *   Jalankan semua kasus uji E2E yang telah didefinisikan (dari Dokumen Rencana Testing).
-        *   Lakukan User Acceptance Testing (UAT) dengan perwakilan pengguna (atau Anda sendiri sebagai pengguna awal) untuk memastikan sistem memenuhi kebutuhan dasar MVP.
-        *   Verifikasi semua fitur MVP berfungsi seperti yang diharapkan di lingkungan yang terintegrasi.
-        *   Pastikan tidak ada *bug* kritis/mayor.
+### **Fase 4: Finalisasi "Sistem Produksi Laporan & Komunikasi"**
+
+**Tujuan:** Menyempurnakan alur dengan validasi, penyajian hasil profesional, penanganan semua skenario, dan komunikasi *real-time* ke frontend.
+
+*   **4.1. Implementasi Validasi & Ketahanan**
+    *   **Aktivitas:** Tambahkan node `validate_plan` (dengan *self-correction loop*) dan `validate_results` ke dalam alur kerja.
+    *   **File Dibuat/Diubah:** `nodes/validate_plan.py`, `nodes/validate_results.py`, `graph.py` (Revisi).
+
+*   **4.2. Implementasi Penyajian & Alur Alternatif**
+    *   **Aktivitas:**
+        *   a. Implementasikan `replace_placeholders.py`. Node ini akan memanggil `retrieve_session_data` dari `graphiti_server` untuk mendapatkan data asli dan mengisi template.
+        *   b. Implementasikan node `generate_acknowledgement` dan `generate_error_response`.
+        *   c. **(Penting)** Implementasikan logika revisi di `plan_execution.py` untuk menangani `intent: REQUEST_MODIFICATION`.
+    *   **File Dibuat/Diubah:** `nodes/replace_placeholders.py`, `nodes/generate_acknowledgement.py`, `nodes/generate_error_response.py`, `nodes/plan_execution.py` (Revisi).
+
+*   **4.3. Implementasi Logging & Streaming (SSE)**
+    *   **Aktivitas:**
+        *   a. Implementasikan endpoint streaming SSE (`GET /api/v1/stream_updates/{session_id}`).
+        *   b. Modifikasi `agent_service` untuk menggunakan `astream_events()` dan mengirim pembaruan ke klien yang terhubung.
+        *   c. Tambahkan kode *timing* di setiap node.
+        *   d. Implementasikan node `log_analytics` dan pastikan semua alur berakhir di sana.
+    *   **File Dibuat/Diubah:** `api/v1/endpoints/query.py` (Revisi), `services/agent_service.py` (Revisi), semua file di `nodes/`, `nodes/log_analytics.py`.
+
+*   **4.4. Pengujian Fase 4: Uji Coba Sistem Penuh**
+    *   **Aktivitas:** Lakukan pengujian E2E yang komprehensif untuk semua skenario.
+    *   **Langkah Pengujian:**
+        *   a. Uji alur sukses (`EXECUTE_QUERY`), alur modifikasi (`REQUEST_MODIFICATION`), alur sosial (`ACKNOWLEDGE_RESPONSE`), dan alur error.
+        *   b. **Verifikasi Streaming:** Gunakan *SSE client* untuk memastikan pembaruan *real-time* diterima dengan benar.
+        *   c. **Verifikasi Hasil Akhir:** Pastikan respons final dari API berisi narasi dan tabel data yang sudah diformat dengan benar (bukan `DataHandle`).
+        *   d. **Verifikasi Logging:** Periksa `logs/analytics.log` untuk memastikan setiap interaksi tercatat dengan lengkap.
+
+---
+Dengan pendekatan ini, kita membangun fitur secara logis, menguji integrasi di setiap fase, dan memastikan tidak ada "pemasangan kursi setelah badan pesawat ditutup". Ini adalah rencana yang jauh lebih kokoh dan profesional.
+---
+
+### **Dokumen Perencanaan: To-do List - Pembangunan Frontend (v1.0)**
+
+**Versi:** 1.0
+**Status:** Not Started
+
+**Filosofi:** Membangun antarmuka pengguna secara bertahap, dimulai dengan kerangka visual dan konektivitas, lalu menambahkan lapisan interaktivitas dan fitur. Setiap fase diakhiri dengan pengujian untuk memastikan fondasi UI kokoh.
 
 ---
 
-**STEP 9: Persiapan Deployment (Dasar)**
-*   **Status**: ⚪ **BELUM DIMULAI**
-    *   **9.1**: Buat `Dockerfile` untuk meng-containerize aplikasi backend FastAPI.
-        *   File terkait: `backend/Dockerfile`
-    *   **9.2**: Buat `Dockerfile` untuk meng-containerize aplikasi frontend React (misalnya, build statis yang di-serve oleh Nginx atau server statis lainnya).
-        *   File terkait: `frontend/Dockerfile`
-    *   **9.3**: Buat file `docker-compose.yml` untuk memudahkan menjalankan semua service (backend, frontend, database MySQL `sim_testgeluran`, Neo4j/Graphiti) secara lokal dalam container.
-        *   File terkait: `docker-compose.yml`
-    *   **9.4**: Tulis skrip atau instruksi untuk setup database dan Graphiti di dalam lingkungan Docker (misalnya, menggunakan skrip inisialisasi yang dijalankan saat container DB/Graphiti pertama kali start).
-    *   **9.5**: **TESTING (STEP 9)**:
-        *   Verifikasi aplikasi backend dan frontend bisa di-build menjadi image Docker.
-        *   Verifikasi semua service bisa dijalankan bersamaan menggunakan `docker-compose up`.
-        *   Lakukan tes fungsionalitas dasar pada aplikasi yang berjalan di Docker untuk memastikan semua koneksi antar service (Frontend -> Backend, Backend -> DB, Backend -> Neo4j, Backend -> LLM) berfungsi.
+### **Fase 1: Pembangunan "Kerangka UI" & Konektivitas Dasar**
+
+**Tujuan:** Membuat struktur visual dasar aplikasi (layout 3 panel), menerapkan tema, dan memastikan frontend dapat berkomunikasi dengan backend untuk memulai sesi dan mengirim permintaan. Ini adalah "chassis" dan "kabel-kabel dasar" dari mobil kita.
+
+*   **1.1. Inisialisasi Proyek React & Struktur Folder Awal**
+    *   **Aktivitas:** Gunakan `create-react-app` atau Vite untuk membuat proyek React baru. Susun struktur folder awal untuk komponen, service, dan style.
+    *   **File yang Dibuat:**
+        *   `frontend/` (root folder)
+        *   `frontend/src/App.js`, `index.js`
+        *   `frontend/src/components/` (folder kosong)
+        *   `frontend/src/services/` (folder kosong)
+        *   `frontend/src/styles/` (folder kosong)
+
+*   **1.2. Implementasi Layout Tiga Panel & Tema Gelap**
+    *   **Aktivitas:** Buat komponen-komponen dasar untuk layout tiga panel. Terapkan styling global untuk tema gelap (dark mode) menggunakan CSS atau library seperti Styled Components.
+    *   **File yang Dibuat:**
+        *   `frontend/src/components/layout/MainLayout.js`: Komponen utama yang mengatur tiga panel.
+        *   `frontend/src/components/layout/LeftSidebar.js`: Komponen placeholder untuk panel kiri.
+        *   `frontend/src/components/layout/MainContent.js`: Komponen placeholder untuk area tengah.
+        *   `frontend/src/components/layout/RightSidebar.js`: Komponen placeholder untuk panel kanan.
+        *   `frontend/src/styles/global.css`: CSS untuk tema gelap, font, dan layout dasar.
+    *   **File yang Diubah:** `frontend/src/App.js` (untuk menggunakan `MainLayout`).
+
+*   **1.3. Implementasi Service API untuk Komunikasi Backend**
+    *   **Aktivitas:** Buat sebuah file service yang berisi fungsi-fungsi untuk berinteraksi dengan API backend. Untuk fase ini, kita hanya butuh dua fungsi.
+        *   a. `startSession()`: Fungsi yang melakukan `GET` request ke `/api/v1/session/start`.
+        *   b. `postQuery()`: Fungsi yang melakukan `POST` request ke `/api/v1/query` dengan membawa payload query.
+    *   **File yang Dibuat:** `frontend/src/services/apiService.js`.
+
+*   **1.4. Integrasi Manajemen Sesi pada Level Aplikasi**
+    *   **Aktivitas:** Gunakan React's state management (misalnya, `useState` dan `useEffect` di `App.js`) untuk mengelola alur sesi.
+        *   a. Saat komponen `App` pertama kali dimuat, panggil `apiService.startSession()`.
+        *   b. Simpan `session_id` dan `suggested_queries` yang diterima dari backend ke dalam state aplikasi.
+        *   c. Buat komponen `QueryInput` yang akan memanggil `apiService.postQuery()` saat pengguna mengirim pesan.
+    *   **File yang Dibuat:** `frontend/src/components/chat/QueryInput.js`.
+    *   **File yang Diubah:** `frontend/src/App.js` (untuk menambahkan state management dan logika pemanggilan API).
+
+*   **1.5. Pengujian Fase 1: Validasi Kerangka dan Konektivitas**
+    *   **Aktivitas:** Lakukan pengujian manual untuk memastikan semua komponen dasar terpasang dan berfungsi.
+    *   **Langkah Pengujian:**
+        *   a. **Uji Tampilan:** Jalankan aplikasi frontend (`npm start` atau `yarn start`). Pastikan layout tiga panel muncul dengan benar dan memiliki tema gelap.
+        *   b. **Uji Inisiasi Sesi:**
+            *   Buka *Developer Tools* di browser, pergi ke tab "Network".
+            *   Refresh halaman. Verifikasi bahwa ada panggilan `GET` yang berhasil ke `/api/v1/session/start`.
+            *   Periksa *console log* di aplikasi React untuk memastikan `session_id` dan `suggested_queries` berhasil diterima dan disimpan di dalam state.
+        *   c. **Uji Pengiriman Query:**
+            *   Ketik pesan di `QueryInput` dan tekan kirim.
+            *   Di tab "Network", verifikasi bahwa ada panggilan `POST` ke `/api/v1/query`.
+            *   Periksa payload request untuk memastikan `session_id` dan teks query dikirim dengan benar.
+            *   **Kriteria Sukses:** Tidak harus ada respons yang "cantik" di UI saat ini. Cukup pastikan panggilan API terjadi dan backend (jika sedang berjalan dalam mode "skeleton") memberikan respons `200 OK`. Jika kita menjalankan backend "skeleton", kita bisa melihat log "pong" di konsol browser.
 
 ---
+Setelah menyelesaikan fase ini, kita akan memiliki fondasi UI yang kokoh: aplikasi sudah memiliki "tubuh" (layout) dan "sistem saraf dasar" (koneksi API) yang siap untuk dihubungkan dengan fitur-fitur yang lebih cerdas di fase berikutnya.
+
+---
+
+### **Dokumen Perencanaan: To-do List - Pembangunan Frontend (v1.0)**
+
+**Versi:** 1.0
+**Status:** Not Started
+
+**Filosofi:** Membangun antarmuka pengguna secara bertahap, dimulai dengan kerangka visual dan konektivitas, lalu menambahkan lapisan interaktivitas dan fitur. Setiap fase diakhiri dengan pengujian untuk memastikan fondasi UI kokoh.
+
+---
+
+### **Fase 1: Pembangunan "Kerangka UI" & Konektivitas Dasar**
+
+**Tujuan:** Membuat struktur visual dasar aplikasi (layout 3 panel), menerapkan tema, dan memastikan frontend dapat berkomunikasi dengan backend untuk memulai sesi dan mengirim permintaan. Ini adalah "chassis" dan "kabel-kabel dasar" dari mobil kita.
+
+*   **1.1. Inisialisasi Proyek React & Struktur Folder Awal**
+    *   **Aktivitas:** Gunakan `create-react-app` atau Vite untuk membuat proyek React baru. Susun struktur folder awal untuk komponen, service, dan style.
+    *   **File yang Dibuat:**
+        *   `frontend/` (root folder)
+        *   `frontend/src/App.js`, `index.js`
+        *   `frontend/src/components/` (folder kosong)
+        *   `frontend/src/services/` (folder kosong)
+        *   `frontend/src/styles/` (folder kosong)
+
+*   **1.2. Implementasi Layout Tiga Panel & Tema Gelap**
+    *   **Aktivitas:** Buat komponen-komponen dasar untuk layout tiga panel. Terapkan styling global untuk tema gelap (dark mode) menggunakan CSS atau library seperti Styled Components.
+    *   **File yang Dibuat:**
+        *   `frontend/src/components/layout/MainLayout.js`: Komponen utama yang mengatur tiga panel.
+        *   `frontend/src/components/layout/LeftSidebar.js`: Komponen placeholder untuk panel kiri.
+        *   `frontend/src/components/layout/MainContent.js`: Komponen placeholder untuk area tengah.
+        *   `frontend/src/components/layout/RightSidebar.js`: Komponen placeholder untuk panel kanan.
+        *   `frontend/src/styles/global.css`: CSS untuk tema gelap, font, dan layout dasar.
+    *   **File yang Diubah:** `frontend/src/App.js` (untuk menggunakan `MainLayout`).
+
+*   **1.3. Implementasi Service API untuk Komunikasi Backend**
+    *   **Aktivitas:** Buat sebuah file service yang berisi fungsi-fungsi untuk berinteraksi dengan API backend. Untuk fase ini, kita hanya butuh dua fungsi.
+        *   a. `startSession()`: Fungsi yang melakukan `GET` request ke `/api/v1/session/start`.
+        *   b. `postQuery()`: Fungsi yang melakukan `POST` request ke `/api/v1/query` dengan membawa payload query.
+    *   **File yang Dibuat:** `frontend/src/services/apiService.js`.
+
+*   **1.4. Integrasi Manajemen Sesi pada Level Aplikasi**
+    *   **Aktivitas:** Gunakan React's state management (misalnya, `useState` dan `useEffect` di `App.js`) untuk mengelola alur sesi.
+        *   a. Saat komponen `App` pertama kali dimuat, panggil `apiService.startSession()`.
+        *   b. Simpan `session_id` dan `suggested_queries` yang diterima dari backend ke dalam state aplikasi.
+        *   c. Buat komponen `QueryInput` yang akan memanggil `apiService.postQuery()` saat pengguna mengirim pesan.
+    *   **File yang Dibuat:** `frontend/src/components/chat/QueryInput.js`.
+    *   **File yang Diubah:** `frontend/src/App.js` (untuk menambahkan state management dan logika pemanggilan API).
+
+*   **1.5. Pengujian Fase 1: Validasi Kerangka dan Konektivitas**
+    *   **Aktivitas:** Lakukan pengujian manual untuk memastikan semua komponen dasar terpasang dan berfungsi.
+    *   **Langkah Pengujian:**
+        *   a. **Uji Tampilan:** Jalankan aplikasi frontend (`npm start` atau `yarn start`). Pastikan layout tiga panel muncul dengan benar dan memiliki tema gelap.
+        *   b. **Uji Inisiasi Sesi:**
+            *   Buka *Developer Tools* di browser, pergi ke tab "Network".
+            *   Refresh halaman. Verifikasi bahwa ada panggilan `GET` yang berhasil ke `/api/v1/session/start`.
+            *   Periksa *console log* di aplikasi React untuk memastikan `session_id` dan `suggested_queries` berhasil diterima dan disimpan di dalam state.
+        *   c. **Uji Pengiriman Query:**
+            *   Ketik pesan di `QueryInput` dan tekan kirim.
+            *   Di tab "Network", verifikasi bahwa ada panggilan `POST` ke `/api/v1/query`.
+            *   Periksa payload request untuk memastikan `session_id` dan teks query dikirim dengan benar.
+            *   **Kriteria Sukses:** Tidak harus ada respons yang "cantik" di UI saat ini. Cukup pastikan panggilan API terjadi dan backend (jika sedang berjalan dalam mode "skeleton") memberikan respons `200 OK`. Jika kita menjalankan backend "skeleton", kita bisa melihat log "pong" di konsol browser.
+
+---
+
+### **Fase 2: Implementasi Alur "Happy Path" (Query Baru & Hasil)**
+
+**Tujuan:** Mengimplementasikan alur interaksi inti dari awal hingga akhir. Pengguna harus dapat mengajukan query baru, melihat visualisasi proses berpikir agent secara *real-time*, dan menerima laporan hasil yang terstruktur dan komprehensif.
+
+*   **2.1. Implementasi Koneksi Server-Sent Events (SSE)**
+    *   **Aktivitas:** Buat logika di frontend untuk membuat dan mengelola koneksi SSE.
+        *   a. Setelah `session_id` didapat (dari Fase 1), buat instance `EventSource` yang menunjuk ke endpoint `GET /api/v1/stream_updates/{session_id}`.
+        *   b. Buat *event listener* untuk menangani berbagai `event_type` yang akan dikirim dari backend (misalnya, `AGENT_THINKING`, `PLANNING_STEP_UPDATE`, `FINAL_RESULT`, `WORKFLOW_ERROR`).
+        *   c. Simpan status koneksi SSE di dalam state aplikasi (misal: 'connecting', 'open', 'closed').
+    *   **File yang Diubah:** `frontend/src/services/apiService.js` (untuk logika SSE), `frontend/src/App.js` (untuk mengelola koneksi).
+
+*   **2.2. Implementasi Komponen "Fase Perencanaan" (State A)**
+    *   **Aktivitas:** Buat komponen React baru yang secara dinamis me-render Daftar Rencana Aksi (To-do List) berdasarkan data dari SSE.
+        *   a. Buat komponen `PlanningPhaseDisplay.js`.
+        *   b. Komponen ini menerima daftar langkah-langkah perencanaan dari state aplikasi.
+        *   c. Berdasarkan status setiap langkah ('pending', 'active', 'completed', 'failed'), komponen akan me-render ikon yang sesuai (lingkaran kosong, lingkaran berdenyut, centang hijau, silang merah).
+        *   d. State ini diperbarui setiap kali *event listener* SSE menerima event `PLANNING_STEP_UPDATE`.
+    *   **File yang Dibuat:** `frontend/src/components/chat/PlanningPhaseDisplay.js`.
+    *   **File yang Diubah:** `frontend/src/components/chat/ConversationBlock.js` (sebuah komponen baru untuk membungkus setiap interaksi, yang akan menampilkan `PlanningPhaseDisplay` saat agent bekerja).
+
+*   **2.3. Implementasi Komponen "Fase Hasil" (State B) - Bagian Utama**
+    *   **Aktivitas:** Buat komponen-komponen untuk menampilkan hasil akhir yang diterima dari event `FINAL_RESULT`.
+        *   a. Buat komponen `ResultsDisplay.js`.
+        *   b. Di dalamnya, buat sub-komponen:
+            *   `ExecutiveSummary.js`: Menampilkan metrik-metrik kunci.
+            *   `AnalysisNarrative.js`: Menampilkan teks narasi dari agent.
+            *   `DataQualityPanel.js`: Menampilkan skor kualitas, tingkat kepercayaan, dan peringatan.
+    *   **File yang Dibuat:** `frontend/src/components/results/ResultsDisplay.js`, `ExecutiveSummary.js`, `AnalysisNarrative.js`, `DataQualityPanel.js`.
+    *   **File yang Diubah:** `frontend/src/components/chat/ConversationBlock.js` (untuk menampilkan `ResultsDisplay` setelah proses selesai).
+
+*   **2.4. Implementasi Komponen Tabel Data Interaktif**
+    *   **Aktivitas:** Buat komponen tabel yang canggih untuk menampilkan data mentah di Panel Kanan.
+        *   a. Pilih dan install library tabel yang baik untuk React (misalnya, `react-table` atau AG Grid Community).
+        *   b. Buat komponen `InteractiveDataTable.js`.
+        *   c. Komponen ini harus menerima `data` (array of objects) dan `columns` (konfigurasi header) dari state aplikasi.
+        *   d. Implementasikan fungsionalitas **sorting per kolom**.
+        *   e. Implementasikan tombol **ekspor ke CSV**.
+    *   **File yang Dibuat:** `frontend/src/components/details/InteractiveDataTable.js`.
+    *   **File yang Diubah:** `frontend/src/components/layout/RightSidebar.js` (untuk menampilkan tabel ini).
+
+*   **2.5. Pengujian Fase 2: Validasi Alur "Happy Path"**
+    *   **Aktivitas:** Lakukan pengujian end-to-end dengan backend yang sudah menyelesaikan Fase 3 (Perencanaan Cerdas).
+    *   **Langkah Pengujian:**
+        *   a. **Uji Koneksi SSE:** Jalankan aplikasi. Setelah sesi dimulai, verifikasi di tab "Network" bahwa koneksi SSE berhasil dibuat dan tetap `pending`.
+        *   b. **Uji Visualisasi Perencanaan:**
+            *   Kirim query baru yang valid (misal: "tampilkan 5 customer").
+            *   **Amati dengan saksama:** UI harus menampilkan Daftar Rencana Aksi. Verifikasi bahwa status setiap langkah berubah dari 'pending' -> 'active' (dengan animasi denyut) -> 'completed' (dengan centang hijau) secara *real-time* sesuai dengan event SSE yang masuk.
+        *   c. **Uji Tampilan Hasil:**
+            *   Setelah proses selesai, verifikasi bahwa "Daftar Rencana Aksi" menghilang dan digantikan oleh blok `ResultsDisplay`.
+            *   Periksa apakah Ringkasan Eksekutif, Narasi, dan Skor Kualitas ditampilkan dengan benar sesuai data dari payload `FINAL_RESULT`.
+        *   d. **Uji Tabel Interaktif:**
+            *   Verifikasi bahwa tabel data mentah muncul di Panel Kanan.
+            *   Klik header kolom untuk menguji fungsionalitas sorting.
+            *   Klik tombol "Ekspor CSV" dan pastikan file CSV yang benar berhasil diunduh.
+        *   e. **Kriteria Sukses:** Pengguna dapat mengajukan query dan mendapatkan laporan lengkap dengan pengalaman "live" yang transparan, dari awal hingga akhir, tanpa ada error.
+
+---
+Setelah Fase 2 selesai, kita akan memiliki produk inti yang fungsional dan mengesankan. Pengguna sudah bisa merasakan nilai utama dari AI Agent ini. Fase-fase berikutnya akan fokus pada penyempurnaan dan penanganan skenario yang lebih beragam.
+
+---
+
+### **Fase 3: Implementasi Alur Alternatif & Ketahanan UI**
+
+**Tujuan:** Mengembangkan fungsionalitas UI untuk menangani skenario di luar alur query baru yang standar. Ini termasuk merespons berbagai `intent` dari backend, menangani error secara elegan, dan menyempurnakan alur percakapan.
+
+*   **3.1. Implementasi State Management untuk Alur Percakapan**
+    *   **Aktivitas:** Refaktor state management aplikasi untuk dapat menangani percakapan yang lebih kompleks.
+        *   a. Struktur data state utama (misalnya di `App.js`) harus diubah untuk menyimpan riwayat interaksi sebagai sebuah array of "blok". Setiap blok akan memiliki ID unik dan bisa berisi `query`, `planning_steps`, `results`, atau `error_info`.
+        *   b. Ini memungkinkan kita untuk merujuk dan memperbarui blok-blok sebelumnya, yang krusial untuk fitur modifikasi (Langkah 3.2).
+    *   **File yang Diubah:** `frontend/src/App.js` (Refaktor besar pada state management).
+
+*   **3.2. Implementasi Tampilan "Mode Revisi" (`REQUEST_MODIFICATION`)**
+    *   **Aktivitas:** Buat logika di frontend untuk menangani `intent: REQUEST_MODIFICATION` dengan benar, sesuai yang telah kita rencanakan.
+        *   a. Saat pengguna mengirim query lanjutan (misal: "filter untuk Jakarta"), frontend akan mengirimnya ke backend seperti biasa.
+        *   b. Backend (jika sudah diimplementasikan) akan merespons dengan event SSE yang menandakan `intent` adalah `REQUEST_MODIFICATION`.
+        *   c. Frontend harus menampilkan **Daftar Rencana Aksi yang lebih singkat** (misal: "Memperbarui rencana...", "Mengeksekusi ulang..."). Komponen `PlanningPhaseDisplay.js` mungkin perlu diadaptasi agar bisa menerima daftar langkah yang berbeda.
+        *   d. **Penting:** Setelah menerima `FINAL_RESULT` untuk modifikasi, UI harus **menemukan blok respons asli dan memperbaruinya**, bukan membuat blok baru. Ini bisa dilakukan dengan animasi *fade out/fade in* untuk menunjukkan pembaruan.
+    *   **File yang Diubah:** `frontend/src/App.js` (logika untuk memperbarui blok), `frontend/src/components/chat/ConversationBlock.js`.
+
+*   **3.3. Implementasi Tampilan Respons Sosial (`ACKNOWLEDGE_RESPONSE`)**
+    *   **Aktivitas:** Tangani `intent` untuk interaksi sosial sederhana.
+        *   a. Jika backend merespons dengan `intent: ACKNOWLEDGE_RESPONSE`, frontend harus langsung menampilkan respons teks singkat (misal: "Sama-sama! Senang bisa membantu.") tanpa melalui "Fase Perencanaan".
+        *   b. Ini memastikan pengalaman yang cepat dan alami untuk basa-basi.
+    *   **File yang Diubah:** `frontend/src/App.js` (logika untuk menangani `intent` ini).
+
+*   **3.4. Implementasi Tampilan Penanganan Error yang Membimbing (`Graceful Failure`)**
+    *   **Aktivitas:** Buat komponen UI khusus untuk menampilkan pesan error secara informatif.
+        *   a. Buat komponen `ErrorDisplay.js`.
+        *   b. Ketika backend mengirim event `WORKFLOW_ERROR`, komponen ini akan ditampilkan.
+        *   c. Komponen ini akan menampilkan `user_message` dengan jelas dan ikon yang sesuai (misalnya, ikon peringatan).
+        *   d. Sediakan tombol atau tautan "Lihat Detail Teknis" yang, jika diklik, akan menampilkan `technical_details` di Panel Kanan.
+    *   **File yang Dibuat:** `frontend/src/components/chat/ErrorDisplay.js`.
+    *   **File yang Diubah:** `frontend/src/components/chat/ConversationBlock.js` (untuk menampilkan `ErrorDisplay`).
+
+*   **3.5. Pengujian Fase 3: Validasi Semua Alur Percakapan**
+    *   **Aktivitas:** Lakukan pengujian manual yang komprehensif untuk semua skenario yang mungkin terjadi.
+    *   **Langkah Pengujian:**
+        *   a. **Uji Alur Modifikasi:**
+            *   Kirim query awal (misal: "tampilkan semua customer").
+            *   Setelah hasil muncul, kirim query modifikasi (misal: "hanya dari Jakarta").
+            *   **Verifikasi:** Daftar rencana aksi yang muncul harus lebih singkat. Hasil yang ditampilkan harus **memperbarui blok sebelumnya**, bukan membuat yang baru.
+        *   b. **Uji Alur Sosial:**
+            *   Kirim pesan "terima kasih".
+            *   **Verifikasi:** Respons harus muncul secara instan tanpa ada "Fase Perencanaan".
+        *   c. **Uji Alur Error:**
+            *   Kirim query yang sengaja dibuat ambigu (misal: "tunjukkan data").
+            *   **Verifikasi:** Komponen `ErrorDisplay` harus muncul dengan pesan yang ramah. Klik "Lihat Detail Teknis" dan pastikan detail error muncul di Panel Kanan.
+        *   d. **Uji Regresi:** Pastikan alur "happy path" dari Fase 2 masih berfungsi dengan sempurna setelah semua perubahan ini.
+        *   e. **Kriteria Sukses:** Aplikasi terasa cerdas, dapat diandalkan, dan mampu menangani berbagai jenis dialog secara berbeda dan tepat, sesuai dengan konteks.
+
+---
+Setelah menyelesaikan fase ini, frontend kita akan jauh lebih matang. Ia tidak hanya bisa menangani kasus ideal, tetapi juga siap menghadapi kompleksitas dan ketidakpastian dari interaksi pengguna di dunia nyata.
+
+---
+
+### **Fase 4: Polishing, Pemantauan, dan Detail Tambahan**
+
+**Tujuan:** Menyempurnakan pengalaman pengguna dengan menambahkan fitur pemantauan kinerja, detail UI yang lebih kaya, dan interaktivitas yang lebih baik. Ini adalah fase "pemasangan interior mewah dan dashboard canggih" pada mobil kita.
+
+*   **4.1. Implementasi Komponen Pemantauan Kinerja**
+    *   **Aktivitas:** Buat komponen-komponen UI untuk menampilkan metrik kinerja yang diterima dari backend.
+        *   a. **Meteran Penggunaan Konteks:** Buat komponen `ContextUsageMeter.js` (misalnya, sebuah *progress bar* atau *gauge*) yang menampilkan persentase penggunaan token. Data ini perlu disediakan oleh backend pada setiap respons. Komponen ini bisa ditempatkan di header atau footer aplikasi.
+        *   b. **Pelacak Sistem Fallback:** Buat komponen `FallbackIndicator.js`. Ini bisa berupa ikon kecil atau *badge* (misal: 🛡️ atau "Fallback Used") yang muncul di `ConversationBlock` jika backend menandakan `was_fallback_used: true`. Saat di-hover atau diklik, ia bisa menampilkan *tooltip* dengan penjelasan singkat.
+    *   **File yang Dibuat:** `frontend/src/components/monitoring/ContextUsageMeter.js`, `frontend/src/components/monitoring/FallbackIndicator.js`.
+    *   **File yang Diubah:** `frontend/src/components/layout/MainLayout.js` (untuk menempatkan meteran), `frontend/src/components/chat/ConversationBlock.js` (untuk menampilkan indikator).
+
+*   **4.2. Implementasi Panel Detail Bertab yang Lengkap**
+    *   **Aktivitas:** Lengkapi Panel Kanan dengan semua tab yang telah direncanakan.
+        *   a. Buat komponen `TabbedDetailsPanel.js` yang akan menjadi kontainer untuk tab-tab.
+        *   b. Buat komponen `ExecutionPlanDisplay.js` untuk menampilkan `DatabaseOperationPlan`. Gunakan library *syntax highlighter* (seperti `react-syntax-highlighter`) agar JSON mudah dibaca.
+        *   c. Buat komponen `PerformanceLog.js` untuk menampilkan metrik performa (Total Durasi, Waktu Eksekusi DB, dll.) dalam format yang rapi.
+    *   **File yang Dibuat:** `frontend/src/components/details/TabbedDetailsPanel.js`, `ExecutionPlanDisplay.js`, `PerformanceLog.js`.
+    *   **File yang Diubah:** `frontend/src/components/layout/RightSidebar.js` (untuk menggunakan `TabbedDetailsPanel`).
+
+*   **4.3. Implementasi Detail UI & Interaktivitas (Polishing)**
+    *   **Aktivitas:** Tambahkan sentuhan-sentuhan kecil yang meningkatkan kualitas pengalaman pengguna.
+        *   a. **Sapaan Kontekstual:** Buat fungsi utilitas kecil untuk menghasilkan sapaan ("Selamat Pagi", "Selamat Siang") berdasarkan waktu di browser klien, dan tampilkan di pesan pembuka sesi.
+        *   b. **Animasi Mikro:** Tambahkan transisi CSS yang halus (misalnya, `transition: all 0.3s ease;`) pada elemen-elemen UI seperti saat blok respons baru muncul (*fade-in*), atau saat panel samping di-minimize.
+        *   c. **Tombol Minimize Panel:** Implementasikan logika `useState` untuk mengontrol visibilitas Panel Kiri dan Kanan. Tambahkan tombol ikon (misal: `<<` dan `>>`) untuk memicu perubahan state ini.
+
+*   **4.4. Pengujian Fase 4: Validasi Fitur Lanjutan dan Kualitas UI**
+    *   **Aktivitas:** Lakukan pengujian menyeluruh pada semua fitur baru dan pastikan tidak ada regresi pada fungsionalitas yang sudah ada.
+    *   **Langkah Pengujian:**
+        *   a. **Uji Pemantauan:**
+            *   Jalankan beberapa query secara berurutan. Verifikasi bahwa `ContextUsageMeter` meningkat secara akurat (ini memerlukan backend untuk mengirim data penggunaan token).
+            *   (Memerlukan mock dari backend) Uji skenario di mana backend mengembalikan `was_fallback_used: true`. Pastikan `FallbackIndicator` muncul dengan benar di UI.
+        *   b. **Uji Panel Detail:**
+            *   Setelah mendapatkan hasil, buka Panel Kanan.
+            *   Klik setiap tab ("Data Mentah", "Rencana Eksekusi", "Log & Performa"). Pastikan konten yang ditampilkan di setiap tab benar, rapi, dan sesuai dengan data dari respons backend. Verifikasi bahwa JSON di tab "Rencana Eksekusi" memiliki *syntax highlighting*.
+        *   c. **Uji Interaktivitas:**
+            *   Klik tombol minimize pada panel samping. Pastikan panel tersebut menyusut/menghilang dengan animasi yang halus dan area konten utama melebar.
+            *   Muat ulang aplikasi pada waktu yang berbeda (pagi/siang/malam) dan verifikasi bahwa sapaan pembuka berubah.
+        *   d. **Uji Regresi Penuh:** Lakukan kembali pengujian dari Fase 2 dan 3 untuk memastikan semua alur utama (query baru, modifikasi, error) masih berfungsi dengan sempurna setelah penambahan fitur-fitur baru ini.
+        *   e. **Kriteria Sukses:** Aplikasi terasa lengkap, profesional, dan informatif. Semua fitur yang direncanakan di dokumen UI/UX telah terimplementasi dan berfungsi dengan baik.
+
+---
+Setelah menyelesaikan fase terakhir ini, frontend kita akan siap sepenuhnya, tidak hanya sebagai alat yang fungsional tetapi juga sebagai sebuah produk demo yang mengesankan dan siap ditunjukkan kepada pemangku kepentingan atau investor.

@@ -42,7 +42,7 @@ LLM Response:
 {
   "user_query": "Tunjukkan customer siapa saja yang belum lunas membayar beserta due date nya",
   "session_id": "session_001",
-  "intent": "customer_aging_analysis",
+  "intent": "EXECUTE_QUERY",
   "entities_mentioned": ["customer", "payment_status", "due_date"],
   "requested_metrics": ["outstanding_amount", "days_overdue"],
   "query_complexity": "medium"
@@ -188,23 +188,51 @@ Customer dengan risiko tertinggi adalah {TOP_RISK_CUSTOMER} dengan outstanding {
 ```json
 {
   // ... previous state ...
-  "sql_queries": [
+  "database_operations_plan": [
     {
-      "purpose": "outstanding_details",
-      "query": "SELECT c.customer_name, i.invoice_number...",
-      "type": "detail_data"
-    },
-    {
-      "purpose": "summary_statistics", 
-      "query": "SELECT COUNT(DISTINCT c.customer_id)...",
-      "type": "aggregate_data"
+      "operation_id": "get_summary_stats",
+      "purpose": "Menghitung ringkasan data piutang customer",
+      "main_table": "arbook",
+      "select_columns": [
+        {"field_name": "arbook.CustomerCode", "aggregation": "COUNT_DISTINCT", "alias": "TOTAL_CUSTOMERS_OUTSTANDING"},
+        {"field_name": "(arbook.DocValueLocal - arbook.PaymentValueLocal)", "aggregation": "SUM", "alias": "TOTAL_OUTSTANDING_AMOUNT", "is_expression": true},
+        {"field_name": "(CURRENT_DATE - arbook.DueDate)", "aggregation": "AVG", "alias": "AVG_DAYS_OVERDUE", "is_expression": true}
+      ],
+      "filters": {
+        "logical_operator": "AND",
+        "conditions": [{"field_or_expression": "(arbook.DocValueLocal - arbook.PaymentValueLocal)", "operator": ">", "value": 0, "is_expression": true}]
+      },
+      "result_key": "SUMMARY_STATS",
+      "expected_result_format": "single_value"
     }
   ],
+  "raw_data_operation_plan": {
+      "operation_id": "get_raw_outstanding_details",
+      "purpose": "Mengambil daftar detail piutang customer",
+      "main_table": "arbook",
+      "select_columns": [
+          {"field_name": "mastercustomer.Name", "alias": "Customer Name"},
+          {"field_name": "arbook.DocNo", "alias": "Invoice Number"},
+          {"field_name": "arbook.DocValueLocal", "alias": "Invoice Amount"},
+          {"field_name": "(arbook.DocValueLocal - arbook.PaymentValueLocal)", "alias": "Outstanding", "is_expression": true},
+          {"field_name": "arbook.DueDate", "alias": "Due Date"}
+      ],
+      "joins": [
+          {"target_table": "mastercustomer", "type": "INNER", "on_conditions": [{"left_table_field": "arbook.CustomerCode", "right_table_field": "mastercustomer.Code"}]}
+      ],
+      "filters": {
+        "logical_operator": "AND",
+        "conditions": [{"field_or_expression": "(arbook.DocValueLocal - arbook.PaymentValueLocal)", "operator": ">", "value": 0, "is_expression": true}]
+      },
+      "limit": 50,
+      "result_key": "RAW_DATA_TABLE",
+      "expected_result_format": "list_of_dicts"
+  },
   "response_template": "Template dengan placeholder di atas",
   "placeholder_mapping": {
-    "TOTAL_CUSTOMERS_OUTSTANDING": "number",
-    "TOTAL_OUTSTANDING_AMOUNT": "currency",
-    "AVG_DAYS_OVERDUE": "number_with_decimal"
+    "TOTAL_CUSTOMERS_OUTSTANDING": { "type": "number", "label": "Jumlah Customer Outstanding" },
+    "TOTAL_OUTSTANDING_AMOUNT": { "type": "currency_IDR", "label": "Total Nilai Outstanding" },
+    "AVG_DAYS_OVERDUE": { "type": "number", "precision": 0, "label": "Rata-rata Keterlambatan" }
   }
 }
 ```
@@ -213,101 +241,66 @@ Customer dengan risiko tertinggi adalah {TOP_RISK_CUSTOMER} dengan outstanding {
 
 ## 🟦 Node 4: execute_query
 
-### SQL Execution ke SQLite:
-```python
-# Execute Query 1: Detail Data
-detail_results = [
-  {
-    "customer_name": "PT ABC Corp",
-    "invoice_number": "INV-001", 
-    "invoice_amount": 15000000,
-    "paid_amount": 0,
-    "outstanding": 15000000,
-    "due_date": "2023-01-15",
-    "days_overdue": 45
-  },
-  {
-    "customer_name": "CV XYZ Trading",
-    "invoice_number": "INV-002",
-    "invoice_amount": 8500000, 
-    "paid_amount": 0,
-    "outstanding": 8500000,
-    "due_date": "2023-01-20", 
-    "days_overdue": 40
-  },
-  {
-    "customer_name": "PT DEF Industries",
-    "invoice_number": "INV-003",
-    "invoice_amount": 12000000,
-    "paid_amount": 6000000,
-    "outstanding": 6000000,
-    "due_date": "2023-01-25",
-    "days_overdue": 35
-  }
-]
-
-# Execute Query 2: Summary Stats  
-summary_results = [
-  {
-    "total_customers_outstanding": 3,
-    "total_outstanding_amount": 29500000,
-    "avg_days_overdue": 40.0
-  }
-]
-```
+### MCP Server Call & Graphiti Storage:
+1.  **Panggil MCP Server:** Node `execute_query` mengirimkan `database_operations_plan` dan `raw_data_operation_plan` ke `sim_testgeluran_server`.
+2.  **Terima Hasil:** `sim_testgeluran_server` (yang menggunakan ORM) mengembalikan hasil dalam format JSON:
+    *   `SUMMARY_STATS`: `{"TOTAL_CUSTOMERS_OUTSTANDING": 3, "TOTAL_OUTSTANDING_AMOUNT": 29500000, "AVG_DAYS_OVERDUE": 40.0}`
+    *   `RAW_DATA_TABLE`: `[{"Customer Name": "PT ABC Corp", ...}, ...]` (3 baris data)
+3.  **Simpan ke Graphiti:** Node `execute_query` mengambil hasil ini, lalu membuat **episode baru** di Graphiti dengan `group_id` sesi ini. Data tersebut disimpan di dalam episode.
+4.  **Buat DataHandle:** Agent membuat "pointer" atau `DataHandle` untuk setiap data yang disimpan.
 
 ### State After Node 4:
+`AgentState` sekarang berisi `DataHandle`, bukan data mentah.
+
 ```json
 {
   // ... previous state ...
-  "raw_query_results": [
-    // detail_results array di atas
+  "financial_calculations_handles": [
+    {
+      "data_handle_id": "ep-sum-001",
+      "storage_location": "Graphiti",
+      "group_id": "session_001",
+      "data_description": "Menghitung ringkasan data piutang customer",
+      "source_operation_id": "get_summary_stats",
+      "row_count": 1
+    }
   ],
-  "financial_calculations": {
-    "TOTAL_CUSTOMERS_OUTSTANDING": 3,
-    "TOTAL_OUTSTANDING_AMOUNT": 29500000,
-    "AVG_DAYS_OVERDUE": 40.0,
-    "TOP_RISK_CUSTOMER": "PT ABC Corp",
-    "TOP_OUTSTANDING_AMOUNT": 15000000
+  "raw_query_results_handle": {
+    "data_handle_id": "ep-raw-001",
+    "storage_location": "Graphiti",
+    "group_id": "session_001",
+    "data_description": "Mengambil daftar detail piutang customer",
+    "source_operation_id": "get_raw_outstanding_details",
+    "row_count": 3
   },
   "query_execution_status": "success"
 }
-```
-
 ---
 
 ## 🟦 Node 5: validate_results
 
-### Validation Checks:
-```python
-validation_results = {
-  "checks_performed": [
-    {
-      "check": "negative_outstanding",
-      "result": "PASS",
-      "message": "No negative outstanding amounts found"
-    },
-    {
-      "check": "null_customer_names", 
-      "result": "PASS",
-      "message": "All customer names present"
-    },
-    {
-      "check": "future_due_dates",
-      "result": "PASS", 
-      "message": "All due dates are in the past"
-    },
-    {
-      "check": "reasonable_amounts",
-      "result": "WARNING",
-      "message": "1 invoice over Rp 10M detected (normal for enterprise)"
+### Data Retrieval and Validation Checks:
+1.  **Baca `DataHandle`:** Node mengambil `financial_calculations_handles` dan `raw_query_results_handle` dari `AgentState`.
+2.  **Query ke Graphiti:** Menggunakan `data_handle_id`, node ini mengambil data JSON yang sebenarnya dari Graphiti.
+3.  **Lakukan Validasi:** Setelah mendapatkan data mentah, proses validasi berjalan seperti sebelumnya:
+    *   Memeriksa apakah ada nilai `outstanding` yang negatif.
+    *   Memastikan semua nama customer tidak kosong.
+    *   Memverifikasi semua tanggal jatuh tempo (`DueDate`) valid.
+    *   Memberi peringatan jika ada jumlah tagihan yang sangat besar.
+4.  **Hasil Validasi:**
+    ```python
+    validation_results = {
+      "checks_performed": [
+        { "check": "negative_outstanding", "result": "PASS", "message": "..." },
+        { "check": "null_customer_names", "result": "PASS", "message": "..." },
+        { "check": "future_due_dates", "result": "PASS", "message": "..." },
+        { "check": "reasonable_amounts", "result": "WARNING", "message": "..." }
+      ],
+      "quality_score": 95,
+      "critical_issues": 0,
+      "warnings": 1
     }
-  ],
-  "quality_score": 95,
-  "critical_issues": 0,
-  "warnings": 1
-}
-```
+    ```
 
 ### Decision: CONTINUE (no critical issues)
 
@@ -333,55 +326,16 @@ validation_results = {
 
 ## 🟦 Node 6: replace_placeholders
 
-### Number Formatting:
-```python
-formatted_values = {
-  "TOTAL_CUSTOMERS_OUTSTANDING": "3",
-  "TOTAL_OUTSTANDING_AMOUNT": "Rp 29.500.000",
-  "AVG_DAYS_OVERDUE": "40",
-  "TOP_RISK_CUSTOMER": "PT ABC Corp", 
-  "TOP_OUTSTANDING_AMOUNT": "Rp 15.000.000",
-  "COLLECTION_RECOMMENDATIONS": "Follow up prioritas untuk customer dengan outstanding > Rp 5M"
-}
-```
+### Data Retrieval from Graphiti:
+1.  **Baca `DataHandle`:** Node mengambil `financial_calculations_handles` dan `raw_query_results_handle` dari `AgentState`.
+2.  **Query ke Graphiti:** Menggunakan `data_handle_id` dari setiap handle, node ini melakukan query ke Graphiti untuk mengambil data JSON yang sebenarnya yang disimpan di Langkah 4.
+    *   Hasilnya adalah data yang sama seperti yang diterima dari MCP server sebelumnya.
 
-### Template Replacement:
-```
-Original: "Total Outstanding Amount: {TOTAL_OUTSTANDING_AMOUNT}"
-Result:   "Total Outstanding Amount: Rp 29.500.000"
-```
+### Number Formatting & Template Replacement:
+Proses pemformatan angka dan penggantian placeholder pada template narasi berjalan seperti sebelumnya, namun menggunakan data yang baru saja diambil dari Graphiti.
 
 ### Raw Data Table Formatting:
-```python
-formatted_table = [
-  {
-    "Customer Name": "PT ABC Corp",
-    "Invoice": "INV-001",
-    "Invoice Amount": "Rp 15.000.000",
-    "Paid": "Rp 0", 
-    "Outstanding": "Rp 15.000.000",
-    "Due Date": "15 Jan 2023",
-    "Days Overdue": "45 hari"
-  },
-  {
-    "Customer Name": "CV XYZ Trading", 
-    "Invoice": "INV-002",
-    "Invoice Amount": "Rp 8.500.000",
-    "Paid": "Rp 0",
-    "Outstanding": "Rp 8.500.000", 
-    "Due Date": "20 Jan 2023",
-    "Days Overdue": "40 hari"
-  },
-  {
-    "Customer Name": "PT DEF Industries",
-    "Invoice": "INV-003", 
-    "Invoice Amount": "Rp 12.000.000",
-    "Paid": "Rp 6.000.000",
-    "Outstanding": "Rp 6.000.000",
-    "Due Date": "25 Jan 2023", 
-    "Days Overdue": "35 hari"
-  }
-]
+Proses pemformatan tabel juga berjalan seperti sebelumnya, menggunakan data mentah yang diambil dari Graphiti.
 ```
 
 ---

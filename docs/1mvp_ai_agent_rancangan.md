@@ -11,23 +11,111 @@ Membangun AI agent yang dapat memahami pertanyaan bisnis dalam bahasa natural da
 - **Transparency First**: Semua data mentah ditampilkan untuk verifikasi user
 - **Placeholder Strategy**: LLM bekerja dengan template, angka diisi oleh system
 
-## 2. Arsitektur Sistem
+Tentu. Saya siap. Mari kita mulai proses penulisan ulang dokumen perencanaan inti kita, dimulai dengan Bab 2.
 
-### Stack Teknologi
-- **LangGraph**: Framework untuk state management dan workflow orchestration
-- **Graphiti**: Knowledge graph untuk menyimpan metadata schema database
-- **SQLite In-Memory**: Runtime database untuk execute query dari SQL source file
-- **FastAPI**: Backend API server
-- **React.js**: Frontend interface untuk display tabel dan narasi
-- **Pandas**: Data manipulation dan analysis
+Berikut adalah draf revisi untuk **Bab 2: Arsitektur Sistem** dari dokumen `1mvp_ai_agent_rancangan.md`. Bab ini telah ditulis ulang sepenuhnya untuk mencerminkan arsitektur **Model Context Protocol (MCP)** yang telah kita sepakati.
 
-### Komponen Utama
-1. **SQL File Processor**: Membaca dan parse SQL source file ke in-memory database
-2. **Schema Knowledge Manager**: Interface ke Graphiti untuk schema consultation
-3. **Query Execution Engine**: Tool untuk execute SQL query dengan validasi
-4. **Placeholder Manager**: System untuk generate dan replace placeholder
-5. **LangGraph Workflow**: State machine untuk orchestrate seluruh proses
-6. **Validation Engine**: Multi-layer validation untuk data quality
+---
+
+## **Bab 2: Arsitektur Sistem**
+
+### **2.1. Filosofi Arsitektur Baru: Modular dan Terisolasi**
+
+Arsitektur sistem AI Agent ini dirancang dengan filosofi **modularitas, portabilitas, dan keamanan** sebagai pilar utamanya. Kita secara sadar menghindari pendekatan monolitik di mana agent memiliki akses langsung ke semua sumber daya.
+
+Sebagai gantinya, kita mengadopsi **Model Context Protocol (MCP)**. Dalam arsitektur ini, AI Agent inti (yang dibangun dengan LangGraph) bertindak sebagai **"Otak" atau "MCP Client"** yang cerdas. Ia tidak melakukan pekerjaan teknis seperti koneksi database secara langsung. Sebaliknya, ia mendelegasikan tugas-tugas tersebut kepada **"Departemen Spesialis" atau "MCP Server"** yang terisolasi.
+
+Pendekatan ini memberikan beberapa keuntungan strategis:
+*   **Keamanan:** Agent inti tidak pernah memiliki kredensial atau akses langsung ke database. Semua interaksi dimediasi melalui server spesialis yang memiliki satu tugas jelas.
+*   **Portabilitas:** Setiap MCP Server (misalnya, untuk database `sim_testgeluran` atau Graphiti) adalah komponen mandiri. Mereka dapat dengan mudah diperbarui, diganti, atau bahkan digunakan kembali di proyek AI lain di masa depan tanpa mengubah agent inti.
+*   **Skalabilitas:** Setiap server spesialis dapat di-scale secara independen sesuai dengan bebannya.
+
+### **2.2. Komponen Utama Sistem**
+
+Sistem kita terdiri dari beberapa komponen utama yang berinteraksi melalui peran yang jelas:
+
+1.  **Frontend (React.js):** Antarmuka pengguna tempat pengguna berinteraksi, memasukkan query, dan melihat hasil (termasuk Fase Perencanaan dan Fase Hasil).
+
+2.  **Backend API (FastAPI):** Gerbang utama yang menerima permintaan dari frontend dan mengorkestrasi seluruh proses dengan memanggil `AgentService`.
+
+3.  **LangGraph Workflow (AI Agent Core - sebagai MCP Client):**
+    *   Ini adalah otak dari operasi. Bertanggung jawab untuk memahami query, merencanakan `DatabaseOperationPlan`, dan mengelola alur kerja.
+    *   **Peran Kunci:** Ia tidak lagi terhubung ke database. Sebaliknya, ia bertindak sebagai **klien** yang memanggil *tools* yang disediakan oleh MCP Server.
+
+4.  **`sim_testgeluran_server` (MCP Server):**
+    *   Ini adalah "Departemen" yang bertanggung jawab penuh atas database operasional MySQL `sim_testgeluran`.
+    *   **Tugas Inti:** Mengekspos sebuah *tool* (misalnya, `execute_operation_plan`) yang menerima `DatabaseOperationPlan` dalam format JSON.
+    *   **Teknologi Internal:** Di dalam server inilah **logika SQLAlchemy ORM** berada. Ia menerjemahkan rencana JSON menjadi query ORM yang aman dan mengeksekusinya.
+
+5.  **`graphiti_server` (MCP Server):**
+    *   Ini adalah "Departemen" yang bertanggung jawab atas *knowledge graph* (Neo4j).
+    *   **Tugas Inti:** Mengekspos *tool* (misalnya, `get_relevant_schema`) yang menerima intent dan entitas, lalu mengembalikan informasi skema yang relevan.
+
+6.  **Database Operasional (MySQL):** Sumber data aktual yang berisi data bisnis `sim_testgeluran`. Hanya dapat diakses oleh `sim_testgeluran_server`.
+
+7.  **Knowledge Graph (Graphiti/Neo4j):** Sumber metadata skema yang diperkaya. Hanya dapat diakses oleh `graphiti_server`.
+
+### **2.3. Diagram Aliran Data (DFD) dengan Arsitektur MCP**
+
+Diagram ini mengilustrasikan alur baru di mana Agent Core (LangGraph) berkomunikasi dengan MCP Server, dan MCP Server-lah yang berkomunikasi dengan sumber data.
+
+```mermaid
+graph TD
+    A[Pengguna via Frontend] --> B{Backend API (FastAPI)};
+    B --> C[Memulai LangGraph Workflow (Agent Core)];
+
+    subgraph Agent Core (Bertindak sebagai MCP Client)
+        direction LR
+        N1[Node: Router] --> N2[Node: consult_schema];
+        N2 --> N3[Node: plan_execution];
+        N3 --> N4[Node: validate_plan];
+        N4 --> N5[Node: execute_query];
+        N5 --> N6[Node: validate_results];
+        N6 --> N7[Node: replace_placeholders];
+        N7 --> N8[Node: log_analytics];
+        N8 --> F[Hasil Akhir untuk API];
+
+        %% Jalur Error (Sederhana)
+        subgraph Alur Error
+            direction LR
+            N1 & N2 & N3 & N4 & N5 & N6 & N7 -- Error Kritis --> NE[Node: generate_error_response];
+            NE --> N8_ERR[Node: log_analytics];
+            N8_ERR --> G[Respons Error untuk API];
+        end
+    end
+
+    %% Interaksi dengan MCP Servers
+    N2 -- 1. Panggil Tool `get_relevant_schema` --> MCP_Graphiti[MCP Server: graphiti_server];
+    MCP_Graphiti -- 2. Query Metadata --> GraphitiDB[(Graphiti KG / Neo4j)];
+    GraphitiDB -- 3. Respons Metadata --> MCP_Graphiti;
+    MCP_Graphiti -- 4. Kirim Hasil Skema (JSON) --> N2;
+
+    N5 -- 5. Panggil Tool `execute_operation_plan` --> MCP_MySQL[MCP Server: sim_testgeluran_server];
+    MCP_MySQL -- 6. Terjemahkan Rencana ke Query ORM --> ORM[SQLAlchemy ORM Layer];
+    ORM -- 7. Eksekusi Query --> MySQL_DB[(Database ERP / MySQL)];
+    MySQL_DB -- 8. Respons Data Mentah --> ORM;
+    ORM -- 9. Kirim Hasil Data (JSON) --> MCP_MySQL;
+    MCP_MySQL -- 10. Kirim Hasil Data (JSON) --> N5;
+
+    F --> H{AgentService di Backend API};
+    G --> H;
+    H --> I[Respons API ke Frontend];
+    I --> J[Tampilan ke Pengguna];
+```
+
+### **2.4. Deskripsi Aliran Data Detail**
+
+1.  **Input Pengguna:** Pengguna mengirimkan query melalui Frontend ke Backend API.
+2.  **Inisiasi Agent:** `AgentService` memulai LangGraph Workflow.
+3.  **Routing & Perencanaan:** `Router` menentukan intent, `consult_schema` memanggil `graphiti_server` untuk mendapatkan peta data, dan `plan_execution` membuat `DatabaseOperationPlan` (rencana JSON).
+4.  **Validasi Rencana:** `validate_plan` memeriksa apakah rencana JSON tersebut logis dan bisa dijalankan.
+5.  **Delegasi Eksekusi:** Node `execute_query` sekarang bertindak sebagai klien. Ia **mengirim `DatabaseOperationPlan`** ke `sim_testgeluran_server` melalui panggilan *tool* MCP.
+6.  **Eksekusi oleh Spesialis:** `sim_testgeluran_server` menerima rencana JSON. Di dalam server ini, **SQLAlchemy ORM menerjemahkan rencana tersebut** menjadi query yang aman dan mengeksekusinya ke database MySQL.
+7.  **Laporan Hasil:** `sim_testgeluran_server` mengembalikan hasil query (dalam format JSON) ke node `execute_query`.
+8.  **Pemrosesan Akhir:** Alur LangGraph melanjutkan prosesnya (validasi hasil, mengisi template, logging analitik) menggunakan data yang diterima dari MCP server.
+9.  **Output ke Pengguna:** Hasil akhir yang sudah dipoles dikirim kembali melalui API ke Frontend untuk ditampilkan.
+
+---
 
 ## 3. Strategi Placeholder untuk Mencegah LLM Generate Angka
 
@@ -65,175 +153,169 @@ Rata-rata Nilai Order: Rp 274.123
 - **Dates**: `{REPORT_PERIOD}`, `{LAST_UPDATE_DATE}`
 - **Names/Labels**: `{TOP_CUSTOMER}`, `{BEST_PRODUCT}`
 
-## 4. Penanganan SQL Source File
 
-### Data Loading Strategy
-1. **Parse SQL File**: Extract CREATE TABLE statements untuk mendapatkan struktur schema
-2. **Schema Registration**: Simpan informasi tabel dan kolom ke Graphiti sebagai knowledge base
-3. **Data Loading**: Execute INSERT statements ke SQLite in-memory database
-4. **Metadata Enrichment**: Analisis otomatis untuk kategorisasi kolom (financial, temporal, descriptive)
+---
 
-### Schema Knowledge Storage di Graphiti
-Untuk setiap tabel, simpan informasi:
-- **Table Purpose**: "sales tracking", "customer management", "product catalog"
-- **Business Category**: "financial", "operational", "master_data"
-- **Column Classification**: financial_amount, identifier, temporal, descriptive
-- **Aggregation Capability**: apakah kolom bisa di-SUM, AVG, COUNT
-- **Relationship Mapping**: foreign key relationships antar tabel
 
-### Contoh Knowledge Graph Structure
+## **Bab 4: Penanganan Database & Knowledge Graph**
+
+### **4.1. Pemisahan Tanggung Jawab Akses Data**
+
+Dalam arsitektur baru kami, AI Agent Core (LangGraph) **tidak lagi memiliki akses langsung** ke sumber data mana pun. Semua interaksi data dimediasi melalui dua server spesialis (MCP Server) yang bertindak sebagai gateway yang aman dan terstruktur.
+
+1.  **`sim_testgeluran_server`**: Satu-satunya komponen yang diizinkan untuk terhubung dan melakukan query ke database operasional **MySQL `sim_testgeluran`**. Ia menggunakan SQLAlchemy ORM secara internal untuk keamanan dan keandalan.
+2.  **`graphiti_server`**: Satu-satunya komponen yang diizinkan untuk terhubung dan melakukan query ke **Graphiti Knowledge Graph (Neo4j)** untuk mengambil metadata skema.
+
+Pemisahan ini memastikan bahwa logika bisnis agent tetap terpisah dari detail teknis implementasi penyimpanan data.
+
+### **4.2. Strategi Pemuatan dan Pengelolaan Skema di `graphiti_server`**
+
+`graphiti_server` bertanggung jawab untuk menyediakan "peta data" yang kaya dan kontekstual kepada agent.
+
+*   **Inisialisasi Awal (Offline/Scripted):**
+    1.  **Ekstraksi Skema Dasar:** Sebuah skrip (`scripts/extract_mysql_schema.py`) akan digunakan untuk mengekstrak struktur dasar (`CREATE TABLE`) dari database MySQL `sim_testgeluran`.
+    2.  **Pengayaan Semantik:** Informasi skema dasar ini akan diperkaya dengan metadata semantik dari file konfigurasi terpusat (misalnya, `graphiti_semantic_mapping.json`). Metadata ini mencakup:
+        *   **`purpose`**: Tujuan bisnis dari setiap tabel (misalnya, "Mencatat transaksi penjualan").
+        *   **`business_category`**: Kategori data ("financial", "operational", "master_data").
+        *   **`classification`**: Klasifikasi fungsional untuk setiap kolom ("financial_amount", "temporal", "identifier").
+        *   **`is_aggregatable`**: Menandai kolom mana yang bisa di-`SUM`, `AVG`, `COUNT`.
+        *   **`relationships`**: Definisi eksplisit dari `Foreign Key` antar tabel.
+    3.  **Populasi ke Neo4j:** Skrip lain (`scripts/sync_mysql_to_graphiti.py`) akan mengambil skema yang telah diperkaya ini dan mempopulasikannya ke dalam Neo4j, menciptakan node `:DatabaseTable`, `:DatabaseColumn`, dan relasi `:HAS_COLUMN` serta `:REFERENCES`.
+
+*   **Akses Saat Runtime:**
+    *   AI Agent (melalui `consult_schema_node`) akan memanggil *tool* yang diekspos oleh `graphiti_server` (misalnya, `get_relevant_schema`).
+    *   Tool ini akan melakukan query Cypher ke Neo4j untuk mengambil hanya bagian dari skema yang relevan dengan `intent` dan `entities` dari permintaan pengguna, lalu mengembalikannya dalam format JSON yang bersih.
+
+### **4.3. Strategi Eksekusi Query di `sim_testgeluran_server`**
+
+`sim_testgeluran_server` adalah "tangan" yang mengeksekusi permintaan data ke database MySQL.
+
+*   **Prinsip Utama: Eksekusi Berdasarkan Rencana, Bukan Perintah SQL**
+    *   Server ini **tidak akan pernah** menerima string SQL mentah dari agent. Ini adalah aturan keamanan yang fundamental.
+    *   Sebagai gantinya, ia menerima objek **`DatabaseOperationPlan`** dalam format JSON.
+
+*   **Proses Internal `sim_testgeluran_server`:**
+    1.  **Menerima Rencana:** Tool `execute_operation_plan` menerima `DatabaseOperationPlan` dari `execute_query_node`.
+    2.  **Penerjemahan ke ORM:** Di sinilah keajaiban terjadi. Server akan mem-parsing objek JSON tersebut dan, menggunakan **SQLAlchemy ORM**, secara dinamis membangun objek query Python.
+        *   `"main_table": "arbook"` akan diterjemahkan menjadi `session.query(Arbook)`.
+        *   `"joins": [...]` akan menjadi `query.join(MasterCustomer, ...)`.
+        *   `"filters": [...]` akan menjadi `query.filter(...)`.
+        *   `"select_columns": [{"aggregation": "SUM", ...}]` akan menjadi `query.with_entities(func.sum(...))`.
+    3.  **Eksekusi Aman:** SQLAlchemy akan menghasilkan query SQL yang aman (dengan parameterisasi otomatis untuk mencegah SQL injection) dan mengeksekusinya ke database MySQL.
+    4.  **Mengembalikan Hasil:** Hasil query dari database (biasanya berupa list objek atau tuple) akan dikonversi kembali menjadi format JSON standar (`List[Dict[str, Any]]`) dan dikirim kembali sebagai respons ke agent.
+
+Pendekatan ini memastikan bahwa semua logika interaksi database yang kompleks dan rentan terhadap error terisolasi di dalam server spesialis ini, sementara agent inti dapat fokus pada tugas-tugas tingkat tinggi seperti perencanaan dan penalaran.
+
+
+---
+
+## **Bab 5: LangGraph Workflow Design (Revisi)**
+
+### **5.1. Alur Kerja Cerdas Berbasis Intent**
+
+Desain alur kerja (workflow) LangGraph kami telah berevolusi dari alur linear sederhana menjadi **State Machine yang cerdas dan adaptif**. Alih-alih mengikuti satu jalur yang kaku, agent kini mampu memilih alur kerja yang paling efisien berdasarkan **intent** (maksud) dari permintaan pengguna. Ini memungkinkan respons yang lebih cepat untuk tugas-tugas sederhana dan alur yang lebih teliti untuk permintaan data yang kompleks.
+
+### **5.2. `AgentState`: Memori Kerja Agent**
+
+Struktur `AgentState` adalah pusat dari semua operasi. Ini adalah memori dinamis yang dibawa dan diperbarui oleh setiap node.
+
+*   **Penyimpanan Data:** Untuk menjaga `AgentState` tetap ringan, data mentah hasil query dari database tidak disimpan langsung di sini. Sebaliknya, kita menggunakan **`DataHandle`**, sebuah pointer yang merujuk ke data yang disimpan sementara di Graphiti selama sesi berlangsung.
+*   **Struktur Kunci `AgentState`:**
+    *   **Input & Konteks:** `user_query`, `session_id`, `conversation_history`.
+    *   **Hasil Routing:** `intent` (misalnya, `EXECUTE_QUERY`, `REQUEST_MODIFICATION`).
+    *   **Hasil Perencanaan:** `database_operations_plan` (rencana JSON untuk dieksekusi).
+    *   **Pointer Data:** `raw_query_results_handle`, `financial_calculations_handles` (objek `DataHandle`).
+    *   **Status & Hasil:** `validation_status`, `quality_score`, `final_narrative`, dll.
+
+### **5.3. Diagram Alur Kerja LangGraph yang Telah Disempurnakan**
+
+Diagram ini menunjukkan alur kerja baru yang bercabang, dengan `Router` sebagai titik keputusan utama.
+
+```mermaid
+graph TD
+    A[START] --> N1_Router(Node: Router);
+    
+    subgraph Alur Utama
+        direction LR
+        N1_Router -- Intent: EXECUTE_QUERY --> N2_ConsultSchema(Node: consult_schema);
+        N2_ConsultSchema --> N3_PlanExecution(Node: plan_execution);
+        
+        N1_Router -- Intent: REQUEST_MODIFICATION --> N3_PlanExecution_Mod(Node: plan_execution<br/>(Mode Revisi));
+        
+        N3_PlanExecution --> N4_ValidatePlan(Node: validate_plan);
+        N3_PlanExecution_Mod --> N4_ValidatePlan;
+
+        subgraph "Validation & Repair Loop"
+            direction TB
+            N4_ValidatePlan -- Rencana Valid --> N5_ExecuteQuery(Node: execute_query);
+            N4_ValidatePlan -- Rencana TIDAK Valid --> N3_RePlan(Node: plan_execution<br/>(Mode Perbaikan));
+            N3_RePlan --> N4_ValidatePlan;
+        end
+        
+        N5_ExecuteQuery --> N6_ValidateResults(Node: validate_results);
+    end
+    
+    subgraph Alur Sederhana
+        direction LR
+        N1_Router -- Intent: ACKNOWLEDGE_RESPONSE --> N_Ack(Node: generate_acknowledgement);
+    end
+
+    subgraph Alur Penanganan Error
+        direction LR
+        N1_Router -- Intent: UNKNOWN_OR_AMBIGUOUS --> N_Error(Node: generate_error_response);
+        N6_ValidateResults -- Hasil Gagal Kritis --> N_Error;
+    end
+    
+    subgraph Alur Akhir
+        direction LR
+        N6_ValidateResults -- Hasil Valid --> N7_FormatOutput(Node: replace_placeholders);
+        N_Ack --> N8_Log(Node: log_analytics);
+        N7_FormatOutput --> N8_Log;
+        N_Error -- " " --> N8_Log;
+        N8_Log --> Z[END];
+    end
 ```
-Table: sales_orders
-- Purpose: "transaction recording"
-- Category: "financial"
-- Columns:
-  - order_id (type: identifier, aggregatable: false)
-  - customer_id (type: identifier, aggregatable: false)
-  - order_date (type: temporal, aggregatable: false)
-  - total_amount (type: financial_amount, aggregatable: true)
-  - status (type: descriptive, aggregatable: false)
 
-Relationships:
-- sales_orders.customer_id → customers.customer_id
-- sales_orders.order_id ← order_lines.order_id
-```
+### **5.4. Deskripsi Node dan Logika Kondisional**
 
-## 5. LangGraph Workflow Design
+**1. Node: `Router` (Titik Awal & Keputusan)**
+*   **Tugas:** Menganalisis `user_query` dan `conversation_history` untuk menentukan satu dari beberapa intent yang telah didefinisikan (`EXECUTE_QUERY`, `REQUEST_MODIFICATION`, `ACKNOWLEDGE_RESPONSE`, `UNKNOWN_OR_AMBIGUOUS`).
+*   **Logika Kondisional Berikutnya:** Alur diarahkan berdasarkan `intent` yang dihasilkan.
 
-### State Structure
-```
-AgentState:
-  # Input & User Context
-  - user_query: string
-  - session_id: string
-  - conversation_history: list
-  
-  # Query Understanding
-  - intent: string (sales_analysis, customer_aging, etc.)
-  - entities_mentioned: list (customer, product, date_range)
-  - time_period: dict (start_date, end_date)
-  - requested_metrics: list (total, average, count)
-  
-  # Schema Knowledge
-  - relevant_tables: list
-  - table_relationships: list
-  - financial_columns: dict
-  - aggregation_plan: dict
-  
-  # Execution Planning
-  - sql_queries: list
-  - response_template: string (with placeholders)
-  - placeholder_mapping: dict
-  
-  # Results & Validation
-  - raw_query_results: list
-  - financial_calculations: dict
-  - data_quality_checks: dict
-  - validation_warnings: list
-  
-  # Output Generation
-  - data_table_for_display: list
-  - final_narrative: string
-  - visualization_config: dict
-```
+**2. Node: `consult_schema`**
+*   **Tugas:** Dipanggil hanya jika intent adalah `EXECUTE_QUERY`. Bertindak sebagai MCP Client untuk memanggil `graphiti_server` dan mendapatkan "peta data" yang relevan.
 
-### Enhanced Workflow dengan Real-Time Monitoring
+**3. Node: `plan_execution`**
+*   **Tugas:**
+    *   **Mode Normal (`EXECUTE_QUERY`):** Membuat `DatabaseOperationPlan` dari nol.
+    *   **Mode Revisi (`REQUEST_MODIFICATION`):** Mengambil rencana sebelumnya dari `AgentState` dan memodifikasinya (misalnya, menambahkan filter).
+    *   **Mode Perbaikan (`Repair Loop`):** Menerima rencana yang gagal validasi dan mencoba memperbaikinya berdasarkan pesan error.
 
-**Node 1: Understand User Query (Target: <1s)**
-```
-UI Status: 🔄 Understanding your request...
-Process Monitor:
-├── 🧠 LLM Intent Analysis: 0.6s
-├── 📝 Entity Extraction: 0.2s  
-└── ⚙️ Context Update: +45 tokens
+**4. Node: `validate_plan` (Validation & Repair Loop)**
+*   **Tugas:** Memeriksa `DatabaseOperationPlan` yang dibuat oleh `plan_execution`. Apakah tabel dan kolomnya valid? Apakah strukturnya benar?
+*   **Logika Kondisional Berikutnya:**
+    *   **Jika Valid:** Lanjutkan ke `execute_query`.
+    *   **Jika Tidak Valid:** Kembali ke `plan_execution` dengan mode perbaikan. Jika perbaikan gagal setelah beberapa kali percobaan, alihkan ke `generate_error_response`.
 
-Progress: [████████████████████████░] 96%
-```
-- Parse natural language query dengan timing precision
-- Identify business intent (sales analysis, customer report, etc.)
-- Extract entities (customer names, date ranges, product categories)
-- Real-time token counting dan context impact estimation
+**5. Node: `execute_query`**
+*   **Tugas:** Bertindak sebagai MCP Client. Mengirim `DatabaseOperationPlan` ke `sim_testgeluran_server`. Setelah menerima hasil, ia akan menyimpan data ke Graphiti dan menempatkan `DataHandle` ke dalam `AgentState`.
 
-**Node 2: Consult Schema Knowledge (Target: <2s)**
-```
-UI Status: 🗄️ Consulting database schema knowledge...
-Process Monitor:
-├── 🔍 GraphDB Query: 1.2s
-├── 📊 Schema Analysis: 0.3s
-├── 🔗 Relationship Mapping: 0.4s
-└── ⚙️ Context Update: +2,850 tokens
+**6. Node: `validate_results`**
+*   **Tugas:** Menggunakan `DataHandle` untuk mengambil data dari Graphiti, lalu melakukan pemeriksaan kualitas dan konsistensi.
+*   **Logika Kondisional Berikutnya:**
+    *   **Jika Hasil Valid:** Lanjutkan ke `replace_placeholders`.
+    *   **Jika Hasil Gagal Kritis (misal, data tidak ada atau tidak logis):** Alihkan ke `generate_error_response`.
 
-Fallback Status: Primary approach successful ✅
-```
-- Query Graphiti dengan detailed timing metrics
-- Build "execution roadmap" dengan fallback options prepared
-- Real-time schema knowledge loading dengan progress indication
+**7. Node: `replace_placeholders` & `generate_acknowledgement`**
+*   **Tugas:** Mempersiapkan output akhir yang akan dilihat pengguna, baik berupa laporan lengkap maupun respons sosial singkat.
 
-**Node 3: Plan Query Execution (Target: <2s)**
-```
-UI Status: ⚙️ Planning database queries and response format...
-Process Monitor:
-├── 🧠 LLM Query Planning: 1.4s
-├── 📝 Template Generation: 0.3s
-├── 🔍 Validation Prep: 0.2s
-└── ⚙️ Context Update: +1,240 tokens
+**8. Node: `generate_error_response`**
+*   **Tugas:** Menangani semua kondisi error kritis, menyiapkan pesan yang ramah untuk pengguna dan detail teknis untuk log.
 
-Placeholder Count: 7 placeholders prepared
-```
-- Generate SQL plan dengan fallback strategies included
-- Create response template dengan comprehensive placeholder mapping
-- Prepare validation rules dengan estimated execution time
+**9. Node: `log_analytics` (Langkah Terakhir)**
+*   **Tugas:** Titik temu untuk semua alur (sukses maupun gagal). Node ini mengumpulkan semua metrik dari `AgentState` dan mencatatnya sebagai `AnalyticsLogEntry` untuk analisis performa di kemudian hari. Setelah itu, alur kerja berakhir.
 
-**Node 4: Execute SQL Queries dengan Fallback (Target: <3s)**
-```
-UI Status: 🔍 Executing database queries (Attempt 1/3)...
-Process Monitor:
-├── 💾 Primary Query: Failed (0.8s) ❌
-├── 🔄 Fallback Query #1: Success (1.2s) ✅
-├── 📊 Data Processing: 0.4s
-└── ⚙️ Context Update: +4,780 tokens
-
-Fallback Reason: Table 'customer_payments' not found → Used invoice-payment JOIN
-```
-- Maximum 3 retry attempts dengan intelligent fallback strategies
-- Real-time query execution monitoring dengan error explanations
-- Detailed timing breakdown per query attempt
-
-**Node 5: Validate & Process Results (Target: <1s)**
-```
-UI Status: 🔍 Validating data quality and consistency...
-Process Monitor:
-├── ✅ Data Quality Checks: 0.3s
-├── ⚠️ Business Rule Validation: 0.2s
-├── 📊 Statistical Analysis: 0.4s
-└── ⚙️ Context Update: +680 tokens
-
-Quality Score: 95/100 ⭐⭐⭐⭐⭐
-```
-- Comprehensive validation dengan quality scoring
-- Real-time anomaly detection dengan user-friendly explanations
-- Warning generation dengan business context
-
-**Node 6: Replace Placeholders & Generate Output (Target: <1s)**
-```
-UI Status: 📝 Generating final response and formatting...
-Process Monitor:
-├── 🔄 Placeholder Replacement: 0.2s
-├── 💰 Currency Formatting: 0.1s
-├── 📊 Table Preparation: 0.3s
-└── ⚙️ Context Update: +920 tokens
-
-Final Context Usage: [████████░░] 78% (15,240/19,500 tokens)
-```
-- Smart placeholder replacement dengan locale-aware formatting
-- Final output assembly dengan export-ready data tables
-- Context optimization suggestions untuk future queries
-
-### Conditional Logic & Error Handling
-- **If schema knowledge incomplete**: Fallback ke basic table inspection
-- **If query execution fails**: Generate alternative simpler queries
-- **If data validation fails**: Include prominent warnings dalam output
-- **If no data found**: Generate appropriate "no data" response
+Desain alur kerja ini mengubah agent kita menjadi sistem yang lebih tangguh, efisien, dan sadar-konteks, siap untuk menangani berbagai jenis interaksi pengguna dengan cerdas.
 
 ## 6. Implementasi Teknik dari Dokumen Odoo
 
@@ -282,295 +364,85 @@ Gunakan Graphiti untuk menyimpan:
 - **Validation Episodes**: Common data issues dan cara penanganannya
 - **User Preference Episodes**: Format output yang disukai user
 
-## 7. User Experience Design dengan Real-Time Monitoring
+---
 
-### Real-Time Process Monitoring Interface
+## **Bab 7: User Experience (UX) & Desain Antarmuka (UI)**
 
-**1. Context Window & Token Meter**
-```
-State Context Usage: [████████░░] 78% (15,240 / 19,500 tokens)
-⚠️ Warning: Approaching context limit
+### **7.1. Filosofi Desain: Profesional, Transparan, dan Personal**
 
-Token Breakdown:
-- User Query: 45 tokens
-- Schema Knowledge: 8,950 tokens  
-- Query Results: 4,780 tokens
-- Conversation History: 1,465 tokens
-```
+Desain antarmuka pengguna (UI) dan pengalaman pengguna (UX) untuk AI Agent ini berpegang pada tiga prinsip utama untuk memberikan kesan premium dan membangun kepercayaan:
 
-**2. Process Timing Dashboard**
-```
-🕐 Total Processing Time: 11.2 seconds
+1.  **Profesional & Modern:** Antarmuka akan mengadopsi tema gelap (dark mode) yang bersih dengan tipografi yang jelas dan ikonografi minimalis, layaknya perangkat lunak analitik kelas atas.
+2.  **Transparansi Radikal:** Pengguna tidak akan pernah merasa berinteraksi dengan "kotak hitam". Setiap langkah yang diambil agent, mulai dari perencanaan hingga eksekusi, akan divisualisasikan, memberikan pengguna pemahaman penuh atas proses yang terjadi.
+3.  **Personal & Cerdas:** Interaksi harus terasa seperti dialog dengan asisten pribadi yang cerdas, bukan dengan mesin yang kaku. Ini dicapai melalui sapaan personal, umpan balik proaktif, dan animasi yang halus.
 
-Breakdown:
-├── 🧠 LLM API Calls: 4.1 sec (36.6%)
-├── 🗄️ GraphDB Query: 1.6 sec (14.3%)  
-├── 🔍 MySQL Query: 2.3 sec (20.5%)
-├── ⚙️ Data Processing: 0.8 sec (7.1%)
-├── 🔍 Reasoning & Planning: 1.9 sec (17.0%)
-└── 📊 Output Formatting: 0.5 sec (4.5%)
-```
+### **7.2. Anatomi Antarmuka: Tata Letak Tiga Panel**
 
-**3. Real-Time Progress Bar dengan Checkpoints**
-```
-Agent Process Monitor:
+Antarmuka utama akan dibagi menjadi tiga area fungsional yang dapat disesuaikan untuk memberikan fleksibilitas maksimal kepada pengguna.
 
-✅ 1. Understanding User Query          [Completed - 0.8s]
-✅ 2. Consulting Schema Knowledge       [Completed - 1.6s]  
-✅ 3. Planning SQL Execution           [Completed - 2.1s]
-🔄 4. Executing Database Queries       [In Progress...]
-⏳ 5. Validating Results              [Pending]
-⏳ 6. Generating Response              [Pending]
+*   **Panel Kiri (Sidebar Riwayat):** Berisi riwayat percakapan dan tombol untuk memulai sesi baru. Dapat di-minimize untuk memberikan lebih banyak ruang.
+*   **Panel Tengah (Area Interaksi Utama):** Fokus utama pengguna, tempat mereka mengetik query dan menerima hasil analisis dari agent.
+*   **Panel Kanan (Panel Data & Detail):** "Ruang bukti" yang berisi data pendukung. Menggunakan sistem tab dan dapat di-minimize/maximize.
 
-Current Status: Fetching customer payment data...
+```ascii
++----------------------+------------------------------------------+--------------------------------+
+| [<<] Sidebar Kiri    |    Area Interaksi Utama (Tengah)         | Panel Kanan (Data & Detail) [>>] |
+|----------------------|------------------------------------------|--------------------------------|
+| [+] New Chat         | +--------------------------------------+ | + [Data]  [Rencana]  [Log]   + |
+|                      | | (Konten Interaksi ditampilkan di sini) | | |                              |
+| Riwayat Query:       | +--------------------------------------+ | | (Konten Tab Aktif)           |
+|  - Query 1 ✅        |                                          | |                              |
+|  - ...               |                                          | |                              |
++----------------------+------------------------------------------+--------------------------------+
 ```
 
-**4. Fallback & Retry Mechanism Display**
-```
-🔄 Retry Attempts Monitor:
+### **7.3. Dua Fase Pengalaman Pengguna**
 
-Query Attempt #1: ❌ Failed - Table 'customer_payments' not found
-├── Fallback Strategy: Searching alternative table names
-├── GraphDB consulted for similar tables
+Pengalaman pengguna secara dinamis akan berubah antara dua fase utama untuk setiap query yang kompleks.
 
-Query Attempt #2: ❌ Failed - No data for specified date range  
-├── Fallback Strategy: Expanding date range to find nearest data
-├── Checking adjacent months: Dec 2022, Feb 2023
+**Fase 1: Perencanaan (Agent "Berpikir")**
+Setelah pengguna mengirim query, antarmuka tidak menampilkan ikon loading yang membosankan. Sebaliknya, ia menampilkan **Daftar Rencana Aksi (To-do List)** yang dibuat oleh agent.
 
-Query Attempt #3: ✅ Success - Found data in 'invoices' table
-├── Alternative approach: Using invoice-payment LEFT JOIN
-├── Results: 156 records found
+*   **Tampilan:** Sebuah daftar langkah-langkah yang akan dieksekusi agent.
+*   **Interaktivitas Real-Time:**
+    *   Langkah yang sedang diproses akan ditandai dengan **lingkaran hijau yang berdenyut (pulsing circle)**.
+    *   Langkah yang sudah selesai akan ditandai dengan ikon centang hijau (✅).
+*   **Tujuan:** Memberikan transparansi penuh dan mengubah waktu tunggu menjadi pengalaman yang menarik dan informatif.
 
-Final Status: ✅ Query successful with fallback approach #3
-```
+**Fase 2: Hasil (Laporan Disajikan)**
+Setelah semua langkah perencanaan selesai, tampilan akan bertransisi dengan mulus untuk menyajikan hasil akhir di Panel Tengah.
 
-### Enhanced Display Format untuk User
+*   **Komponen Utama di Panel Tengah:**
+    1.  **Ringkasan Eksekutif:** Metrik-metrik kunci ditampilkan dengan visual yang menonjol.
+    2.  **Analisis Naratif:** Paragraf penjelasan dalam bahasa alami.
+    3.  **Panel Kualitas & Kepercayaan:**
+        *   `Skor Kualitas Data: 95/100 ⭐⭐⭐⭐⭐`
+        *   `Tingkat Kepercayaan Analisis: [🟩🟩🟩🟩🟩] Tinggi`
+    4.  **Peringatan (Warnings):** Catatan penting tentang data (misalnya, `⚠️ Data tidak lengkap`).
 
-**1. Session Management Panel**
-```
-Current Session: session_2024_001    [New Chat] [Reset State]
+### **7.4. Onboarding Pengguna dan "Guardrails"**
 
-Session Stats:
-- Queries Processed: 7
-- Context Usage: 78%  
-- Average Response Time: 8.4s
-- Success Rate: 85.7% (6/7 successful)
-```
+Untuk memastikan pengguna baru dapat langsung merasakan manfaat dan tidak frustrasi, antarmuka akan menyediakan panduan secara proaktif.
 
-**2. Interactive Raw Data Table dengan Monitoring**
-```
-📊 Query Results (Retrieved in 2.3s)
-Context Impact: +4,780 tokens
+*   **Saran Query (Suggested Queries):**
+    *   Saat sesi baru dimulai, di bawah sapaan hangat ("Selamat pagi!"), akan ditampilkan beberapa tombol dengan contoh query yang bisa diklik.
+    *   Contoh: `[ Tampilkan total penjualan bulan ini ]`
+    *   **Tujuan:** Menghilangkan kebingungan awal dan memastikan interaksi pertama pengguna berhasil.
 
-[Export CSV] [Export Excel] [Save to Session]
+*   **Penanganan Error yang Membimbing (Graceful Failure):**
+    *   Jika pengguna bertanya sesuatu di luar kemampuan MVP, agent tidak hanya akan berkata "Saya tidak bisa".
+    *   Ia akan memberikan respons yang lebih cerdas, contohnya: "Maaf, saya belum bisa membandingkan data. Namun, saya bisa menampilkan data untuk bulan ini terlebih dahulu. Apakah Anda mau?"
+    *   **Tujuan:** Mengelola ekspektasi dan menjaga alur percakapan tetap produktif.
 
-| Customer Name | Outstanding | Days Overdue | ••• |
-|---------------|-------------|--------------|-----|
-| PT ABC Corp   | Rp 15M     | 45 days      | ••• |
-| CV XYZ        | Rp 8.5M    | 40 days      | ••• |
+### **7.5. Personalisasi dan Sentuhan Akhir**
 
-Showing 3 of 3 results • Loaded in 0.8s • Quality Score: 95%
-```
+Detail-detail kecil akan ditambahkan untuk membuat pengalaman terasa premium dan personal.
 
-**3. Enhanced Executive Summary dengan Performance Metrics**
-```
-📈 Executive Summary (Generated in 1.9s)
+*   **Sapaan Kontekstual:** Sapaan pembuka yang disesuaikan dengan waktu (pagi/siang/malam).
+*   **Animasi Mikro:** Transisi yang halus antar elemen UI, seperti efek *fade-in* atau animasi klik tombol, untuk memberikan kesan responsif dan modern.
+*   **Tampilan Data Interaktif:** Tabel di Panel Kanan akan mendukung *sorting* per kolom dan memiliki tombol ekspor ke CSV, memberikan kontrol lebih kepada pengguna.
 
-Key Findings:
-• Total Outstanding: Rp 29.5M (3 customers)
-• Average Overdue: 40 days
-• Risk Level: Medium-High
-
-Performance Metrics:
-• Query Accuracy: 100%
-• Data Freshness: Current (last updated 1 hour ago)  
-• Processing Efficiency: 11.2s (Fast)
-• Context Utilization: 78% (Good)
-```
-
-**4. Detailed Validation & Quality Panel**
-```
-🔍 Data Quality Assessment (Completed in 0.4s)
-
-Quality Score: 95/100 ⭐⭐⭐⭐⭐
-
-Checks Performed:
-✅ Negative Values: None found
-✅ Null Data: 0% missing values  
-✅ Date Validity: All dates logical
-✅ Business Rules: Passed
-⚠️ Large Amounts: 1 invoice >Rp 10M (flagged for review)
-
-Fallback History:
-🔄 Initial query failed → Used alternative table structure
-✅ Fallback successful → Results verified
-```
-
-### Advanced Error Handling & Fallback UI
-
-**1. Intelligent Fallback Strategy Display**
-```
-🤖 Agent Reasoning Process:
-
-Primary Approach Failed:
-❌ "SELECT * FROM customer_payments WHERE..."
-   Error: Table 'customer_payments' does not exist
-
-Fallback Strategy #1:
-🔄 Consulting GraphDB for alternative table names...
-   Found: ['invoices', 'payments', 'billing_records']
-
-Fallback Strategy #2:  
-🔄 Reconstructing query using 'invoices' + 'payments' LEFT JOIN...
-   Testing: "SELECT customers.name, invoices.amount..."
-
-Success with Alternative Approach:
-✅ Query executed successfully using invoice-payment relationship
-✅ Data validation passed
-✅ Results formatted for display
-
-Agent Learning: Saved successful pattern for future similar queries
-```
-
-**2. Failure Analysis dengan User-Friendly Explanation**
-```
-❌ Query Failed After 3 Attempts
-
-What the Agent Tried:
-1. Direct customer payment table lookup → Table not found
-2. Alternative payment tracking tables → No matching data  
-3. Reconstructed approach using invoices → Data format mismatch
-
-Why This Happened:
-• Database schema doesn't match expected structure
-• Requested date range might be outside available data
-• Payment tracking might use different table organization
-
-What You Can Try:
-• Check if data exists for different time periods
-• Try similar queries with broader criteria
-• Use "show me available tables" to explore schema
-
-Technical Details: [Show Details] [Contact Support]
-```
-
-### Context & Performance Optimization Features
-
-**1. Smart Context Management**
-```
-🧠 Context Window Optimization
-
-Current Usage: [████████░░] 15,240/19,500 tokens (78%)
-
-Optimization Suggestions:
-• Conversation history can be compressed (-2,400 tokens)
-• Old query results can be archived (-1,800 tokens)  
-• Redundant schema info can be cached (-950 tokens)
-
-[Apply Optimizations] [Archive Old Data] [Start Fresh Session]
-
-Predicted Impact: Will free up 5,150 tokens (26% reduction)
-```
-
-**2. Performance Analytics Dashboard**
-```
-⚡ Performance Analytics
-
-Current Session Performance:
-• Average Query Time: 8.4s (Target: <10s) ✅
-• Success Rate: 85.7% (Target: >80%) ✅  
-• Context Efficiency: 78% (Target: <85%) ✅
-• User Satisfaction: N/A (Awaiting feedback)
-
-Bottleneck Analysis:
-🐌 Slowest Component: LLM API calls (4.1s avg)
-⚡ Fastest Component: Data formatting (0.5s avg)
-🎯 Optimization Opportunity: Cache schema knowledge (-1.2s potential)
-
-[View Detailed Metrics] [Export Performance Report]
-```
-
-### Session Management & Reset Capabilities
-
-**1. Smart Session Control**
-```
-📱 Session Management
-
-Current Session: session_2024_001 (Started: 14:30 WIB)
-├── Duration: 15 minutes
-├── Queries: 7 successful, 1 failed
-├── Context Used: 78% 
-└── Last Activity: 2 minutes ago
-
-Actions:
-[🆕 New Chat] - Start fresh session (clears all context)
-[🔄 Reset Context] - Keep conversation, clear technical state  
-[💾 Save Session] - Bookmark current progress
-[📤 Export History] - Download conversation + data
-
-Warning: Starting new chat will lose current schema knowledge
-Estimated reload time: ~3 seconds for schema re-learning
-```
-
-**2. Context Reset Options**
-```
-🔄 Context Reset Options
-
-What to Keep:
-☑️ Database schema knowledge (saves 3s reload time)  
-☑️ User preferences & settings
-☐ Previous query results (will free 4,780 tokens)
-☐ Conversation history (will free 1,465 tokens)  
-
-What to Reset:
-☑️ Current processing state
-☑️ Temporary calculations
-☑️ Error histories
-☑️ Performance metrics
-
-Expected Impact:
-• Context Usage: 78% → 35% 
-• Available Tokens: +6,245
-• Reload Time: <1 second (schema kept)
-
-[Apply Reset] [Cancel]
-```
-
-### Contoh Output Lengkap
-
-**User Query**: "Tunjukkan customer siapa saja yang belum lunas membayar beserta due date nya"
-
-**Output yang Digenerate**:
-
-**📊 Raw Data Table**
-| Customer Name | Invoice Number | Invoice Amount | Outstanding | Due Date | Days Overdue |
-|---------------|----------------|----------------|-------------|----------|--------------|
-| PT ABC Corp | INV-001 | Rp 15.000.000 | Rp 15.000.000 | 2023-01-15 | 45 |
-| CV XYZ | INV-002 | Rp 8.500.000 | Rp 8.500.000 | 2023-01-20 | 40 |
-| PT DEF Ltd | INV-003 | Rp 12.000.000 | Rp 6.000.000 | 2023-01-25 | 35 |
-
-**📈 Executive Summary**
-- Total Outstanding: Rp 29.500.000
-- Customer Count: 3 customers
-- Average Days Overdue: 40 days
-- Highest Risk: PT ABC Corp (Rp 15.000.000, 45 days overdue)
-
-**📝 Analysis Narrative**
-"Berdasarkan analisis piutang per tanggal 1 Maret 2023, terdapat 3 customer dengan total outstanding sebesar Rp 29.500.000. Customer dengan risiko tertinggi adalah PT ABC Corp dengan outstanding Rp 15.000.000 yang telah overdue selama 45 hari. 
-
-Rekomendasi tindakan:
-1. Follow up prioritas untuk PT ABC Corp (100% outstanding)
-2. Monitoring ketat untuk CV XYZ (100% outstanding)  
-3. PT DEF Ltd menunjukkan partial payment, perlu follow up untuk sisanya
-
-Rata-rata days overdue 40 hari mengindikasikan perlu perbaikan dalam collection process."
-
-**⚠️ Data Quality & Validations**
-- ✅ All outstanding amounts are positive
-- ✅ Due dates are valid and in the past
-- ✅ Customer names are not null
-- ⚠️ Note: Analysis based on data as of March 1, 2023
-- ⚠️ Warning: 1 customer has partial payment (check payment allocation)
+Desain ini memastikan bahwa antarmuka AI Agent tidak hanya menjadi alat yang kuat, tetapi juga partner dialog yang transparan, cerdas, dan menyenangkan untuk digunakan.
 
 ## 8. Intelligent Fallback & Recovery System
 

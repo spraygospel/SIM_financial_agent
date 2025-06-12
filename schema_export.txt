@@ -1,0 +1,5887 @@
+TABLE: accountbalance
+  COLUMNS:
+    - Year: INTEGER, NOT NULL, PK
+    - AccountNo: VARCHAR(20), NOT NULL, PK
+    - Debet: DECIMAL(18, 4), NOT NULL
+    - Credit: DECIMAL(18, 4), NOT NULL
+    - DebetLocal: DECIMAL(18, 4), NOT NULL
+    - CreditLocal: DECIMAL(18, 4), NOT NULL
+  PRIMARY KEY: (Year, AccountNo)
+
+---
+
+TABLE: accounttotal
+  COLUMNS:
+    - Periode: DATE, NOT NULL, PK
+    - AccountNo: VARCHAR(20), NOT NULL, PK
+    - BusinessUnit: VARCHAR(20), NOT NULL, PK
+    - Debet: DECIMAL(18, 4), NOT NULL
+    - Credit: DECIMAL(18, 4), NOT NULL
+    - DebetLocal: DECIMAL(18, 4), NOT NULL
+    - CreditLocal: DECIMAL(18, 4), NOT NULL
+  PRIMARY KEY: (Periode, AccountNo, BusinessUnit)
+
+---
+
+TABLE: actionlog
+  COLUMNS:
+    - ActionTime: DATETIME, NOT NULL, PK
+    - ActionBy: VARCHAR(16), NOT NULL, PK
+    - Action: VARCHAR(20), NOT NULL, PK
+    - DocNo: VARCHAR(15), NOT NULL, PK
+    - Reason: VARCHAR(255), NOT NULL
+  PRIMARY KEY: (ActionTime, ActionBy, Action, DocNo)
+
+---
+
+TABLE: adjustind
+  COLUMNS:
+    - DocNo: VARCHAR(15), NOT NULL, PK
+    - MaterialCode: VARCHAR(20), NOT NULL, PK
+    - BatchNo: VARCHAR(20), NOT NULL
+    - BatchInfo: VARCHAR(50), NOT NULL
+    - ExpiryDate: DATE
+    - TagNo: VARCHAR(10), NOT NULL, PK
+    - Zone: VARCHAR(10), NOT NULL, PK
+    - Bin: VARCHAR(10), NOT NULL, PK
+    - Unit: VARCHAR(5), NOT NULL
+    - Qty: DECIMAL(18, 4), NOT NULL
+    - Price: DECIMAL(18, 4), NOT NULL
+    - AssumedPrice: DECIMAL(18, 4), NOT NULL
+  PRIMARY KEY: (DocNo, MaterialCode, TagNo, Zone, Bin)
+  FOREIGN KEYS:
+    - (MaterialCode, Unit) -> masterunitconversion(MaterialCode, Unit)
+
+---
+
+TABLE: adjustinh
+  COLUMNS:
+    - DocNo: VARCHAR(15), NOT NULL, PK
+    - Series: VARCHAR(3), NOT NULL
+    - TransactionType: VARCHAR(20), NOT NULL
+    - DocDate: DATE, NOT NULL
+    - Location: VARCHAR(5), NOT NULL
+    - AODocNo: VARCHAR(15), NOT NULL
+    - IsOutsource: BIT, NOT NULL
+    - Information: VARCHAR(255), NOT NULL
+    - Status: VARCHAR(20), NOT NULL
+    - TotalPrice: DECIMAL(18, 4), NOT NULL
+    - TotalAssumedPrice: DECIMAL(18, 4), NOT NULL
+    - IsApproved: BIT, NOT NULL
+    - ApprovedBy: VARCHAR(16), NOT NULL
+    - ApprovedDate: DATETIME
+    - PrintCounter: INTEGER, NOT NULL
+    - PrintedBy: VARCHAR(16)
+    - PrintedDate: DATETIME
+    - CreatedBy: VARCHAR(16), NOT NULL
+    - CreatedDate: DATETIME, NOT NULL
+    - ChangedBy: VARCHAR(16), NOT NULL
+    - ChangedDate: DATETIME, NOT NULL
+  PRIMARY KEY: (DocNo)
+  FOREIGN KEYS:
+    - (Location) -> masterlocation(Code)
+
+---
+
+TABLE: adjustoutd
+  COLUMNS:
+    - DocNo: VARCHAR(15), NOT NULL, PK
+    - MaterialCode: VARCHAR(20), NOT NULL, PK
+    - TagNo: VARCHAR(10), NOT NULL, PK
+    - Zone: VARCHAR(10), NOT NULL, PK
+    - Bin: VARCHAR(10), NOT NULL, PK
+    - Unit: VARCHAR(5), NOT NULL
+    - Qty: DECIMAL(18, 4), NOT NULL
+    - BaseQty: DECIMAL(18, 4), NOT NULL
+    - Cost: DECIMAL(18, 4), NOT NULL
+  PRIMARY KEY: (DocNo, MaterialCode, TagNo, Zone, Bin)
+  FOREIGN KEYS:
+    - (MaterialCode, Unit) -> masterunitconversion(MaterialCode, Unit)
+
+---
+
+TABLE: adjustouth
+  COLUMNS:
+    - DocNo: VARCHAR(15), NOT NULL, PK
+    - Series: VARCHAR(3), NOT NULL
+    - TransactionType: VARCHAR(20), NOT NULL
+    - DocDate: DATE, NOT NULL
+    - Location: VARCHAR(5), NOT NULL
+    - Information: VARCHAR(255), NOT NULL
+    - Status: VARCHAR(20), NOT NULL
+    - TotalCost: DECIMAL(18, 4), NOT NULL
+    - IsApproved: BIT, NOT NULL
+    - ApprovedBy: VARCHAR(16), NOT NULL
+    - ApprovedDate: DATETIME
+    - PrintCounter: INTEGER, NOT NULL
+    - PrintedBy: VARCHAR(16)
+    - PrintedDate: DATETIME
+    - CreatedBy: VARCHAR(16), NOT NULL
+    - CreatedDate: DATETIME, NOT NULL
+    - ChangedBy: VARCHAR(16), NOT NULL
+    - ChangedDate: DATETIME, NOT NULL
+  PRIMARY KEY: (DocNo)
+  FOREIGN KEYS:
+    - (Location) -> masterlocation(Code)
+
+---
+
+TABLE: apbook
+  COLUMNS:
+    - Periode: DATE, NOT NULL, PK
+    - SupplierCode: VARCHAR(15), NOT NULL, PK
+    - TransType: VARCHAR(20), NOT NULL, PK
+    - DocNo: VARCHAR(40), NOT NULL, PK
+    - DocDate: DATE, NOT NULL
+    - TOP: INTEGER, NOT NULL
+    - DueDate: DATE, NOT NULL
+    - Currency: VARCHAR(3), NOT NULL
+    - ExchangeRate: DECIMAL(18, 4), NOT NULL
+    - Information: VARCHAR(255), NOT NULL
+    - DC: CHAR(1), NOT NULL
+    - DocValue: DECIMAL(18, 4), NOT NULL
+    - DocValueLocal: DECIMAL(18, 4), NOT NULL
+    - PaymentValue: DECIMAL(18, 4), NOT NULL
+    - PaymentValueLocal: DECIMAL(18, 4), NOT NULL
+    - ExchangeRateDiff: DECIMAL(18, 4), NOT NULL
+  PRIMARY KEY: (Periode, SupplierCode, TransType, DocNo)
+
+---
+
+TABLE: apclearinggirod
+  COLUMNS:
+    - DocNo: VARCHAR(15), NOT NULL, PK
+    - CashierPaymentNo: VARCHAR(15), NOT NULL, PK
+    - Bank: VARCHAR(5), NOT NULL, PK
+    - GiroNo: VARCHAR(20), NOT NULL, PK
+  PRIMARY KEY: (DocNo, CashierPaymentNo, Bank, GiroNo)
+
+---
+
+TABLE: apclearinggiroh
+  COLUMNS:
+    - DocNo: VARCHAR(15), NOT NULL, PK
+    - Series: VARCHAR(3), NOT NULL
+    - DocDate: DATE, NOT NULL
+    - TransType: VARCHAR(20), NOT NULL
+    - TotalDocument: INTEGER, NOT NULL
+    - TotalValue: DECIMAL(18, 4), NOT NULL
+    - Information: VARCHAR(255), NOT NULL
+    - Status: VARCHAR(20), NOT NULL
+    - CreatedBy: VARCHAR(16), NOT NULL
+    - CreatedDate: DATETIME, NOT NULL
+    - ChangedBy: VARCHAR(16), NOT NULL
+    - ChangedDate: DATETIME, NOT NULL
+  PRIMARY KEY: (DocNo)
+
+---
+
+TABLE: apcreditnote
+  COLUMNS:
+    - DocNo: VARCHAR(15), NOT NULL, PK
+    - Series: VARCHAR(3), NOT NULL
+    - DocDate: DATE, NOT NULL
+    - SupplierCode: VARCHAR(10), NOT NULL
+    - TaxToCode: VARCHAR(10), NOT NULL
+    - Currency: VARCHAR(3), NOT NULL
+    - ExchangeRate: DECIMAL(18, 4), NOT NULL
+    - TaxStatus: VARCHAR(10), NOT NULL
+    - TaxPercent: DECIMAL(18, 4), NOT NULL
+    - TaxPrefix: VARCHAR(3), NOT NULL
+    - TaxNo: VARCHAR(25), NOT NULL
+    - DocValue: DECIMAL(18, 4), NOT NULL
+    - TaxValue: DECIMAL(18, 4), NOT NULL
+    - TaxValueInTaxCur: DECIMAL(18, 4), NOT NULL
+    - Netto: DECIMAL(18, 4), NOT NULL
+    - TransactionType: VARCHAR(20), NOT NULL
+    - Information: VARCHAR(255), NOT NULL
+    - Status: VARCHAR(20), NOT NULL
+    - PrintCounter: INTEGER, NOT NULL
+    - PrintedBy: VARCHAR(16)
+    - PrintedDate: DATETIME
+    - CreatedBy: VARCHAR(16), NOT NULL
+    - CreatedDate: DATETIME, NOT NULL
+    - ChangedBy: VARCHAR(16), NOT NULL
+    - ChangedDate: DATETIME, NOT NULL
+  PRIMARY KEY: (DocNo)
+
+---
+
+TABLE: apdebetnote
+  COLUMNS:
+    - DocNo: VARCHAR(15), NOT NULL, PK
+    - Series: VARCHAR(3), NOT NULL
+    - DocDate: DATE, NOT NULL
+    - SupplierCode: VARCHAR(10), NOT NULL
+    - TaxToCode: VARCHAR(10), NOT NULL
+    - Currency: VARCHAR(3), NOT NULL
+    - ExchangeRate: DECIMAL(18, 4), NOT NULL
+    - TaxStatus: VARCHAR(10), NOT NULL
+    - TaxPercent: DECIMAL(18, 4), NOT NULL
+    - TaxPrefix: VARCHAR(3), NOT NULL
+    - TaxNo: VARCHAR(25), NOT NULL
+    - DocValue: DECIMAL(18, 4), NOT NULL
+    - TaxValue: DECIMAL(18, 4), NOT NULL
+    - TaxValueInTaxCur: DECIMAL(18, 4), NOT NULL
+    - Netto: DECIMAL(18, 4), NOT NULL
+    - TransactionType: VARCHAR(20), NOT NULL
+    - Information: VARCHAR(255), NOT NULL
+    - Status: VARCHAR(20), NOT NULL
+    - PrintCounter: INTEGER, NOT NULL
+    - PrintedBy: VARCHAR(16)
+    - PrintedDate: DATETIME
+    - CreatedBy: VARCHAR(16), NOT NULL
+    - CreatedDate: DATETIME, NOT NULL
+    - ChangedBy: VARCHAR(16), NOT NULL
+    - ChangedDate: DATETIME, NOT NULL
+  PRIMARY KEY: (DocNo)
+
+---
+
+TABLE: apdownpayment
+  COLUMNS:
+    - DocNo: VARCHAR(15), NOT NULL, PK
+    - Series: VARCHAR(3), NOT NULL
+    - DocDate: DATE, NOT NULL
+    - SupplierCode: VARCHAR(10), NOT NULL
+    - SupplierTaxTo: VARCHAR(10), NOT NULL
+    - Currency: VARCHAR(3), NOT NULL
+    - ExchangeRate: DECIMAL(18, 4), NOT NULL
+    - TaxStatus: VARCHAR(10), NOT NULL
+    - TaxPercent: DECIMAL(18, 4), NOT NULL
+    - DownPayment: DECIMAL(18, 4), NOT NULL
+    - TaxValue: DECIMAL(18, 4), NOT NULL
+    - TaxValueInTaxCur: DECIMAL(18, 4), NOT NULL
+    - DownPaymentNetto: DECIMAL(18, 4), NOT NULL
+    - Information: VARCHAR(255), NOT NULL
+    - Status: VARCHAR(20), NOT NULL
+    - PrintCounter: INTEGER, NOT NULL
+    - PrintedBy: VARCHAR(16)
+    - PrintedDate: DATETIME
+    - CreatedBy: VARCHAR(16), NOT NULL
+    - CreatedDate: DATETIME, NOT NULL
+    - ChangedBy: VARCHAR(16), NOT NULL
+    - ChangedDate: DATETIME, NOT NULL
+  PRIMARY KEY: (DocNo)
+
+---
+
+TABLE: apreceiptlistd
+  COLUMNS:
+    - DocNo: VARCHAR(15), NOT NULL, PK
+    - SupplierCode: VARCHAR(10), NOT NULL, PK
+    - APDocNo: VARCHAR(17), NOT NULL, PK
+  PRIMARY KEY: (DocNo, SupplierCode, APDocNo)
+
+---
+
+TABLE: apreceiptlisth
+  COLUMNS:
+    - DocNo: VARCHAR(15), NOT NULL, PK
+    - Series: VARCHAR(3), NOT NULL
+    - DocDate: DATE, NOT NULL
+    - TotalSupplier: INTEGER, NOT NULL
+    - TotalDocument: INTEGER, NOT NULL
+    - TotalValue: DECIMAL(18, 4), NOT NULL
+    - Information: VARCHAR(255), NOT NULL
+    - Status: VARCHAR(20), NOT NULL
+    - PrintCounter: INTEGER, NOT NULL
+    - PrintedBy: VARCHAR(16)
+    - PrintedDate: DATETIME
+    - CreatedBy: VARCHAR(16), NOT NULL
+    - CreatedDate: DATETIME, NOT NULL
+    - ChangedBy: VARCHAR(16), NOT NULL
+    - ChangedDate: DATETIME, NOT NULL
+  PRIMARY KEY: (DocNo)
+
+---
+
+TABLE: aprejectgiro
+  COLUMNS:
+    - DocNo: VARCHAR(15), NOT NULL, PK
+    - Series: VARCHAR(3), NOT NULL
+    - DocDate: DATE, NOT NULL
+    - CashierPaymentNo: VARCHAR(15), NOT NULL
+    - Bank: VARCHAR(5), NOT NULL
+    - GiroNo: VARCHAR(20), NOT NULL
+    - SupplierCode: VARCHAR(10), NOT NULL
+    - Currency: VARCHAR(3), NOT NULL
+    - GiroValue: DECIMAL(18, 4), NOT NULL
+    - Information: VARCHAR(255), NOT NULL
+    - Status: VARCHAR(20), NOT NULL
+    - CreatedBy: VARCHAR(16), NOT NULL
+    - CreatedDate: DATETIME, NOT NULL
+    - ChangedBy: VARCHAR(16), NOT NULL
+    - ChangedDate: DATETIME, NOT NULL
+  PRIMARY KEY: (DocNo)
+
+---
+
+TABLE: apsettlement
+  COLUMNS:
+    - DocNo: VARCHAR(15), NOT NULL, PK
+    - Series: VARCHAR(3), NOT NULL
+    - DocDate: DATE, NOT NULL
+    - APRecListNo: VARCHAR(15)
+    - TotalValue: DECIMAL(18, 4), NOT NULL
+    - Information: VARCHAR(255), NOT NULL
+    - Status: VARCHAR(20), NOT NULL
+    - CreatedBy: VARCHAR(16), NOT NULL
+    - CreatedDate: DATETIME, NOT NULL
+    - ChangedBy: VARCHAR(16), NOT NULL
+    - ChangedDate: DATETIME, NOT NULL
+  PRIMARY KEY: (DocNo)
+
+---
+
+TABLE: arbook
+  COLUMNS:
+    - Periode: DATE, NOT NULL, PK
+    - CustomerCode: VARCHAR(15), NOT NULL, PK
+    - TransType: VARCHAR(20), NOT NULL, PK
+    - DocNo: VARCHAR(40), NOT NULL, PK
+    - DocDate: DATE, NOT NULL
+    - TOP: INTEGER, NOT NULL
+    - DueDate: DATE, NOT NULL
+    - Currency: VARCHAR(3), NOT NULL
+    - ExchangeRate: DECIMAL(18, 4), NOT NULL
+    - Information: VARCHAR(255), NOT NULL
+    - DC: CHAR(1), NOT NULL
+    - DocValue: DECIMAL(18, 4), NOT NULL
+    - DocValueLocal: DECIMAL(18, 4), NOT NULL
+    - PaymentValue: DECIMAL(18, 4), NOT NULL
+    - PaymentValueLocal: DECIMAL(18, 4), NOT NULL
+    - ExchangeRateDiff: DECIMAL(18, 4), NOT NULL
+  PRIMARY KEY: (Periode, TransType, DocNo, CustomerCode)
+
+---
+
+TABLE: arclearinggirod
+  COLUMNS:
+    - DocNo: VARCHAR(15), NOT NULL, PK
+    - CashierReceiptNo: VARCHAR(15), NOT NULL, PK
+    - Bank: VARCHAR(5), NOT NULL, PK
+    - GiroNo: VARCHAR(20), NOT NULL, PK
+  PRIMARY KEY: (DocNo, CashierReceiptNo, Bank, GiroNo)
+
+---
+
+TABLE: arclearinggiroh
+  COLUMNS:
+    - DocNo: VARCHAR(15), NOT NULL, PK
+    - Series: VARCHAR(3), NOT NULL
+    - DocDate: DATE, NOT NULL
+    - TransType: VARCHAR(20), NOT NULL
+    - TotalDocument: INTEGER, NOT NULL
+    - TotalValue: DECIMAL(18, 4), NOT NULL
+    - Information: VARCHAR(255), NOT NULL
+    - Status: VARCHAR(20), NOT NULL
+    - CreatedBy: VARCHAR(16), NOT NULL
+    - CreatedDate: DATETIME, NOT NULL
+    - ChangedBy: VARCHAR(16), NOT NULL
+    - ChangedDate: DATETIME, NOT NULL
+  PRIMARY KEY: (DocNo)
+
+---
+
+TABLE: arcreditnote
+  COLUMNS:
+    - DocNo: VARCHAR(15), NOT NULL, PK
+    - Series: VARCHAR(3), NOT NULL
+    - DocDate: DATE, NOT NULL
+    - CustomerCode: VARCHAR(10), NOT NULL
+    - TaxToCode: VARCHAR(10), NOT NULL
+    - Currency: VARCHAR(3), NOT NULL
+    - ExchangeRate: DECIMAL(18, 4), NOT NULL
+    - TaxStatus: VARCHAR(10), NOT NULL
+    - TaxPercent: DECIMAL(18, 4), NOT NULL
+    - TaxPrefix: VARCHAR(3), NOT NULL
+    - TaxNo: VARCHAR(25), NOT NULL
+    - DocValue: DECIMAL(18, 4), NOT NULL
+    - TaxValue: DECIMAL(18, 4), NOT NULL
+    - TaxValueInTaxCur: DECIMAL(18, 4), NOT NULL
+    - Netto: DECIMAL(18, 4), NOT NULL
+    - TransactionType: VARCHAR(20), NOT NULL
+    - Information: VARCHAR(255), NOT NULL
+    - Status: VARCHAR(20), NOT NULL
+    - PrintCounter: INTEGER, NOT NULL
+    - PrintedBy: VARCHAR(16)
+    - PrintedDate: DATETIME
+    - CreatedBy: VARCHAR(16), NOT NULL
+    - CreatedDate: DATETIME, NOT NULL
+    - ChangedBy: VARCHAR(16), NOT NULL
+    - ChangedDate: DATETIME, NOT NULL
+  PRIMARY KEY: (DocNo)
+
+---
+
+TABLE: ardebetnote
+  COLUMNS:
+    - DocNo: VARCHAR(15), NOT NULL, PK
+    - Series: VARCHAR(3), NOT NULL
+    - DocDate: DATE, NOT NULL
+    - CustomerCode: VARCHAR(10), NOT NULL
+    - TaxToCode: VARCHAR(10), NOT NULL
+    - Currency: VARCHAR(3), NOT NULL
+    - ExchangeRate: DECIMAL(18, 4), NOT NULL
+    - TaxStatus: VARCHAR(10), NOT NULL
+    - TaxPercent: DECIMAL(18, 4), NOT NULL
+    - TaxPrefix: VARCHAR(3), NOT NULL
+    - TaxNo: VARCHAR(25), NOT NULL
+    - DocValue: DECIMAL(18, 4), NOT NULL
+    - TaxValue: DECIMAL(18, 4), NOT NULL
+    - TaxValueInTaxCur: DECIMAL(18, 4), NOT NULL
+    - Netto: DECIMAL(18, 4), NOT NULL
+    - TransactionType: VARCHAR(20), NOT NULL
+    - Information: VARCHAR(255), NOT NULL
+    - Status: VARCHAR(20), NOT NULL
+    - PrintCounter: INTEGER, NOT NULL
+    - PrintedBy: VARCHAR(16)
+    - PrintedDate: DATETIME
+    - CreatedBy: VARCHAR(16), NOT NULL
+    - CreatedDate: DATETIME, NOT NULL
+    - ChangedBy: VARCHAR(16), NOT NULL
+    - ChangedDate: DATETIME, NOT NULL
+  PRIMARY KEY: (DocNo)
+
+---
+
+TABLE: ardownpayment
+  COLUMNS:
+    - DocNo: VARCHAR(15), NOT NULL, PK
+    - Series: VARCHAR(3), NOT NULL
+    - DocDate: DATE, NOT NULL
+    - CustomerCode: VARCHAR(10), NOT NULL
+    - CustomerTaxTo: VARCHAR(10), NOT NULL
+    - Currency: VARCHAR(3), NOT NULL
+    - ExchangeRate: DECIMAL(18, 4), NOT NULL
+    - TaxStatus: VARCHAR(10), NOT NULL
+    - TaxPercent: DECIMAL(18, 4), NOT NULL
+    - DownPayment: DECIMAL(18, 4), NOT NULL
+    - TaxValue: DECIMAL(18, 4), NOT NULL
+    - TaxValueInTaxCur: DECIMAL(18, 4), NOT NULL
+    - DownPaymentNetto: DECIMAL(18, 4), NOT NULL
+    - Information: VARCHAR(255), NOT NULL
+    - Status: VARCHAR(20), NOT NULL
+    - PrintCounter: INTEGER, NOT NULL
+    - PrintedBy: VARCHAR(16)
+    - PrintedDate: DATETIME
+    - CreatedBy: VARCHAR(16), NOT NULL
+    - CreatedDate: DATETIME, NOT NULL
+    - ChangedBy: VARCHAR(16), NOT NULL
+    - ChangedDate: DATETIME, NOT NULL
+  PRIMARY KEY: (DocNo)
+
+---
+
+TABLE: arperiode
+  COLUMNS:
+    - Periode: DATE, NOT NULL, PK
+    - IsClosed: BIT, NOT NULL
+    - ChangedBy: VARCHAR(16), NOT NULL
+    - ChangedDate: DATETIME, NOT NULL
+  PRIMARY KEY: (Periode)
+
+---
+
+TABLE: arrejectgiro
+  COLUMNS:
+    - DocNo: VARCHAR(15), NOT NULL, PK
+    - Series: VARCHAR(3), NOT NULL
+    - DocDate: DATE, NOT NULL
+    - CashierReceiptNo: VARCHAR(15), NOT NULL
+    - Bank: VARCHAR(5), NOT NULL
+    - GiroNo: VARCHAR(20), NOT NULL
+    - CustomerCode: VARCHAR(10), NOT NULL
+    - Currency: VARCHAR(3), NOT NULL
+    - GiroValue: DECIMAL(18, 4), NOT NULL
+    - Information: VARCHAR(255), NOT NULL
+    - Status: VARCHAR(20), NOT NULL
+    - CreatedBy: VARCHAR(16), NOT NULL
+    - CreatedDate: DATETIME, NOT NULL
+    - ChangedBy: VARCHAR(16), NOT NULL
+    - ChangedDate: DATETIME, NOT NULL
+  PRIMARY KEY: (DocNo)
+
+---
+
+TABLE: arrequestlistd
+  COLUMNS:
+    - DocNo: VARCHAR(15), NOT NULL, PK
+    - CustomerCode: VARCHAR(10), NOT NULL, PK
+    - ARDocNo: VARCHAR(17), NOT NULL, PK
+  PRIMARY KEY: (DocNo, CustomerCode, ARDocNo)
+
+---
+
+TABLE: arrequestlisth
+  COLUMNS:
+    - DocNo: VARCHAR(15), NOT NULL, PK
+    - Series: VARCHAR(3), NOT NULL
+    - DocDate: DATE, NOT NULL
+    - CollectorCode: VARCHAR(10), NOT NULL
+    - TotalCustomer: INTEGER, NOT NULL
+    - TotalDocument: INTEGER, NOT NULL
+    - TotalValue: DECIMAL(18, 4), NOT NULL
+    - Information: VARCHAR(255), NOT NULL
+    - Status: VARCHAR(20), NOT NULL
+    - PrintCounter: INTEGER, NOT NULL
+    - PrintedBy: VARCHAR(16)
+    - PrintedDate: DATETIME
+    - CreatedBy: VARCHAR(16), NOT NULL
+    - CreatedDate: DATETIME, NOT NULL
+    - ChangedBy: VARCHAR(16), NOT NULL
+    - ChangedDate: DATETIME, NOT NULL
+  PRIMARY KEY: (DocNo)
+
+---
+
+TABLE: arsettlement
+  COLUMNS:
+    - DocNo: VARCHAR(15), NOT NULL, PK
+    - Series: VARCHAR(3), NOT NULL
+    - DocDate: DATE, NOT NULL
+    - ARReqListNo: VARCHAR(15), NOT NULL
+    - TotalValue: DECIMAL(18, 4), NOT NULL
+    - Information: VARCHAR(255), NOT NULL
+    - Status: VARCHAR(20), NOT NULL
+    - CreatedBy: VARCHAR(16), NOT NULL
+    - CreatedDate: DATETIME, NOT NULL
+    - ChangedBy: VARCHAR(16), NOT NULL
+    - ChangedDate: DATETIME, NOT NULL
+  PRIMARY KEY: (DocNo)
+
+---
+
+TABLE: asset
+  COLUMNS:
+    - AssetNo: VARCHAR(20), NOT NULL, PK
+    - AssetName: VARCHAR(80), NOT NULL
+    - BusinessUnit: VARCHAR(20), NOT NULL
+    - DocNo: VARCHAR(15), NOT NULL
+    - Number: INTEGER, NOT NULL
+    - MaterialCode: VARCHAR(20), NOT NULL
+    - PurchaseDate: DATE, NOT NULL
+    - PurchaseValue: DECIMAL(18, 4), NOT NULL
+    - BaseDate: DATE, NOT NULL
+    - BaseValue: DECIMAL(18, 4), NOT NULL
+    - SalvagePercentage: DECIMAL(18, 4), NOT NULL
+    - SalvageValue: DECIMAL(18, 4), NOT NULL
+    - DepreciationRun: BIT, NOT NULL
+    - DepreciationStartDate: DATE
+    - Age: INTEGER, NOT NULL
+    - DepreciationValuePerYear: DECIMAL(18, 4), NOT NULL
+    - LastDepreciationRun: DATE, NOT NULL
+    - AccDepreciationValue: DECIMAL(18, 4), NOT NULL
+    - BookValue: DECIMAL(18, 4), NOT NULL
+    - SellDocNo: VARCHAR(15), NOT NULL
+    - SellNumber: INTEGER, NOT NULL
+    - SellDate: DATE
+    - SellValue: DECIMAL(18, 4), NOT NULL
+  PRIMARY KEY: (AssetNo)
+
+---
+
+TABLE: assetdd
+  COLUMNS:
+    - AssetNo: VARCHAR(20), NOT NULL, PK
+    - StartDate: DATE, NOT NULL, PK
+    - EndDate: DATE, NOT NULL
+    - Percentage: DECIMAL(18, 4), NOT NULL
+    - DepreciationValue: DECIMAL(18, 4), NOT NULL
+  PRIMARY KEY: (AssetNo, StartDate)
+
+---
+
+TABLE: aucsettlement
+  COLUMNS:
+    - DocNo: VARCHAR(15), NOT NULL, PK
+    - Series: VARCHAR(3), NOT NULL
+    - DocDate: DATE, NOT NULL
+    - TransactionType: VARCHAR(20), NOT NULL
+    - AssetNo: VARCHAR(20), NOT NULL
+    - AssetName: VARCHAR(80), NOT NULL
+    - MaterialCode: VARCHAR(20), NOT NULL
+    - DepreciationRun: BIT, NOT NULL
+    - Age: INTEGER, NOT NULL
+    - SalvagePercentage: DECIMAL(18, 4), NOT NULL
+    - Information: VARCHAR(255), NOT NULL
+    - Status: VARCHAR(20), NOT NULL
+    - CreatedBy: VARCHAR(16), NOT NULL
+    - CreatedDate: DATETIME, NOT NULL
+    - ChangedBy: VARCHAR(16), NOT NULL
+    - ChangedDate: DATETIME, NOT NULL
+  PRIMARY KEY: (DocNo)
+
+---
+
+TABLE: batch
+  COLUMNS:
+    - TagNo: VARCHAR(10), NOT NULL, PK
+    - MaterialCode: VARCHAR(20), NOT NULL, PK
+    - BatchNo: VARCHAR(20), NOT NULL
+    - BatchInfo: VARCHAR(50), NOT NULL
+    - ExpiryDate: DATE
+  PRIMARY KEY: (TagNo, MaterialCode)
+
+---
+
+TABLE: booking
+  COLUMNS:
+    - TagNo: VARCHAR(10), NOT NULL, PK
+    - MaterialCode: VARCHAR(20), NOT NULL, PK
+    - DocNo: VARCHAR(50), NOT NULL, PK
+    - DocDate: DATE, NOT NULL, PK
+    - Location: VARCHAR(5), NOT NULL, PK
+    - Zone: VARCHAR(10), NOT NULL, PK
+    - Bin: VARCHAR(10), NOT NULL, PK
+    - Number: INTEGER, NOT NULL, PK
+    - Qty: DECIMAL(18, 4), NOT NULL
+  PRIMARY KEY: (TagNo, MaterialCode, DocNo, DocDate, Location, Zone, Bin, Number)
+
+---
+
+TABLE: bookstockb
+  COLUMNS:
+    - DocNo: VARCHAR(15), NOT NULL, PK
+    - TagNo: VARCHAR(10), NOT NULL, PK
+    - MaterialCode: VARCHAR(20), NOT NULL, PK
+    - Location: VARCHAR(5), NOT NULL, PK
+    - Zone: VARCHAR(10), NOT NULL, PK
+    - Bin: VARCHAR(10), NOT NULL, PK
+    - Number: INTEGER, NOT NULL, PK
+    - Qty: DECIMAL(18, 4), NOT NULL
+  PRIMARY KEY: (DocNo, TagNo, MaterialCode, Location, Zone, Bin, Number)
+
+---
+
+TABLE: bookstockd
+  COLUMNS:
+    - DocNo: VARCHAR(15), NOT NULL, PK
+    - Number: INTEGER, NOT NULL, PK
+    - MaterialCode: VARCHAR(20), NOT NULL
+    - Info: VARCHAR(255), NOT NULL
+    - TagNo: VARCHAR(10), NOT NULL, PK
+    - Unit: VARCHAR(5), NOT NULL
+    - Qty: DECIMAL(18, 4), NOT NULL
+    - QtyUsed: DECIMAL(18, 4), NOT NULL
+  PRIMARY KEY: (DocNo, Number, TagNo)
+
+---
+
+TABLE: bookstockh
+  COLUMNS:
+    - DocNo: VARCHAR(15), NOT NULL, PK
+    - Series: VARCHAR(3), NOT NULL
+    - DocDate: DATE, NOT NULL
+    - SODocNo: VARCHAR(15), NOT NULL
+    - JODocNo: VARCHAR(15), NOT NULL
+    - CustomerCode: VARCHAR(10), NOT NULL
+    - Location: VARCHAR(5), NOT NULL
+    - Information: VARCHAR(255), NOT NULL
+    - Status: VARCHAR(20), NOT NULL
+    - CreatedBy: VARCHAR(16), NOT NULL
+    - CreatedDate: DATETIME, NOT NULL
+    - ChangedBy: VARCHAR(16), NOT NULL
+    - ChangedDate: DATETIME, NOT NULL
+  PRIMARY KEY: (DocNo)
+
+---
+
+TABLE: cashierpaymentd
+  COLUMNS:
+    - DocNo: VARCHAR(15), NOT NULL, PK
+    - Number: INTEGER, NOT NULL, PK
+    - TransType: VARCHAR(20), NOT NULL, PK
+    - Info: VARCHAR(255), NOT NULL
+    - DC: CHAR(1), NOT NULL
+    - Currency: VARCHAR(3), NOT NULL
+    - ExchangeRate: DECIMAL(18, 4), NOT NULL
+    - Value: DECIMAL(18, 4), NOT NULL
+    - ValueLocal: DECIMAL(18, 4), NOT NULL
+    - JODocNo: VARCHAR(15), NOT NULL
+  PRIMARY KEY: (DocNo, Number, TransType)
+
+---
+
+TABLE: cashierpaymentg
+  COLUMNS:
+    - DocNo: VARCHAR(15), NOT NULL, PK
+    - Bank: VARCHAR(5), NOT NULL, PK
+    - GiroNo: VARCHAR(20), NOT NULL, PK
+    - SupplierCode: VARCHAR(10), NOT NULL, PK
+    - Currency: VARCHAR(3), NOT NULL
+    - ExchangeRate: DECIMAL(18, 4), NOT NULL
+    - GiroValue: DECIMAL(18, 4), NOT NULL
+    - GiroValueLocal: DECIMAL(18, 4), NOT NULL
+    - TransType: VARCHAR(20), NOT NULL
+    - IssuedDate: DATE, NOT NULL
+    - DueDate: DATE
+    - ClearingDate: DATE
+    - ClearExchangeRate: DECIMAL(18, 4), NOT NULL
+    - ClearValue: DECIMAL(18, 4), NOT NULL
+    - RejectDate: DATE
+    - Information: VARCHAR(255), NOT NULL
+    - Status: VARCHAR(20), NOT NULL
+    - ChangedBy: VARCHAR(16), NOT NULL
+    - ChangedDate: DATETIME, NOT NULL
+  PRIMARY KEY: (DocNo, Bank, GiroNo, SupplierCode)
+
+---
+
+TABLE: cashierpaymenth
+  COLUMNS:
+    - DocNo: VARCHAR(15), NOT NULL, PK
+    - Series: VARCHAR(3), NOT NULL
+    - DocDate: DATE, NOT NULL
+    - APRecListNo: VARCHAR(15)
+    - TotalDebet: DECIMAL(18, 4), NOT NULL
+    - TotalCredit: DECIMAL(18, 4), NOT NULL
+    - TotalGiro: DECIMAL(18, 4), NOT NULL
+    - Information: VARCHAR(255), NOT NULL
+    - Status: VARCHAR(20), NOT NULL
+    - PrintCounter: INTEGER, NOT NULL
+    - PrintedBy: VARCHAR(16)
+    - PrintedDate: DATETIME
+    - CreatedBy: VARCHAR(16), NOT NULL
+    - CreatedDate: DATETIME, NOT NULL
+    - ChangedBy: VARCHAR(16), NOT NULL
+    - ChangedDate: DATETIME, NOT NULL
+  PRIMARY KEY: (DocNo)
+
+---
+
+TABLE: cashierreceiptd
+  COLUMNS:
+    - DocNo: VARCHAR(15), NOT NULL, PK
+    - Number: INTEGER, NOT NULL, PK
+    - TransType: VARCHAR(20), NOT NULL, PK
+    - Info: VARCHAR(255), NOT NULL
+    - DC: CHAR(1), NOT NULL
+    - Currency: VARCHAR(3), NOT NULL
+    - ExchangeRate: DECIMAL(18, 4), NOT NULL
+    - Value: DECIMAL(18, 4), NOT NULL
+    - ValueLocal: DECIMAL(18, 4), NOT NULL
+  PRIMARY KEY: (DocNo, Number, TransType)
+
+---
+
+TABLE: cashierreceiptg
+  COLUMNS:
+    - DocNo: VARCHAR(15), NOT NULL, PK
+    - Bank: VARCHAR(5), NOT NULL, PK
+    - GiroNo: VARCHAR(20), NOT NULL, PK
+    - CustomerCode: VARCHAR(10), NOT NULL, PK
+    - Currency: VARCHAR(3), NOT NULL
+    - ExchangeRate: DECIMAL(18, 4), NOT NULL
+    - GiroValue: DECIMAL(18, 4), NOT NULL
+    - GiroValueLocal: DECIMAL(18, 4), NOT NULL
+    - TransType: VARCHAR(20), NOT NULL
+    - ReceivedDate: DATE, NOT NULL
+    - DepositDate: DATE
+    - DueDate: DATE
+    - ClearingDate: DATE
+    - ClearExchangeRate: DECIMAL(18, 4), NOT NULL
+    - ClearValue: DECIMAL(18, 4), NOT NULL
+    - RejectDate: DATE
+    - Information: VARCHAR(255), NOT NULL
+    - Status: VARCHAR(20), NOT NULL
+    - ChangedBy: VARCHAR(16), NOT NULL
+    - ChangedDate: DATETIME, NOT NULL
+  PRIMARY KEY: (DocNo, Bank, GiroNo, CustomerCode)
+
+---
+
+TABLE: cashierreceipth
+  COLUMNS:
+    - DocNo: VARCHAR(15), NOT NULL, PK
+    - Series: VARCHAR(3), NOT NULL
+    - DocDate: DATE, NOT NULL
+    - ARReqListNo: VARCHAR(15), NOT NULL
+    - TotalDebet: DECIMAL(18, 4), NOT NULL
+    - TotalCredit: DECIMAL(18, 4), NOT NULL
+    - TotalGiro: DECIMAL(18, 4), NOT NULL
+    - Information: VARCHAR(255), NOT NULL
+    - Status: VARCHAR(20), NOT NULL
+    - PrintCounter: INTEGER, NOT NULL
+    - PrintedBy: VARCHAR(16)
+    - PrintedDate: DATETIME
+    - CreatedBy: VARCHAR(16), NOT NULL
+    - CreatedDate: DATETIME, NOT NULL
+    - ChangedBy: VARCHAR(16), NOT NULL
+    - ChangedDate: DATETIME, NOT NULL
+  PRIMARY KEY: (DocNo)
+
+---
+
+TABLE: cfproject
+  COLUMNS:
+    - DocNo: VARCHAR(15), NOT NULL, PK
+    - Series: VARCHAR(3), NOT NULL
+    - PlannedStartDate: DATE, NOT NULL
+    - PlannedFinishDate: DATE, NOT NULL
+    - ActualStartDate: DATE, NOT NULL
+    - ActualFinishDate: DATE, NOT NULL
+    - CustomerCode: VARCHAR(10), NOT NULL
+    - PIC: VARCHAR(40), NOT NULL
+    - Priority: INTEGER, NOT NULL
+    - Location: VARCHAR(80), NOT NULL
+    - TotalCost: DECIMAL(18, 4), NOT NULL
+    - Status: VARCHAR(20), NOT NULL
+    - Information: VARCHAR(255), NOT NULL
+    - CreatedBy: VARCHAR(15), NOT NULL
+    - CreatedDate: DATETIME, NOT NULL
+    - ChangedBy: VARCHAR(15), NOT NULL
+    - ChangedDate: DATETIME, NOT NULL
+  PRIMARY KEY: (DocNo)
+
+---
+
+TABLE: changepriced
+  COLUMNS:
+    - DocNo: VARCHAR(15), NOT NULL, PK
+    - MaterialCode: VARCHAR(20), NOT NULL, PK
+    - PriceListType: VARCHAR(5), NOT NULL, PK
+    - Unit: VARCHAR(5), NOT NULL, PK
+    - MinQty: DECIMAL(18, 4), NOT NULL, PK
+    - MaxQty: DECIMAL(18, 4), NOT NULL
+    - Price: DECIMAL(18, 4), NOT NULL
+    - PercentDisc: DECIMAL(18, 4), NOT NULL
+    - PercentDisc2: DECIMAL(18, 4), NOT NULL
+    - PercentDisc3: DECIMAL(18, 4), NOT NULL
+    - ValueDisc: DECIMAL(18, 4), NOT NULL
+  PRIMARY KEY: (DocNo, MaterialCode, PriceListType, Unit, MinQty)
+
+---
+
+TABLE: changepriceh
+  COLUMNS:
+    - DocNo: VARCHAR(15), NOT NULL, PK
+    - Series: VARCHAR(3), NOT NULL
+    - DocDate: DATE, NOT NULL
+    - Currency: VARCHAR(3), NOT NULL
+    - Information: VARCHAR(255), NOT NULL
+    - Status: VARCHAR(20), NOT NULL
+    - IsApproved: BIT, NOT NULL
+    - ApprovedBy: VARCHAR(16)
+    - ApprovedDate: DATETIME
+    - PrintCounter: INTEGER, NOT NULL
+    - PrintedBy: VARCHAR(16)
+    - PrintedDate: DATETIME
+    - CreatedBy: VARCHAR(16), NOT NULL
+    - CreatedDate: DATETIME, NOT NULL
+    - ChangedBy: VARCHAR(16), NOT NULL
+    - ChangedDate: DATETIME, NOT NULL
+  PRIMARY KEY: (DocNo)
+
+---
+
+TABLE: controlposition
+  COLUMNS:
+    - Form: VARCHAR(50), NOT NULL, PK
+    - Control: VARCHAR(50), NOT NULL, PK
+    - Left: INTEGER, NOT NULL
+    - Top: INTEGER, NOT NULL
+    - Width: INTEGER, NOT NULL
+    - Height: INTEGER, NOT NULL
+    - Container: VARCHAR(50), NOT NULL
+  PRIMARY KEY: (Form, Control)
+
+---
+
+TABLE: cubepointofsale
+  COLUMNS:
+    - DocDate: DATE, NOT NULL, PK
+    - Series: VARCHAR(3), NOT NULL, PK
+    - Location: VARCHAR(5), NOT NULL, PK
+    - SalesCode: VARCHAR(10), NOT NULL, PK
+    - CustomerCode: VARCHAR(15), NOT NULL, PK
+    - MaterialCode: VARCHAR(20), NOT NULL, PK
+    - SupplierCode: VARCHAR(10), NOT NULL, PK
+    - BaseQty: DECIMAL(40, 4)
+    - Netto: DECIMAL(40, 4)
+    - Cost: DECIMAL(40, 4)
+    - DiscNominalAndHeaderDisc: DECIMAL(63, 12)
+    - NettoAfterHeaderDisc: DECIMAL(63, 12)
+  PRIMARY KEY: (DocDate, Series, Location, SalesCode, CustomerCode, MaterialCode, SupplierCode)
+
+---
+
+TABLE: customerbalance
+  COLUMNS:
+    - Periode: DATE, NOT NULL, PK
+    - CustomerCode: VARCHAR(10), NOT NULL, PK
+    - StartBalance: DECIMAL(18, 4), NOT NULL
+    - InValue: DECIMAL(18, 4), NOT NULL
+    - OutValue: DECIMAL(18, 4), NOT NULL
+    - EndBalance: DECIMAL(18, 4), NOT NULL
+    - LocalStartBalance: DECIMAL(18, 4), NOT NULL
+    - LocalInValue: DECIMAL(18, 4), NOT NULL
+    - LocalOutValue: DECIMAL(18, 4), NOT NULL
+    - LocalEndBalance: DECIMAL(18, 4), NOT NULL
+    - ExchangeRate: DECIMAL(18, 4), NOT NULL
+    - LocalEndBalance2: DECIMAL(18, 4), NOT NULL
+    - ExchangeRateDiff: DECIMAL(18, 4), NOT NULL
+  PRIMARY KEY: (Periode, CustomerCode)
+
+---
+
+TABLE: customerdpbalance
+  COLUMNS:
+    - Periode: DATE, NOT NULL, PK
+    - CustomerCode: VARCHAR(10), NOT NULL, PK
+    - StartBalance: DECIMAL(18, 4), NOT NULL
+    - InValue: DECIMAL(18, 4), NOT NULL
+    - OutValue: DECIMAL(18, 4), NOT NULL
+    - EndBalance: DECIMAL(18, 4), NOT NULL
+    - LocalStartBalance: DECIMAL(18, 4), NOT NULL
+    - LocalInValue: DECIMAL(18, 4), NOT NULL
+    - LocalOutValue: DECIMAL(18, 4), NOT NULL
+    - LocalEndBalance: DECIMAL(18, 4), NOT NULL
+    - ExchangeRate: DECIMAL(18, 4), NOT NULL
+    - LocalEndBalance2: DECIMAL(18, 4), NOT NULL
+    - ExchangeRateDiff: DECIMAL(18, 4), NOT NULL
+  PRIMARY KEY: (Periode, CustomerCode)
+
+---
+
+TABLE: customerpaymentd
+  COLUMNS:
+    - DocNo: VARCHAR(15), NOT NULL, PK
+    - TransactionType: VARCHAR(20), NOT NULL, PK
+    - CustomerCode: VARCHAR(10), NOT NULL, PK
+    - ARDocNo: VARCHAR(16), NOT NULL, PK
+    - DC: CHAR(1), NOT NULL
+    - Currency: VARCHAR(3), NOT NULL
+    - Payment: DECIMAL(18, 4), NOT NULL
+    - ExchangeRate: DECIMAL(18, 4), NOT NULL
+    - PaymentLocal: DECIMAL(18, 4), NOT NULL
+    - TaxPrefix: VARCHAR(3), NOT NULL
+    - TaxNo: VARCHAR(25), NOT NULL
+    - Information: VARCHAR(255)
+  PRIMARY KEY: (DocNo, TransactionType, CustomerCode, ARDocNo)
+
+---
+
+TABLE: customerpaymenth
+  COLUMNS:
+    - DocNo: VARCHAR(15), NOT NULL, PK
+    - Series: VARCHAR(3), NOT NULL
+    - DocDate: DATE, NOT NULL
+    - ARReqListNo: VARCHAR(15), NOT NULL
+    - TotalCustomer: INTEGER, NOT NULL
+    - TotalDocument: INTEGER, NOT NULL
+    - TotalPayment: DECIMAL(18, 4), NOT NULL
+    - Information: VARCHAR(255), NOT NULL
+    - Status: VARCHAR(20), NOT NULL
+    - CreatedBy: VARCHAR(16), NOT NULL
+    - CreatedDate: DATETIME, NOT NULL
+    - ChangedBy: VARCHAR(16), NOT NULL
+    - ChangedDate: DATETIME, NOT NULL
+  PRIMARY KEY: (DocNo)
+
+---
+
+TABLE: customerpoint
+  COLUMNS:
+    - DocDate: DATE, NOT NULL, PK
+    - CustomerCode: VARCHAR(10), NOT NULL, PK
+    - MaterialCode: VARCHAR(20), NOT NULL, PK
+    - DocNo: VARCHAR(15), NOT NULL, PK
+    - Number: INTEGER, NOT NULL, PK
+    - Qty: DECIMAL(18, 4), NOT NULL
+  PRIMARY KEY: (DocDate, CustomerCode, MaterialCode, DocNo, Number)
+
+---
+
+TABLE: customerpointbalance
+  COLUMNS:
+    - Year: INTEGER, NOT NULL, PK
+    - CustomerCode: VARCHAR(10), NOT NULL, PK
+    - MaterialCode: VARCHAR(20), NOT NULL, PK
+    - StartQty: DECIMAL(18, 4), NOT NULL
+    - InQty: DECIMAL(18, 4), NOT NULL
+    - OutQty: DECIMAL(18, 4), NOT NULL
+    - EndQty: DECIMAL(18, 4), NOT NULL
+  PRIMARY KEY: (Year, CustomerCode, MaterialCode)
+
+---
+
+TABLE: customervisitd
+  COLUMNS:
+    - DocNo: VARCHAR(15), NOT NULL, PK
+    - CustomerCode: VARCHAR(10), NOT NULL, PK
+    - OrderNo: INTEGER, NOT NULL
+    - IsScheduled: BIT, NOT NULL
+    - StartTime: TIME
+    - EndTime: TIME
+    - Latitude: DECIMAL(18, 7)
+    - Longitude: DECIMAL(18, 7)
+    - Distance: DECIMAL(18, 4)
+  PRIMARY KEY: (DocNo, CustomerCode)
+
+---
+
+TABLE: customervisith
+  COLUMNS:
+    - DocNo: VARCHAR(15), NOT NULL, PK
+    - Series: VARCHAR(3), NOT NULL
+    - DocDate: DATE, NOT NULL
+    - EmployeeNo: VARCHAR(10), NOT NULL
+    - Location: VARCHAR(5), NOT NULL
+    - StartTime: TIME
+    - EndTime: TIME
+    - Information: VARCHAR(255), NOT NULL
+    - Status: VARCHAR(20), NOT NULL
+    - CreatedBy: VARCHAR(16), NOT NULL
+    - CreatedDate: DATETIME, NOT NULL
+    - ChangedBy: VARCHAR(16), NOT NULL
+    - ChangedDate: DATETIME, NOT NULL
+  PRIMARY KEY: (DocNo)
+
+---
+
+TABLE: cyclecountd
+  COLUMNS:
+    - DocNo: VARCHAR(15), NOT NULL, PK
+    - Zone: VARCHAR(10), NOT NULL, PK
+    - Bin: VARCHAR(10), NOT NULL, PK
+    - MaterialCode: VARCHAR(20), NOT NULL, PK
+    - TagNo: VARCHAR(10), NOT NULL, PK
+    - Unit: VARCHAR(5), NOT NULL
+    - CountQty: DECIMAL(18, 4)
+    - StockQty: DECIMAL(18, 4)
+    - DiffQty: DECIMAL(18, 4)
+  PRIMARY KEY: (DocNo, Zone, Bin, MaterialCode, TagNo)
+
+---
+
+TABLE: cyclecounth
+  COLUMNS:
+    - DocNo: VARCHAR(15), NOT NULL, PK
+    - Series: VARCHAR(3), NOT NULL
+    - DocDate: DATE, NOT NULL
+    - Location: VARCHAR(5), NOT NULL
+    - UseTagNo: BIT, NOT NULL
+    - NoCountSince: DATE, NOT NULL
+    - AdjustInDocNo: VARCHAR(15), NOT NULL
+    - AdjustOutDocNo: VARCHAR(15), NOT NULL
+    - Information: VARCHAR(255), NOT NULL
+    - Status: VARCHAR(20), NOT NULL
+    - IsApproved: BIT, NOT NULL
+    - ApprovedBy: VARCHAR(16)
+    - ApprovedDate: DATETIME
+    - PrintCounter: INTEGER, NOT NULL
+    - PrintedBy: VARCHAR(16)
+    - PrintedDate: DATETIME
+    - CreatedBy: VARCHAR(16), NOT NULL
+    - CreatedDate: DATETIME
+    - ChangedBy: VARCHAR(16), NOT NULL
+    - ChangedDate: DATETIME
+  PRIMARY KEY: (DocNo)
+
+---
+
+TABLE: datalog
+  COLUMNS:
+    - LogDate: DATE, NOT NULL
+    - LogTime: TIME, NOT NULL
+    - User: VARCHAR(16), NOT NULL
+    - Query: VARCHAR(4096), NOT NULL
+  PRIMARY KEY: ()
+
+---
+
+TABLE: datatransferlog
+  COLUMNS:
+    - Server: VARCHAR(10), NOT NULL, PK
+    - Table: VARCHAR(30), NOT NULL, PK
+    - KeyValue: VARCHAR(50), NOT NULL, PK
+    - AllowChange: BIT, NOT NULL
+    - TransferDate: DATETIME, NOT NULL
+  PRIMARY KEY: (Server, Table, KeyValue)
+
+---
+
+TABLE: datatransferlogsummary
+  COLUMNS:
+    - TransferDate: DATETIME, NOT NULL, PK
+    - TransferBy: VARCHAR(16), NOT NULL, PK
+    - StartDate: DATE, NOT NULL
+    - EndDate: DATE, NOT NULL
+    - Mode: VARCHAR(10), NOT NULL, PK
+    - Server: VARCHAR(10), NOT NULL, PK
+    - Number: INTEGER, NOT NULL, PK
+    - Title: VARCHAR(100), NOT NULL
+    - TotalRow: INTEGER, NOT NULL
+    - Error: MEDIUMTEXT, NOT NULL
+  PRIMARY KEY: (TransferDate, TransferBy, Mode, Server, Number)
+
+---
+
+TABLE: debtpaymentd
+  COLUMNS:
+    - DocNo: VARCHAR(15), NOT NULL, PK
+    - TransactionType: VARCHAR(20), NOT NULL, PK
+    - SupplierCode: VARCHAR(10), NOT NULL, PK
+    - APDocNo: VARCHAR(16), NOT NULL, PK
+    - DC: CHAR(1), NOT NULL
+    - Currency: VARCHAR(3), NOT NULL
+    - Payment: DECIMAL(18, 4), NOT NULL
+    - ExchangeRate: DECIMAL(18, 4), NOT NULL
+    - PaymentLocal: DECIMAL(18, 4), NOT NULL
+    - TaxPrefix: VARCHAR(3), NOT NULL
+    - TaxNo: VARCHAR(25), NOT NULL
+    - Information: VARCHAR(255)
+  PRIMARY KEY: (DocNo, TransactionType, SupplierCode, APDocNo)
+
+---
+
+TABLE: debtpaymenth
+  COLUMNS:
+    - DocNo: VARCHAR(15), NOT NULL, PK
+    - Series: VARCHAR(3), NOT NULL
+    - DocDate: DATE, NOT NULL
+    - APRecListNo: VARCHAR(15)
+    - TotalSupplier: INTEGER, NOT NULL
+    - TotalDocument: INTEGER, NOT NULL
+    - TotalPayment: DECIMAL(18, 4), NOT NULL
+    - Information: VARCHAR(255), NOT NULL
+    - Status: VARCHAR(20), NOT NULL
+    - CreatedBy: VARCHAR(16), NOT NULL
+    - CreatedDate: DATETIME, NOT NULL
+    - ChangedBy: VARCHAR(16), NOT NULL
+    - ChangedDate: DATETIME, NOT NULL
+  PRIMARY KEY: (DocNo)
+
+---
+
+TABLE: deliveryreturnd
+  COLUMNS:
+    - DocNo: VARCHAR(15), NOT NULL, PK
+    - Number: INTEGER, NOT NULL, PK
+    - MaterialCode: VARCHAR(20), NOT NULL
+    - Info: VARCHAR(1024), NOT NULL
+    - TagNo: VARCHAR(10), NOT NULL, PK
+    - Unit: VARCHAR(5), NOT NULL
+    - QtyReturn: DECIMAL(18, 4), NOT NULL
+  PRIMARY KEY: (DocNo, Number, TagNo)
+
+---
+
+TABLE: deliveryreturnh
+  COLUMNS:
+    - DocNo: VARCHAR(15), NOT NULL, PK
+    - Series: VARCHAR(3), NOT NULL
+    - DocDate: DATE, NOT NULL
+    - GIDocNo: VARCHAR(15), NOT NULL
+    - CustomerCode: VARCHAR(10), NOT NULL
+    - Location: VARCHAR(5), NOT NULL
+    - Zone: VARCHAR(10), NOT NULL
+    - Information: VARCHAR(255), NOT NULL
+    - Status: VARCHAR(20), NOT NULL
+    - PrintCounter: INTEGER, NOT NULL
+    - PrintedBy: VARCHAR(16)
+    - PrintedDate: DATETIME
+    - CreatedBy: VARCHAR(16), NOT NULL
+    - CreatedDate: DATETIME, NOT NULL
+    - ChangedBy: VARCHAR(16), NOT NULL
+    - ChangedDate: DATETIME, NOT NULL
+  PRIMARY KEY: (DocNo)
+
+---
+
+TABLE: dialogcustomization
+  COLUMNS:
+    - DialogName: VARCHAR(50), NOT NULL, PK
+    - Variant: VARCHAR(20), NOT NULL, PK
+    - SimpleMode: BIT, NOT NULL
+    - SelectFields: VARCHAR(2048), NOT NULL
+    - FilterFields: VARCHAR(2048), NOT NULL
+    - OrderBy: VARCHAR(255), NOT NULL
+  PRIMARY KEY: (DialogName, Variant)
+
+---
+
+TABLE: employeegps
+  COLUMNS:
+    - GPSDate: DATE, NOT NULL, PK
+    - EmployeeNo: VARCHAR(10), NOT NULL, PK
+    - GPSTime: TIME, NOT NULL, PK
+    - Latitude: DECIMAL(18, 7), NOT NULL
+    - Longitude: DECIMAL(18, 7), NOT NULL
+    - Accuracy: DECIMAL(18, 7), NOT NULL
+    - Speed: DECIMAL(18, 7), NOT NULL
+  PRIMARY KEY: (GPSDate, EmployeeNo, GPSTime)
+
+---
+
+TABLE: expansiondefinition
+  COLUMNS:
+    - Table: VARCHAR(50), NOT NULL, PK
+    - Field: VARCHAR(50), NOT NULL, PK
+    - OrderNo: INTEGER, NOT NULL
+    - Label: VARCHAR(50), NOT NULL
+    - IsFilter: BIT, NOT NULL
+    - IsSelect: BIT, NOT NULL
+    - Type: VARCHAR(10), NOT NULL
+    - MinValue: DECIMAL(18, 4), NOT NULL
+    - MaxValue: DECIMAL(18, 4), NOT NULL
+    - RangeSelector: VARCHAR(40), NOT NULL
+    - IsLookup: BIT, NOT NULL
+    - IsRequired: BIT, NOT NULL
+    - IsEditable: BIT, NOT NULL
+    - RequiredMessage: VARCHAR(255), NOT NULL
+    - Information: VARCHAR(255), NOT NULL
+    - CreatedBy: VARCHAR(16), NOT NULL
+    - CreatedDate: DATETIME, NOT NULL
+    - ChangedBy: VARCHAR(16), NOT NULL
+    - ChangedDate: DATETIME, NOT NULL
+  PRIMARY KEY: (Table, Field)
+
+---
+
+TABLE: expansionformtable
+  COLUMNS:
+    - Form: VARCHAR(50), NOT NULL, PK
+    - Table: VARCHAR(50), NOT NULL, PK
+  PRIMARY KEY: (Form, Table)
+
+---
+
+TABLE: expansionhook
+  COLUMNS:
+    - Form: VARCHAR(50), NOT NULL, PK
+    - FormParameter: VARCHAR(50), NOT NULL, PK
+    - Enabled: BIT, NOT NULL
+    - References: MEDIUMTEXT, NOT NULL
+    - SourceCode: MEDIUMTEXT, NOT NULL
+    - CreatedBy: VARCHAR(16), NOT NULL
+    - CreatedDate: DATETIME, NOT NULL
+    - ChangedBy: VARCHAR(16), NOT NULL
+    - ChangedDate: DATETIME, NOT NULL
+  PRIMARY KEY: (Form, FormParameter)
+
+---
+
+TABLE: expansionhookhistory
+  COLUMNS:
+    - Form: VARCHAR(50), NOT NULL, PK
+    - FormParameter: VARCHAR(50), NOT NULL, PK
+    - Version: INTEGER, NOT NULL, PK
+    - Description: VARCHAR(1024), NOT NULL
+    - SourceCode: TEXT, NOT NULL
+    - CreatedBy: VARCHAR(16), NOT NULL
+    - CreatedDate: DATETIME, NOT NULL
+  PRIMARY KEY: (Form, FormParameter, Version)
+
+---
+
+TABLE: expansionlookup
+  COLUMNS:
+    - Table: VARCHAR(50), NOT NULL, PK
+    - Field: VARCHAR(50), NOT NULL, PK
+    - Value: VARCHAR(50), NOT NULL, PK
+    - CreatedBy: VARCHAR(16), NOT NULL
+    - CreatedDate: DATETIME, NOT NULL
+    - ChangedBy: VARCHAR(16), NOT NULL
+    - ChangedDate: DATETIME, NOT NULL
+  PRIMARY KEY: (Table, Field, Value)
+
+---
+
+TABLE: expansionui
+  COLUMNS:
+    - Form: VARCHAR(50), NOT NULL, PK
+    - Table: VARCHAR(50), NOT NULL, PK
+    - Field: VARCHAR(50), NOT NULL, PK
+    - IsDetail: BIT, NOT NULL
+    - CreatedBy: VARCHAR(16), NOT NULL
+    - CreatedDate: DATETIME, NOT NULL
+    - ChangedBy: VARCHAR(16), NOT NULL
+    - ChangedDate: DATETIME, NOT NULL
+  PRIMARY KEY: (Form, Table, Field)
+
+---
+
+TABLE: files
+  COLUMNS:
+    - DocNo: VARCHAR(15), NOT NULL, PK
+    - Filename: VARCHAR(255), NOT NULL, PK
+    - Size: INTEGER, NOT NULL
+    - LastModified: DATETIME, NOT NULL
+    - UploadedDate: DATETIME, NOT NULL
+    - UploadedBy: VARCHAR(16), NOT NULL
+  PRIMARY KEY: (DocNo, Filename)
+
+---
+
+TABLE: formmanagement
+  COLUMNS:
+    - role: VARCHAR(16), NOT NULL, PK
+    - form: VARCHAR(50), NOT NULL, PK
+    - variant: VARCHAR(50), NOT NULL, PK
+    - control: VARCHAR(50), NOT NULL, PK
+    - property: VARCHAR(50), NOT NULL, PK
+    - value: VARCHAR(50), NOT NULL
+  PRIMARY KEY: (role, form, control, property, variant)
+
+---
+
+TABLE: generaljournald
+  COLUMNS:
+    - DocNo: VARCHAR(15), NOT NULL, PK
+    - Number: INTEGER, NOT NULL, PK
+    - AccountNo: VARCHAR(20), NOT NULL
+    - Info: VARCHAR(255), NOT NULL
+    - Currency: VARCHAR(3), NOT NULL
+    - Debet: DECIMAL(18, 4), NOT NULL
+    - Credit: DECIMAL(18, 4), NOT NULL
+    - ExchangeRate: DECIMAL(18, 4), NOT NULL
+    - DebetLocal: DECIMAL(18, 4), NOT NULL
+    - CreditLocal: DECIMAL(18, 4), NOT NULL
+  PRIMARY KEY: (DocNo, Number)
+
+---
+
+TABLE: generaljournalh
+  COLUMNS:
+    - DocNo: VARCHAR(15), NOT NULL, PK
+    - Series: VARCHAR(3), NOT NULL
+    - DocDate: DATE, NOT NULL
+    - TotalDebet: DECIMAL(18, 4), NOT NULL
+    - TotalCredit: DECIMAL(18, 4), NOT NULL
+    - Information: VARCHAR(255), NOT NULL
+    - Status: VARCHAR(20), NOT NULL
+    - PrintCounter: INTEGER, NOT NULL
+    - PrintedBy: VARCHAR(16), NOT NULL
+    - PrintedDate: DATETIME
+    - CreatedBy: VARCHAR(16), NOT NULL
+    - CreatedDate: DATETIME, NOT NULL
+    - ChangedBy: VARCHAR(16), NOT NULL
+    - ChangedDate: DATETIME, NOT NULL
+  PRIMARY KEY: (DocNo)
+
+---
+
+TABLE: goodsissueb
+  COLUMNS:
+    - DocNo: VARCHAR(15), NOT NULL, PK
+    - TagNo: VARCHAR(10), NOT NULL, PK
+    - MaterialCode: VARCHAR(20), NOT NULL, PK
+    - Location: VARCHAR(5), NOT NULL, PK
+    - Zone: VARCHAR(10), NOT NULL, PK
+    - Bin: VARCHAR(10), NOT NULL, PK
+    - Number: INTEGER, NOT NULL, PK
+    - Qty: DECIMAL(18, 4), NOT NULL
+  PRIMARY KEY: (DocNo, MaterialCode, TagNo, Location, Zone, Bin, Number)
+
+---
+
+TABLE: goodsissued
+  COLUMNS:
+    - DocNo: VARCHAR(15), NOT NULL, PK
+    - Number: INTEGER, NOT NULL, PK
+    - MaterialCode: VARCHAR(20), NOT NULL
+    - Info: VARCHAR(1024), NOT NULL
+    - TagNo: VARCHAR(10), NOT NULL, PK
+    - Unit: VARCHAR(5), NOT NULL
+    - Qty: DECIMAL(18, 4), NOT NULL
+    - BaseQty: DECIMAL(18, 4), NOT NULL
+    - QtyReturn: DECIMAL(18, 4), NOT NULL
+    - QtyNetto: DECIMAL(18, 4), NOT NULL
+  PRIMARY KEY: (DocNo, Number, TagNo)
+  FOREIGN KEYS:
+    - (MaterialCode, Unit) -> masterunitconversion(MaterialCode, Unit)
+
+---
+
+TABLE: goodsissueh
+  COLUMNS:
+    - DocNo: VARCHAR(15), NOT NULL, PK
+    - Series: VARCHAR(3), NOT NULL
+    - DocDate: DATE, NOT NULL
+    - SODocNo: VARCHAR(15), NOT NULL
+    - CustomerCode: VARCHAR(10), NOT NULL
+    - ShipToCode: VARCHAR(10), NOT NULL
+    - Location: VARCHAR(5), NOT NULL
+    - Zone: VARCHAR(10), NOT NULL
+    - PONo: VARCHAR(50), NOT NULL
+    - VehicleNo: VARCHAR(10), NOT NULL
+    - PackingListNo: VARCHAR(15), NOT NULL
+    - ShipmentDocNo: VARCHAR(15), NOT NULL
+    - Information: VARCHAR(255), NOT NULL
+    - Status: VARCHAR(20), NOT NULL
+    - PrintCounter: INTEGER, NOT NULL
+    - PrintedBy: VARCHAR(16)
+    - PrintedDate: DATETIME
+    - CreatedBy: VARCHAR(16), NOT NULL
+    - CreatedDate: DATETIME, NOT NULL
+    - ChangedBy: VARCHAR(16), NOT NULL
+    - ChangedDate: DATETIME, NOT NULL
+  PRIMARY KEY: (DocNo)
+
+---
+
+TABLE: goodsreceiptd
+  COLUMNS:
+    - DocNo: VARCHAR(15), NOT NULL, PK
+    - Number: INTEGER, NOT NULL, PK
+    - MaterialCode: VARCHAR(20), NOT NULL, PK
+    - Info: VARCHAR(1024), NOT NULL
+    - BatchNo: VARCHAR(20), NOT NULL
+    - BatchInfo: VARCHAR(50), NOT NULL
+    - ExpiryDate: DATE
+    - TagNo: VARCHAR(10), NOT NULL, PK
+    - Unit: VARCHAR(5), NOT NULL
+    - Qty: DECIMAL(18, 4), NOT NULL
+  PRIMARY KEY: (DocNo, Number, MaterialCode, TagNo)
+  FOREIGN KEYS:
+    - (MaterialCode, Unit) -> masterunitconversion(MaterialCode, Unit)
+
+---
+
+TABLE: goodsreceipth
+  COLUMNS:
+    - DocNo: VARCHAR(15), NOT NULL, PK
+    - Series: VARCHAR(3), NOT NULL
+    - DocDate: DATE, NOT NULL
+    - SupplierCode: VARCHAR(10), NOT NULL
+    - PODocNo: VARCHAR(15), NOT NULL
+    - Location: VARCHAR(5), NOT NULL
+    - Zone: VARCHAR(10), NOT NULL
+    - SupplierDlvDocNo: VARCHAR(20), NOT NULL
+    - VehicleNo: VARCHAR(10), NOT NULL
+    - Information: VARCHAR(255), NOT NULL
+    - Status: VARCHAR(20), NOT NULL
+    - PrintCounter: INTEGER, NOT NULL
+    - PrintedBy: VARCHAR(16)
+    - PrintedDate: DATETIME
+    - CreatedBy: VARCHAR(16), NOT NULL
+    - CreatedDate: DATETIME, NOT NULL
+    - ChangedBy: VARCHAR(16), NOT NULL
+    - ChangedDate: DATETIME, NOT NULL
+  PRIMARY KEY: (DocNo)
+
+---
+
+TABLE: hrattendance
+  COLUMNS:
+    - AttendanceDate: DATE, NOT NULL, PK
+    - EmployeeNo: VARCHAR(20), NOT NULL, PK
+    - WorkingStartTime: DATETIME
+    - WorkingEndTime: DATETIME
+    - Break1StartTime: DATETIME
+    - Break1EndTime: DATETIME
+    - Break2StartTime: DATETIME
+    - Break2EndTime: DATETIME
+    - Shift: VARCHAR(20), NOT NULL
+    - WorkingDuration: DECIMAL(18, 4), NOT NULL
+    - Break1Duration: DECIMAL(18, 4), NOT NULL
+    - Break2Duration: DECIMAL(18, 4), NOT NULL
+    - NettoWorkingDuration: DECIMAL(18, 4), NOT NULL
+    - StartEarlyMinute: DECIMAL(18, 4), NOT NULL
+    - StartLateMinute: DECIMAL(18, 4), NOT NULL
+    - EndEarlyMinute: DECIMAL(18, 4), NOT NULL
+    - EndLateMinute: DECIMAL(18, 4), NOT NULL
+    - Overtime: DECIMAL(18, 4), NOT NULL
+    - IsValid: BIT, NOT NULL
+    - DocNo: VARCHAR(15), NOT NULL
+    - Problem: VARCHAR(255), NOT NULL
+    - CreatedBy: VARCHAR(16), NOT NULL
+    - CreatedDate: DATETIME, NOT NULL
+  PRIMARY KEY: (AttendanceDate, EmployeeNo)
+
+---
+
+TABLE: hrattendanceoriginal
+  COLUMNS:
+    - AttendanceDate: DATE, NOT NULL, PK
+    - EmployeeNo: VARCHAR(20), NOT NULL, PK
+    - WorkingStartTime: DATETIME
+    - WorkingEndTime: DATETIME
+    - Break1StartTime: DATETIME
+    - Break1EndTime: DATETIME
+    - Break2StartTime: DATETIME
+    - Break2EndTime: DATETIME
+    - Shift: VARCHAR(20), NOT NULL
+    - WorkingDuration: DECIMAL(18, 4), NOT NULL
+    - Break1Duration: DECIMAL(18, 4), NOT NULL
+    - Break2Duration: DECIMAL(18, 4), NOT NULL
+    - NettoWorkingDuration: DECIMAL(18, 4), NOT NULL
+    - StartEarlyMinute: DECIMAL(18, 4), NOT NULL
+    - StartLateMinute: DECIMAL(18, 4), NOT NULL
+    - EndEarlyMinute: DECIMAL(18, 4), NOT NULL
+    - EndLateMinute: DECIMAL(18, 4), NOT NULL
+    - Overtime: DECIMAL(18, 4), NOT NULL
+    - IsValid: BIT, NOT NULL
+    - DocNo: VARCHAR(15), NOT NULL
+    - Problem: VARCHAR(255), NOT NULL
+    - CreatedBy: VARCHAR(16), NOT NULL
+    - CreatedDate: DATETIME, NOT NULL
+  PRIMARY KEY: (AttendanceDate, EmployeeNo)
+
+---
+
+TABLE: hrattendancerawmachine
+  COLUMNS:
+    - AttendanceDate: DATETIME, NOT NULL, PK
+    - EmployeeNo: VARCHAR(10), NOT NULL, PK
+    - Machine: VARCHAR(50), NOT NULL
+    - Direction: VARCHAR(5), NOT NULL
+  PRIMARY KEY: (AttendanceDate, EmployeeNo)
+
+---
+
+TABLE: hrchangeshiftd
+  COLUMNS:
+    - DocNo: VARCHAR(15), NOT NULL, PK
+    - EmployeeNo: VARCHAR(10), NOT NULL, PK
+    - NewShift: VARCHAR(20), NOT NULL
+  PRIMARY KEY: (DocNo, EmployeeNo)
+
+---
+
+TABLE: hrchangeshifth
+  COLUMNS:
+    - DocNo: VARCHAR(15), NOT NULL, PK
+    - Series: VARCHAR(3), NOT NULL
+    - DocDate: DATE, NOT NULL
+    - Information: VARCHAR(255), NOT NULL
+    - Status: VARCHAR(20), NOT NULL
+    - IsApproved: BIT, NOT NULL
+    - ApprovedBy: VARCHAR(16)
+    - ApprovedDate: DATETIME
+    - PrintCounter: INTEGER, NOT NULL
+    - PrintedBy: VARCHAR(16)
+    - PrintedDate: DATETIME
+    - CreatedBy: VARCHAR(16), NOT NULL
+    - CreatedDate: DATETIME, NOT NULL
+    - ChangedBy: VARCHAR(16), NOT NULL
+    - ChangedDate: DATETIME, NOT NULL
+  PRIMARY KEY: (DocNo)
+
+---
+
+TABLE: hrgeneratequotad
+  COLUMNS:
+    - DocNo: VARCHAR(15), NOT NULL, PK
+    - EmployeeNo: VARCHAR(10), NOT NULL, PK
+    - QuotaValue: DECIMAL(18, 4), NOT NULL
+  PRIMARY KEY: (DocNo, EmployeeNo)
+
+---
+
+TABLE: hrgeneratequotah
+  COLUMNS:
+    - DocNo: VARCHAR(15), NOT NULL, PK
+    - Series: VARCHAR(3), NOT NULL
+    - DocDate: DATE, NOT NULL
+    - Quota: VARCHAR(20), NOT NULL
+    - StartDate: DATE, NOT NULL
+    - EndDate: DATE, NOT NULL
+    - Information: VARCHAR(255), NOT NULL
+    - Status: VARCHAR(20), NOT NULL
+    - IsApproved: BIT, NOT NULL
+    - ApprovedBy: VARCHAR(16)
+    - ApprovedDate: DATETIME
+    - PrintCounter: INTEGER, NOT NULL
+    - PrintedBy: VARCHAR(16)
+    - PrintedDate: DATETIME
+    - CreatedBy: VARCHAR(16), NOT NULL
+    - CreatedDate: DATETIME, NOT NULL
+    - ChangedBy: VARCHAR(16), NOT NULL
+    - ChangedDate: DATETIME, NOT NULL
+  PRIMARY KEY: (DocNo)
+
+---
+
+TABLE: hrirregularpaymentd
+  COLUMNS:
+    - DocNo: VARCHAR(15), NOT NULL, PK
+    - EmployeeNo: VARCHAR(10), NOT NULL, PK
+    - Value: DECIMAL(18, 4), NOT NULL
+  PRIMARY KEY: (DocNo, EmployeeNo)
+
+---
+
+TABLE: hrirregularpaymenth
+  COLUMNS:
+    - DocNo: VARCHAR(15), NOT NULL, PK
+    - Series: VARCHAR(3), NOT NULL
+    - DocDate: DATE, NOT NULL
+    - IsDeduction: BIT, NOT NULL
+    - Type: VARCHAR(20), NOT NULL
+    - Information: VARCHAR(255), NOT NULL
+    - Status: VARCHAR(20), NOT NULL
+    - IsApproved: BIT, NOT NULL
+    - ApprovedBy: VARCHAR(16)
+    - ApprovedDate: DATETIME
+    - PrintCounter: INTEGER, NOT NULL
+    - PrintedBy: VARCHAR(16)
+    - PrintedDate: DATETIME
+    - CreatedBy: VARCHAR(16), NOT NULL
+    - CreatedDate: DATETIME, NOT NULL
+    - ChangedBy: VARCHAR(16), NOT NULL
+    - ChangedDate: DATETIME, NOT NULL
+  PRIMARY KEY: (DocNo)
+
+---
+
+TABLE: hrloand
+  COLUMNS:
+    - DocNo: VARCHAR(15), NOT NULL, PK
+    - Number: INTEGER, NOT NULL, PK
+    - PaymentDate: DATE, NOT NULL
+    - PaymentValue: DECIMAL(18, 4), NOT NULL
+    - IsPaidAutomatic: BIT, NOT NULL
+    - IsPaidManual: BIT, NOT NULL
+    - Info: VARCHAR(255), NOT NULL
+  PRIMARY KEY: (DocNo, Number)
+
+---
+
+TABLE: hrloanh
+  COLUMNS:
+    - DocNo: VARCHAR(15), NOT NULL, PK
+    - Series: VARCHAR(3), NOT NULL
+    - DocDate: DATE, NOT NULL
+    - EmployeeNo: VARCHAR(10), NOT NULL
+    - LoanValue: DECIMAL(18, 4), NOT NULL
+    - PaidValue: DECIMAL(18, 4), NOT NULL
+    - OutstandingValue: DECIMAL(18, 4), NOT NULL
+    - InstallmentValue: DECIMAL(18, 4), NOT NULL
+    - RepeatEvery: VARCHAR(10), NOT NULL
+    - RepeatValue: INTEGER, NOT NULL
+    - StartPaymentDate: DATE, NOT NULL
+    - EndPaymentDate: DATE, NOT NULL
+    - Information: VARCHAR(255), NOT NULL
+    - Status: VARCHAR(20), NOT NULL
+    - IsApproved: BIT, NOT NULL
+    - ApprovedBy: VARCHAR(16)
+    - ApprovedDate: DATETIME
+    - PrintCounter: INTEGER, NOT NULL
+    - PrintedBy: VARCHAR(16)
+    - PrintedDate: DATETIME
+    - CreatedBy: VARCHAR(16), NOT NULL
+    - CreatedDate: DATETIME, NOT NULL
+    - ChangedBy: VARCHAR(16), NOT NULL
+    - ChangedDate: DATETIME, NOT NULL
+  PRIMARY KEY: (DocNo)
+
+---
+
+TABLE: hrovertimed
+  COLUMNS:
+    - DocNo: VARCHAR(15), NOT NULL, PK
+    - EmployeeNo: VARCHAR(10), NOT NULL, PK
+    - StartTime: TIME, NOT NULL
+    - EndTime: TIME, NOT NULL
+    - Duration: DECIMAL(18, 4), NOT NULL
+  PRIMARY KEY: (DocNo, EmployeeNo)
+
+---
+
+TABLE: hrovertimeh
+  COLUMNS:
+    - DocNo: VARCHAR(15), NOT NULL, PK
+    - Series: VARCHAR(3), NOT NULL
+    - DocDate: DATE, NOT NULL
+    - Reason: VARCHAR(50), NOT NULL
+    - Information: VARCHAR(255), NOT NULL
+    - Status: VARCHAR(20), NOT NULL
+    - IsApproved: BIT, NOT NULL
+    - ApprovedBy: VARCHAR(16)
+    - ApprovedDate: DATETIME
+    - PrintCounter: INTEGER, NOT NULL
+    - PrintedBy: VARCHAR(16)
+    - PrintedDate: DATETIME
+    - CreatedBy: VARCHAR(16), NOT NULL
+    - CreatedDate: DATETIME, NOT NULL
+    - ChangedBy: VARCHAR(16), NOT NULL
+    - ChangedDate: DATETIME, NOT NULL
+  PRIMARY KEY: (DocNo)
+
+---
+
+TABLE: hrpayroll
+  COLUMNS:
+    - PayrollDate: DATE, NOT NULL, PK
+    - RootComponent: VARCHAR(50), NOT NULL, PK
+    - EmployeeNo: VARCHAR(20), NOT NULL, PK
+    - Component: VARCHAR(50), NOT NULL, PK
+    - IsFinal: BIT, NOT NULL, PK
+    - Value: DECIMAL(18, 4)
+    - CreatedBy: VARCHAR(16), NOT NULL
+    - CreatedDate: DATETIME, NOT NULL
+  PRIMARY KEY: (PayrollDate, RootComponent, EmployeeNo, Component, IsFinal)
+
+---
+
+TABLE: hrpermissiond
+  COLUMNS:
+    - DocNo: VARCHAR(15), NOT NULL, PK
+    - EmployeeNo: VARCHAR(10), NOT NULL, PK
+    - Shift: VARCHAR(20), NOT NULL
+    - WorkingStartTime: TIME
+    - WorkingEndTime: TIME
+    - Break1StartTime: TIME
+    - Break1EndTime: TIME
+    - Break2StartTime: TIME
+    - Break2EndTime: TIME
+    - QuotaValue: DECIMAL(18, 4), NOT NULL
+  PRIMARY KEY: (DocNo, EmployeeNo)
+
+---
+
+TABLE: hrpermissionh
+  COLUMNS:
+    - DocNo: VARCHAR(15), NOT NULL, PK
+    - Series: VARCHAR(3), NOT NULL
+    - DocDate: DATE, NOT NULL
+    - EndDate: DATE, NOT NULL
+    - PermissionType: VARCHAR(20), NOT NULL
+    - Quota: VARCHAR(20), NOT NULL
+    - Information: VARCHAR(255), NOT NULL
+    - Status: VARCHAR(20), NOT NULL
+    - IsApproved: BIT, NOT NULL
+    - ApprovedBy: VARCHAR(16)
+    - ApprovedDate: DATETIME
+    - PrintCounter: INTEGER, NOT NULL
+    - PrintedBy: VARCHAR(16)
+    - PrintedDate: DATETIME
+    - CreatedBy: VARCHAR(16), NOT NULL
+    - CreatedDate: DATETIME, NOT NULL
+    - ChangedBy: VARCHAR(16), NOT NULL
+    - ChangedDate: DATETIME, NOT NULL
+  PRIMARY KEY: (DocNo)
+
+---
+
+TABLE: hrquota
+  COLUMNS:
+    - StartDate: DATE, NOT NULL, PK
+    - EndDate: DATE, NOT NULL, PK
+    - EmployeeNo: VARCHAR(10), NOT NULL, PK
+    - Quota: VARCHAR(20), NOT NULL, PK
+    - StartValue: DECIMAL(18, 4), NOT NULL
+    - RollOverValue: DECIMAL(18, 4), NOT NULL
+    - UsageValue: DECIMAL(18, 4), NOT NULL
+    - EndValue: DECIMAL(18, 4), NOT NULL
+  PRIMARY KEY: (StartDate, EndDate, EmployeeNo, Quota)
+
+---
+
+TABLE: hrschedule
+  COLUMNS:
+    - ScheduleDate: DATE, NOT NULL, PK
+    - Workgroup: VARCHAR(20), NOT NULL, PK
+    - Shift: VARCHAR(20), NOT NULL
+    - CreatedBy: VARCHAR(16), NOT NULL
+    - CreatedDate: DATETIME, NOT NULL
+  PRIMARY KEY: (ScheduleDate, Workgroup)
+
+---
+
+TABLE: jobcostdistribution
+  COLUMNS:
+    - Periode: DATE, NOT NULL, PK
+    - AccountNo: VARCHAR(20), NOT NULL, PK
+    - Department: VARCHAR(10), NOT NULL, PK
+    - MUDocNo: VARCHAR(15), NOT NULL, PK
+    - JODocNo: VARCHAR(15), NOT NULL, PK
+    - Info: VARCHAR(255), NOT NULL
+    - BaseValue: DECIMAL(18, 4), NOT NULL
+    - Percent: DECIMAL(18, 4), NOT NULL
+    - Cost: DECIMAL(18, 4), NOT NULL
+  PRIMARY KEY: (Periode, AccountNo, Department, MUDocNo, JODocNo)
+
+---
+
+TABLE: joborder
+  COLUMNS:
+    - DocNo: VARCHAR(15), NOT NULL, PK
+    - Series: VARCHAR(3), NOT NULL
+    - PlannedStartDate: DATE, NOT NULL
+    - PlannedFinishDate: DATE, NOT NULL
+    - ActualStartDate: DATE, NOT NULL
+    - ActualStartTime: TIME, NOT NULL
+    - ActualFinishDate: DATE, NOT NULL
+    - ActualFinishTime: TIME, NOT NULL
+    - RequiredDate: DATE, NOT NULL
+    - SODocNo: VARCHAR(15), NOT NULL
+    - IODocNo: VARCHAR(20), NOT NULL
+    - WODocNo: VARCHAR(15), NOT NULL
+    - ParentJODocNo: VARCHAR(15), NOT NULL
+    - Level: INTEGER, NOT NULL
+    - Priority: INTEGER, NOT NULL
+    - Location: VARCHAR(5), NOT NULL
+    - Department: VARCHAR(10), NOT NULL
+    - ExcludeCostDistribution: BIT, NOT NULL
+    - CostDistributionMinMU: DECIMAL(18, 4)
+    - Formula: VARCHAR(40), NOT NULL
+    - MaterialCode: VARCHAR(20), NOT NULL
+    - Unit: VARCHAR(5), NOT NULL
+    - QtyTarget: DECIMAL(18, 4), NOT NULL
+    - QtyOutput: DECIMAL(18, 4), NOT NULL
+    - CheckQtyOutput: BIT, NOT NULL
+    - TotalCost: DECIMAL(18, 4), NOT NULL
+    - Status: VARCHAR(20), NOT NULL
+    - Information: VARCHAR(255), NOT NULL
+    - CreatedBy: VARCHAR(15), NOT NULL
+    - CreatedDate: DATETIME, NOT NULL
+    - ChangedBy: VARCHAR(15), NOT NULL
+    - ChangedDate: DATETIME, NOT NULL
+  PRIMARY KEY: (DocNo)
+  FOREIGN KEYS:
+    - (Location) -> masterlocation(Code)
+    - (MaterialCode, Unit) -> masterunitconversion(MaterialCode, Unit)
+
+---
+
+TABLE: jobresultd
+  COLUMNS:
+    - DocNo: VARCHAR(15), NOT NULL, PK
+    - MaterialCode: VARCHAR(20), NOT NULL, PK
+    - Info: VARCHAR(255), NOT NULL
+    - TagNo: VARCHAR(10), NOT NULL, PK
+    - BatchNo: VARCHAR(20), NOT NULL
+    - BatchInfo: VARCHAR(50), NOT NULL
+    - ExpiryDate: DATE
+    - Unit: VARCHAR(5), NOT NULL
+    - Qty: DECIMAL(18, 4), NOT NULL
+    - COGM: DECIMAL(18, 4), NOT NULL
+    - Cost: DECIMAL(18, 4), NOT NULL
+  PRIMARY KEY: (DocNo, MaterialCode, TagNo)
+  FOREIGN KEYS:
+    - (MaterialCode, Unit) -> masterunitconversion(MaterialCode, Unit)
+
+---
+
+TABLE: jobresultdt
+  COLUMNS:
+    - DocNo: VARCHAR(15), NOT NULL, PK
+    - StartDate: DATE, NOT NULL, PK
+    - StartTime: TIME, NOT NULL, PK
+    - EndDate: DATE, NOT NULL
+    - EndTime: TIME, NOT NULL
+    - Duration: DECIMAL(18, 4), NOT NULL
+    - Reason: VARCHAR(10), NOT NULL
+    - Info: VARCHAR(100), NOT NULL
+  PRIMARY KEY: (DocNo, StartDate, StartTime)
+
+---
+
+TABLE: jobresulth
+  COLUMNS:
+    - DocNo: VARCHAR(15), NOT NULL, PK
+    - Series: VARCHAR(3), NOT NULL
+    - DocDate: DATE, NOT NULL
+    - DocTime: TIME, NOT NULL
+    - JODocNo: VARCHAR(15), NOT NULL
+    - Location: VARCHAR(5), NOT NULL
+    - Machine: VARCHAR(10), NOT NULL
+    - Information: VARCHAR(255), NOT NULL
+    - Status: VARCHAR(20), NOT NULL
+    - PrintCounter: INTEGER, NOT NULL
+    - PrintedBy: VARCHAR(16)
+    - PrintedDate: DATETIME
+    - CreatedBy: VARCHAR(16), NOT NULL
+    - CreatedDate: DATETIME, NOT NULL
+    - ChangedBy: VARCHAR(16), NOT NULL
+    - ChangedDate: DATETIME, NOT NULL
+  PRIMARY KEY: (DocNo)
+  FOREIGN KEYS:
+    - (Location) -> masterlocation(Code)
+
+---
+
+TABLE: jobstandardcost
+  COLUMNS:
+    - Periode: DATE, NOT NULL, PK
+    - JODocNo: VARCHAR(15), NOT NULL, PK
+    - Formula: VARCHAR(40), NOT NULL
+    - MaterialCode: VARCHAR(20), NOT NULL
+    - QtyOutput: DECIMAL(18, 4), NOT NULL
+    - MaterialInput: VARCHAR(20), NOT NULL, PK
+    - QtyInput: DECIMAL(18, 4), NOT NULL
+    - PriceInput: DECIMAL(18, 4), NOT NULL
+  PRIMARY KEY: (Periode, JODocNo, MaterialInput)
+
+---
+
+TABLE: masteraccount
+  COLUMNS:
+    - AccountNo: VARCHAR(20), NOT NULL, PK
+    - Name: VARCHAR(50), NOT NULL
+    - Level: TINYINT, NOT NULL
+    - AccountGroup: VARCHAR(5), NOT NULL
+    - ParentNo: VARCHAR(20), NOT NULL
+    - IsJournal: BIT, NOT NULL
+    - IsCashier: BIT, NOT NULL
+    - Users: VARCHAR(512), NOT NULL
+    - Department: VARCHAR(10), NOT NULL
+    - Currency: VARCHAR(3), NOT NULL
+    - CreatedBy: VARCHAR(16), NOT NULL
+    - CreatedDate: DATETIME, NOT NULL
+    - ChangedBy: VARCHAR(16), NOT NULL
+    - ChangedDate: DATETIME, NOT NULL
+  PRIMARY KEY: (AccountNo)
+
+---
+
+TABLE: masteraccountgroup
+  COLUMNS:
+    - Code: VARCHAR(5), NOT NULL, PK
+    - Name: VARCHAR(40), NOT NULL
+    - CreatedBy: VARCHAR(16), NOT NULL
+    - CreatedDate: DATETIME, NOT NULL
+    - ChangedBy: VARCHAR(16), NOT NULL
+    - ChangedDate: DATETIME, NOT NULL
+  PRIMARY KEY: (Code)
+
+---
+
+TABLE: masterapproval
+  COLUMNS:
+    - Series: VARCHAR(3), NOT NULL, PK
+    - MinValue: DECIMAL(18, 4), NOT NULL, PK
+    - MaxValue: DECIMAL(18, 4), NOT NULL, PK
+    - Users: VARCHAR(2048), NOT NULL
+    - CreatedBy: VARCHAR(16), NOT NULL
+    - CreatedDate: DATETIME, NOT NULL
+    - ChangedBy: VARCHAR(16), NOT NULL
+    - ChangedDate: DATETIME, NOT NULL
+  PRIMARY KEY: (Series, MinValue, MaxValue)
+
+---
+
+TABLE: masterbank
+  COLUMNS:
+    - Code: VARCHAR(5), NOT NULL, PK
+    - Name: VARCHAR(40), NOT NULL
+    - CreatedBy: VARCHAR(16), NOT NULL
+    - CreatedDate: DATETIME, NOT NULL
+    - ChangedBy: VARCHAR(16), NOT NULL
+    - ChangedDate: DATETIME, NOT NULL
+  PRIMARY KEY: (Code)
+
+---
+
+TABLE: masterbin
+  COLUMNS:
+    - Location: VARCHAR(5), NOT NULL, PK
+    - Zone: VARCHAR(10), NOT NULL, PK
+    - Code: VARCHAR(10), NOT NULL, PK
+    - Name: VARCHAR(40), NOT NULL
+    - Type: VARCHAR(15), NOT NULL
+    - VolumeCapacity: DECIMAL(18, 0), NOT NULL
+    - CreatedBy: VARCHAR(16), NOT NULL
+    - CreatedDate: DATETIME
+    - ChangedBy: VARCHAR(16), NOT NULL
+    - ChangedDate: DATETIME
+  PRIMARY KEY: (Location, Zone, Code)
+
+---
+
+TABLE: masterbomcoproduct
+  COLUMNS:
+    - Formula: VARCHAR(40), NOT NULL, PK
+    - MaterialCode: VARCHAR(20), NOT NULL, PK
+    - Unit: VARCHAR(5), NOT NULL
+    - Qty: DECIMAL(18, 4), NOT NULL
+    - PercentValue: DECIMAL(18, 4), NOT NULL
+  PRIMARY KEY: (Formula, MaterialCode)
+
+---
+
+TABLE: masterbomd
+  COLUMNS:
+    - Formula: VARCHAR(40), NOT NULL, PK
+    - MaterialCode: VARCHAR(20), NOT NULL, PK
+    - Unit: VARCHAR(5), NOT NULL
+    - Qty: DECIMAL(18, 4), NOT NULL
+  PRIMARY KEY: (Formula, MaterialCode)
+  FOREIGN KEYS:
+    - (MaterialCode, Unit) -> masterunitconversion(MaterialCode, Unit)
+
+---
+
+TABLE: masterbomh
+  COLUMNS:
+    - Formula: VARCHAR(40), NOT NULL, PK
+    - MaterialCode: VARCHAR(20), NOT NULL
+    - Unit: VARCHAR(5), NOT NULL
+    - Qty: DECIMAL(18, 4), NOT NULL
+    - IsAverageCOGM: BIT, NOT NULL
+    - CompositionCode: VARCHAR(40), NOT NULL
+    - CreatedBy: VARCHAR(16), NOT NULL
+    - CreatedDate: DATETIME, NOT NULL
+    - ChangedBy: VARCHAR(16), NOT NULL
+    - ChangedDate: DATETIME, NOT NULL
+  PRIMARY KEY: (Formula)
+  FOREIGN KEYS:
+    - (MaterialCode, Unit) -> masterunitconversion(MaterialCode, Unit)
+
+---
+
+TABLE: masterbudgetd
+  COLUMNS:
+    - Code: VARCHAR(15), NOT NULL, PK
+    - Year: INTEGER, NOT NULL, PK
+    - AccountNo: VARCHAR(20), NOT NULL, PK
+    - Budget: DECIMAL(18, 4), NOT NULL
+  PRIMARY KEY: (Code, Year, AccountNo)
+
+---
+
+TABLE: masterbudgeth
+  COLUMNS:
+    - Code: VARCHAR(15), NOT NULL, PK
+    - Year: INTEGER, NOT NULL, PK
+    - Name: VARCHAR(100), NOT NULL
+    - CreatedBy: VARCHAR(16), NOT NULL
+    - CreatedDate: DATETIME, NOT NULL
+    - ChangedBy: VARCHAR(16), NOT NULL
+    - ChangedDate: DATETIME, NOT NULL
+  PRIMARY KEY: (Code, Year)
+
+---
+
+TABLE: masterbusinessunit
+  COLUMNS:
+    - Code: VARCHAR(20), NOT NULL, PK
+    - Name: VARCHAR(50), NOT NULL
+    - CreatedBy: VARCHAR(16), NOT NULL
+    - CreatedDate: DATETIME, NOT NULL
+    - ChangedBy: VARCHAR(16), NOT NULL
+    - ChangedDate: DATETIME, NOT NULL
+  PRIMARY KEY: (Code)
+
+---
+
+TABLE: mastercashflowd
+  COLUMNS:
+    - CashflowGroup: VARCHAR(15), NOT NULL, PK
+    - Number: INTEGER, NOT NULL, PK
+    - AccountNo: VARCHAR(20), NOT NULL, PK
+  PRIMARY KEY: (CashflowGroup, Number, AccountNo)
+
+---
+
+TABLE: mastercashflowh
+  COLUMNS:
+    - CashflowGroup: VARCHAR(15), NOT NULL, PK
+    - Number: INTEGER, NOT NULL, PK
+    - ItemText: VARCHAR(100), NOT NULL
+    - CreatedBy: VARCHAR(16), NOT NULL
+    - CreatedDate: DATETIME, NOT NULL
+    - ChangedBy: VARCHAR(16), NOT NULL
+    - ChangedDate: DATETIME, NOT NULL
+  PRIMARY KEY: (CashflowGroup, Number)
+
+---
+
+TABLE: mastercfdumptruck
+  COLUMNS:
+    - Code: VARCHAR(10), NOT NULL, PK
+    - LicensePlate: VARCHAR(10), NOT NULL
+    - Length: DECIMAL(18, 4), NOT NULL
+    - Width: DECIMAL(18, 4), NOT NULL
+    - Height: DECIMAL(18, 4), NOT NULL
+    - Volume: DECIMAL(18, 4), NOT NULL
+    - CreatedBy: VARCHAR(16), NOT NULL
+    - CreatedDate: DATETIME, NOT NULL
+    - ChangedBy: VARCHAR(16), NOT NULL
+    - ChangedDate: DATETIME, NOT NULL
+  PRIMARY KEY: (Code)
+
+---
+
+TABLE: masterchatbotpath
+  COLUMNS:
+    - Path: VARCHAR(255), NOT NULL, PK
+    - Roles: VARCHAR(255), NOT NULL
+    - CreatedBy: VARCHAR(16), NOT NULL
+    - CreatedDate: DATETIME, NOT NULL
+    - ChangedBy: VARCHAR(16), NOT NULL
+    - ChangedDate: DATETIME, NOT NULL
+  PRIMARY KEY: (Path)
+
+---
+
+TABLE: masterchatbotschedule
+  COLUMNS:
+    - ID: VARCHAR(50), NOT NULL, PK
+    - StateID: VARCHAR(50), NOT NULL
+    - Schedule: VARCHAR(50), NOT NULL
+    - Enabled: BIT, NOT NULL
+    - Multicast: BIT, NOT NULL
+    - AddParam: VARCHAR(255), NOT NULL
+    - Roles: VARCHAR(255), NOT NULL
+    - CreatedBy: VARCHAR(16), NOT NULL
+    - CreatedDate: DATETIME, NOT NULL
+    - ChangedBy: VARCHAR(16), NOT NULL
+    - ChangedDate: DATETIME, NOT NULL
+  PRIMARY KEY: (ID)
+
+---
+
+TABLE: masterchatbotstate
+  COLUMNS:
+    - ID: VARCHAR(50), NOT NULL, PK
+    - StateType: VARCHAR(10), NOT NULL
+    - Description: VARCHAR(255), NOT NULL
+    - Param: VARCHAR(50), NOT NULL
+    - Accept: VARCHAR(20), NOT NULL
+    - Keywords: VARCHAR(255), NOT NULL
+    - Answer: VARCHAR(255), NOT NULL
+    - Service: VARCHAR(50), NOT NULL
+    - Help: VARCHAR(255), NOT NULL
+    - AddParam: VARCHAR(255), NOT NULL
+    - QueryFunction: TEXT, NOT NULL
+    - MessageFunction: TEXT, NOT NULL
+    - Roles: VARCHAR(255), NOT NULL
+    - CreatedBy: VARCHAR(16), NOT NULL
+    - CreatedDate: DATETIME, NOT NULL
+    - ChangedBy: VARCHAR(16), NOT NULL
+    - ChangedDate: DATETIME, NOT NULL
+  PRIMARY KEY: (ID)
+
+---
+
+TABLE: mastercity
+  COLUMNS:
+    - Country: VARCHAR(5), NOT NULL, PK
+    - Province: VARCHAR(20), NOT NULL, PK
+    - City: VARCHAR(50), NOT NULL, PK
+    - CreatedBy: VARCHAR(16), NOT NULL
+    - CreatedDate: DATETIME, NOT NULL
+    - ChangedBy: VARCHAR(16), NOT NULL
+    - ChangedDate: DATETIME, NOT NULL
+  PRIMARY KEY: (Country, Province, City)
+
+---
+
+TABLE: mastercollector
+  COLUMNS:
+    - Code: VARCHAR(10), NOT NULL, PK
+    - Name: VARCHAR(40), NOT NULL
+    - Address: VARCHAR(80), NOT NULL
+    - City: VARCHAR(20), NOT NULL
+    - Phone: VARCHAR(20), NOT NULL
+    - Mobile: VARCHAR(20), NOT NULL
+    - CreatedBy: VARCHAR(16), NOT NULL
+    - CreatedDate: DATETIME, NOT NULL
+    - ChangedBy: VARCHAR(16), NOT NULL
+    - ChangedDate: DATETIME, NOT NULL
+  PRIMARY KEY: (Code)
+
+---
+
+TABLE: mastercompositiond
+  COLUMNS:
+    - Code: VARCHAR(40), NOT NULL, PK
+    - MaterialCode: VARCHAR(20), NOT NULL, PK
+    - Unit: VARCHAR(5), NOT NULL
+    - Percentage: DECIMAL(18, 4), NOT NULL
+  PRIMARY KEY: (Code, MaterialCode)
+  FOREIGN KEYS:
+    - (MaterialCode, Unit) -> masterunitconversion(MaterialCode, Unit)
+
+---
+
+TABLE: mastercompositionh
+  COLUMNS:
+    - Code: VARCHAR(40), NOT NULL, PK
+    - Description: VARCHAR(255), NOT NULL
+    - CreatedBy: VARCHAR(16), NOT NULL
+    - CreatedDate: DATETIME, NOT NULL
+    - ChangedBy: VARCHAR(16), NOT NULL
+    - ChangedDate: DATETIME, NOT NULL
+  PRIMARY KEY: (Code)
+
+---
+
+TABLE: mastercostdistribution
+  COLUMNS:
+    - AccountNo: VARCHAR(20), NOT NULL, PK
+    - Department: VARCHAR(10), NOT NULL, PK
+    - StartDate: DATE, NOT NULL, PK
+    - EndDate: DATE, NOT NULL
+    - Percent: DECIMAL(18, 4), NOT NULL
+    - CreatedBy: VARCHAR(16), NOT NULL
+    - CreatedDate: DATETIME, NOT NULL
+    - ChangedBy: VARCHAR(16), NOT NULL
+    - ChangedDate: DATETIME, NOT NULL
+  PRIMARY KEY: (AccountNo, Department, StartDate)
+
+---
+
+TABLE: mastercountry
+  COLUMNS:
+    - Code: VARCHAR(5), NOT NULL, PK
+    - Name: VARCHAR(40), NOT NULL
+    - CreatedBy: VARCHAR(16), NOT NULL
+    - CreatedDate: DATETIME, NOT NULL
+    - ChangedBy: VARCHAR(16), NOT NULL
+    - ChangedDate: DATETIME, NOT NULL
+  PRIMARY KEY: (Code)
+
+---
+
+TABLE: mastercubeh
+  COLUMNS:
+    - Name: VARCHAR(50), NOT NULL, PK
+    - Description: VARCHAR(100), NOT NULL
+    - Query: TEXT, NOT NULL
+    - CreatedBy: VARCHAR(16), NOT NULL
+    - CreatedDate: DATETIME, NOT NULL
+    - ChangedBy: VARCHAR(16), NOT NULL
+    - ChangedDate: DATETIME, NOT NULL
+  PRIMARY KEY: (Name)
+
+---
+
+TABLE: mastercurrency
+  COLUMNS:
+    - Code: VARCHAR(3), NOT NULL, PK
+    - Name: VARCHAR(40), NOT NULL
+    - CreatedBy: VARCHAR(16), NOT NULL
+    - CreatedDate: DATETIME, NOT NULL
+    - ChangedBy: VARCHAR(16), NOT NULL
+    - ChangedDate: DATETIME, NOT NULL
+  PRIMARY KEY: (Code)
+
+---
+
+TABLE: mastercustomer
+  COLUMNS:
+    - Code: VARCHAR(10), NOT NULL, PK
+    - Name: VARCHAR(120), NOT NULL
+    - Address: VARCHAR(80), NOT NULL
+    - Address2: VARCHAR(80), NOT NULL
+    - City: VARCHAR(20), NOT NULL
+    - Country: VARCHAR(5), NOT NULL
+    - Phone: VARCHAR(50), NOT NULL
+    - Fax: VARCHAR(50), NOT NULL
+    - Email: VARCHAR(50), NOT NULL
+    - Contact: VARCHAR(40), NOT NULL
+    - Mobile: VARCHAR(50), NOT NULL
+    - WhatsAppSession: VARCHAR(20), NOT NULL
+    - WhatsAppNo: VARCHAR(20), NOT NULL
+    - TaxNumber: VARCHAR(21), NOT NULL
+    - CustomerGroup: VARCHAR(10), NOT NULL
+    - PriceListType: VARCHAR(5), NOT NULL
+    - SalesArea1: VARCHAR(10), NOT NULL
+    - SalesArea2: VARCHAR(10), NOT NULL
+    - SalesArea3: VARCHAR(10), NOT NULL
+    - TOP: INTEGER, NOT NULL
+    - Currency: VARCHAR(3), NOT NULL
+    - Limit: DECIMAL(18, 4), NOT NULL
+    - TransactionType: VARCHAR(20), NOT NULL
+    - TransactionType2: VARCHAR(20), NOT NULL
+    - CutPPh: BIT, NOT NULL
+    - IsBlacklisted: BIT, NOT NULL
+    - IsDeleted: BIT, NOT NULL
+    - Latitude: DECIMAL(18, 7), NOT NULL
+    - Longitude: DECIMAL(18, 7), NOT NULL
+    - Information: VARCHAR(255), NOT NULL
+    - CreatedBy: VARCHAR(16), NOT NULL
+    - CreatedDate: DATETIME, NOT NULL
+    - ChangedBy: VARCHAR(16), NOT NULL
+    - ChangedDate: DATETIME, NOT NULL
+    - Znowa: VARCHAR(1)
+  PRIMARY KEY: (Code)
+  FOREIGN KEYS:
+    - (Country) -> mastercountry(Code)
+    - (CustomerGroup) -> mastercustomergroup(Code)
+    - (Currency) -> mastercurrency(Code)
+    - (PriceListType) -> masterpricelisttype(Code)
+
+---
+
+TABLE: mastercustomergroup
+  COLUMNS:
+    - Code: VARCHAR(5), NOT NULL, PK
+    - Name: VARCHAR(40), NOT NULL
+    - CreatedBy: VARCHAR(16), NOT NULL
+    - CreatedDate: DATETIME, NOT NULL
+    - ChangedBy: VARCHAR(16), NOT NULL
+    - ChangedDate: DATETIME, NOT NULL
+  PRIMARY KEY: (Code)
+
+---
+
+TABLE: mastercustomerpartner
+  COLUMNS:
+    - CustomerCode: VARCHAR(10), NOT NULL, PK
+    - PartnerFunc: VARCHAR(10), NOT NULL, PK
+    - PartnerCode: VARCHAR(10), NOT NULL, PK
+  PRIMARY KEY: (CustomerCode, PartnerFunc, PartnerCode)
+  FOREIGN KEYS:
+    - (CustomerCode) -> mastercustomer(Code)
+
+---
+
+TABLE: mastercustomervisitscheduled
+  COLUMNS:
+    - EmployeeNo: VARCHAR(10), NOT NULL, PK
+    - CustomerCode: VARCHAR(10), NOT NULL, PK
+    - DivideWeek: INTEGER, NOT NULL
+    - RemainderWeek: INTEGER, NOT NULL
+    - Sunday: BIT, NOT NULL
+    - Monday: BIT, NOT NULL
+    - Tuesday: BIT, NOT NULL
+    - Wednesday: BIT, NOT NULL
+    - Thursday: BIT, NOT NULL
+    - Friday: BIT, NOT NULL
+    - Saturday: BIT, NOT NULL
+  PRIMARY KEY: (EmployeeNo, CustomerCode)
+
+---
+
+TABLE: mastercustomervisitscheduleh
+  COLUMNS:
+    - EmployeeNo: VARCHAR(10), NOT NULL, PK
+    - Series: VARCHAR(3), NOT NULL
+    - Location: VARCHAR(5), NOT NULL
+    - Information: VARCHAR(255), NOT NULL
+    - CreatedBy: VARCHAR(16), NOT NULL
+    - CreatedDate: DATETIME, NOT NULL
+    - ChangedBy: VARCHAR(16), NOT NULL
+    - ChangedDate: DATETIME, NOT NULL
+  PRIMARY KEY: (EmployeeNo)
+
+---
+
+TABLE: mastercustomervisitscheduleo
+  COLUMNS:
+    - EmployeeNo: VARCHAR(10), NOT NULL, PK
+    - DayOfWeek: VARCHAR(10), NOT NULL, PK
+    - DivideWeek: INTEGER, NOT NULL, PK
+    - RemainderWeek: INTEGER, NOT NULL, PK
+    - CustomerCode: VARCHAR(10), NOT NULL, PK
+    - OrderNo: INTEGER, NOT NULL
+  PRIMARY KEY: (EmployeeNo, DayOfWeek, DivideWeek, RemainderWeek, CustomerCode)
+
+---
+
+TABLE: masterdashboardd
+  COLUMNS:
+    - Code: VARCHAR(20), NOT NULL, PK
+    - ItemCode: VARCHAR(20), NOT NULL, PK
+    - Width: INTEGER, NOT NULL
+    - Height: INTEGER, NOT NULL
+    - Left: INTEGER, NOT NULL
+    - Top: INTEGER, NOT NULL
+  PRIMARY KEY: (Code, ItemCode)
+
+---
+
+TABLE: masterdashboardh
+  COLUMNS:
+    - Code: VARCHAR(20), NOT NULL, PK
+    - Description: VARCHAR(100), NOT NULL
+    - Width: INTEGER, NOT NULL
+    - Height: INTEGER, NOT NULL
+    - Users: VARCHAR(512), NOT NULL
+    - Layout: MEDIUMTEXT, NOT NULL
+    - InitializationCode: MEDIUMTEXT, NOT NULL
+    - Password: VARCHAR(50), NOT NULL
+    - CreatedBy: VARCHAR(16), NOT NULL
+    - CreatedDate: DATETIME, NOT NULL
+    - ChangedBy: VARCHAR(16), NOT NULL
+    - ChangedDate: DATETIME, NOT NULL
+  PRIMARY KEY: (Code)
+
+---
+
+TABLE: masterdashboarditem
+  COLUMNS:
+    - Code: VARCHAR(20), NOT NULL, PK
+    - Name: VARCHAR(100), NOT NULL
+    - Query: MEDIUMTEXT, NOT NULL
+    - Sort: VARCHAR(50), NOT NULL
+    - LayoutCode: MEDIUMTEXT, NOT NULL
+    - CreatedBy: VARCHAR(16), NOT NULL
+    - CreatedDate: DATETIME, NOT NULL
+    - ChangedBy: VARCHAR(16), NOT NULL
+    - ChangedDate: DATETIME, NOT NULL
+  PRIMARY KEY: (Code)
+
+---
+
+TABLE: masterdashboarditemp
+  COLUMNS:
+    - Code: VARCHAR(20), NOT NULL, PK
+    - ParameterName: VARCHAR(50), NOT NULL, PK
+    - ParameterValue: VARCHAR(100), NOT NULL
+  PRIMARY KEY: (Code, ParameterName)
+
+---
+
+TABLE: masterdatatransfer
+  COLUMNS:
+    - Mode: VARCHAR(10), NOT NULL, PK
+    - Server: VARCHAR(10), NOT NULL, PK
+    - Table: VARCHAR(30), NOT NULL, PK
+    - Key: VARCHAR(30), NOT NULL
+    - WithDetail: BIT, NOT NULL
+    - Condition: VARCHAR(255), NOT NULL
+    - CreatedBy: VARCHAR(16), NOT NULL
+    - CreatedDate: DATETIME, NOT NULL
+    - ChangedBy: VARCHAR(16), NOT NULL
+    - ChangedDate: DATETIME, NOT NULL
+  PRIMARY KEY: (Mode, Server, Table)
+
+---
+
+TABLE: masterdepartment
+  COLUMNS:
+    - Code: VARCHAR(10), NOT NULL, PK
+    - Name: VARCHAR(40), NOT NULL
+    - CreatedBy: VARCHAR(16), NOT NULL
+    - CreatedDate: DATETIME, NOT NULL
+    - ChangedBy: VARCHAR(16), NOT NULL
+    - ChangedDate: DATETIME, NOT NULL
+  PRIMARY KEY: (Code)
+
+---
+
+TABLE: masterdocumentseries
+  COLUMNS:
+    - Document: VARCHAR(20), NOT NULL, PK
+    - Series: VARCHAR(3), NOT NULL, PK
+    - Description: VARCHAR(255), NOT NULL
+    - Users: VARCHAR(2048), NOT NULL
+    - NeedQC: BIT, NOT NULL
+    - NoTaxNo: BIT, NOT NULL
+    - AutoTaxNo: BIT, NOT NULL
+    - ISO: VARCHAR(30), NOT NULL
+    - BusinessUnit: VARCHAR(20), NOT NULL
+    - CustomerFilter: VARCHAR(512), NOT NULL
+    - CreatedBy: VARCHAR(16), NOT NULL
+    - CreatedDate: DATETIME, NOT NULL
+    - ChangedBy: VARCHAR(16), NOT NULL
+    - ChangedDate: DATETIME, NOT NULL
+  PRIMARY KEY: (Document, Series)
+
+---
+
+TABLE: masterdocumentseriesl
+  COLUMNS:
+    - Document: VARCHAR(20), NOT NULL, PK
+    - Series: VARCHAR(3), NOT NULL, PK
+    - Location: VARCHAR(5), NOT NULL, PK
+  PRIMARY KEY: (Document, Series, Location)
+
+---
+
+TABLE: masterdocumentseriesmt
+  COLUMNS:
+    - Document: VARCHAR(20), NOT NULL, PK
+    - Series: VARCHAR(3), NOT NULL, PK
+    - MaterialType: VARCHAR(5), NOT NULL, PK
+  PRIMARY KEY: (Document, Series, MaterialType)
+
+---
+
+TABLE: masterdocumentseriestt
+  COLUMNS:
+    - Document: VARCHAR(20), NOT NULL, PK
+    - Series: VARCHAR(3), NOT NULL, PK
+    - TransactionType: VARCHAR(20), NOT NULL, PK
+  PRIMARY KEY: (Document, Series, TransactionType)
+
+---
+
+TABLE: masterdowntimereason
+  COLUMNS:
+    - Code: VARCHAR(10), NOT NULL, PK
+    - Description: VARCHAR(40), NOT NULL
+    - CreatedBy: VARCHAR(16), NOT NULL
+    - CreatedDate: DATETIME, NOT NULL
+    - ChangedBy: VARCHAR(16), NOT NULL
+    - ChangedDate: DATETIME, NOT NULL
+  PRIMARY KEY: (Code)
+
+---
+
+TABLE: masterdriver
+  COLUMNS:
+    - Code: VARCHAR(10), NOT NULL, PK
+    - Name: VARCHAR(40), NOT NULL
+    - Address: VARCHAR(80), NOT NULL
+    - City: VARCHAR(20), NOT NULL
+    - Phone: VARCHAR(20), NOT NULL
+    - Mobile: VARCHAR(20), NOT NULL
+    - Password: VARCHAR(45), NOT NULL
+    - CreatedBy: VARCHAR(16), NOT NULL
+    - CreatedDate: DATETIME, NOT NULL
+    - ChangedBy: VARCHAR(16), NOT NULL
+    - ChangedDate: DATETIME, NOT NULL
+  PRIMARY KEY: (Code)
+
+---
+
+TABLE: masteremployeea
+  COLUMNS:
+    - EmployeeNo: VARCHAR(10), NOT NULL, PK
+    - AddressType: VARCHAR(20), NOT NULL, PK
+    - Country: VARCHAR(5), NOT NULL
+    - Province: VARCHAR(20), NOT NULL
+    - City: VARCHAR(50), NOT NULL
+    - Address: VARCHAR(255), NOT NULL
+    - PostalCode: VARCHAR(20), NOT NULL
+    - CreatedBy: VARCHAR(16), NOT NULL
+    - CreatedDate: DATETIME, NOT NULL
+    - ChangedBy: VARCHAR(16), NOT NULL
+    - ChangedDate: DATETIME, NOT NULL
+  PRIMARY KEY: (EmployeeNo, AddressType)
+
+---
+
+TABLE: masteremployeec
+  COLUMNS:
+    - EmployeeNo: VARCHAR(10), NOT NULL, PK
+    - ContactType: VARCHAR(20), NOT NULL, PK
+    - ContactValue: VARCHAR(50), NOT NULL
+    - CreatedBy: VARCHAR(16), NOT NULL
+    - CreatedDate: DATETIME, NOT NULL
+    - ChangedBy: VARCHAR(16), NOT NULL
+    - ChangedDate: DATETIME, NOT NULL
+  PRIMARY KEY: (EmployeeNo, ContactType)
+
+---
+
+TABLE: masteremployeee
+  COLUMNS:
+    - EmployeeNo: VARCHAR(10), NOT NULL, PK
+    - StartYear: INTEGER, NOT NULL, PK
+    - EndYear: INTEGER, NOT NULL, PK
+    - EducationLevel: VARCHAR(20), NOT NULL, PK
+    - InstitutionName: VARCHAR(50), NOT NULL, PK
+    - Subject: VARCHAR(50), NOT NULL, PK
+    - IsCompleted: BIT, NOT NULL
+    - Score: DECIMAL(18, 4), NOT NULL
+    - Country: VARCHAR(5), NOT NULL
+    - Province: VARCHAR(20), NOT NULL
+    - City: VARCHAR(50), NOT NULL
+    - Info: VARCHAR(255), NOT NULL
+    - CreatedBy: VARCHAR(16), NOT NULL
+    - CreatedDate: DATETIME, NOT NULL
+    - ChangedBy: VARCHAR(16), NOT NULL
+    - ChangedDate: DATETIME, NOT NULL
+  PRIMARY KEY: (EmployeeNo, StartYear, EndYear, EducationLevel, InstitutionName, Subject)
+
+---
+
+TABLE: masteremployeeh
+  COLUMNS:
+    - EmployeeNo: VARCHAR(10), NOT NULL, PK
+    - Name: VARCHAR(50), NOT NULL
+    - Gender: CHAR(1), NOT NULL
+    - BirthDate: DATE, NOT NULL
+    - Religion: VARCHAR(20), NOT NULL
+    - IsActive: BIT, NOT NULL
+    - JoinDate: DATE, NOT NULL
+    - ResignDate: DATE
+    - ResignReason: VARCHAR(50), NOT NULL
+    - Information: VARCHAR(1024), NOT NULL
+    - CreatedBy: VARCHAR(16), NOT NULL
+    - CreatedDate: DATETIME, NOT NULL
+    - ChangedBy: VARCHAR(16), NOT NULL
+    - ChangedDate: DATETIME, NOT NULL
+  PRIMARY KEY: (EmployeeNo)
+
+---
+
+TABLE: masteremployeer
+  COLUMNS:
+    - EmployeeNo: VARCHAR(10), NOT NULL, PK
+    - RelationType: VARCHAR(20), NOT NULL, PK
+    - Name: VARCHAR(50), NOT NULL, PK
+    - Gender: CHAR(1), NOT NULL
+    - BirthDate: DATE
+    - Country: VARCHAR(5), NOT NULL
+    - Province: VARCHAR(20), NOT NULL
+    - City: VARCHAR(50), NOT NULL
+    - Address: VARCHAR(255), NOT NULL
+    - IDNo: VARCHAR(50), NOT NULL
+    - PhoneNo: VARCHAR(50), NOT NULL
+    - Info: VARCHAR(255), NOT NULL
+    - CreatedBy: VARCHAR(16), NOT NULL
+    - CreatedDate: DATETIME, NOT NULL
+    - ChangedBy: VARCHAR(16), NOT NULL
+    - ChangedDate: DATETIME, NOT NULL
+  PRIMARY KEY: (EmployeeNo, RelationType, Name)
+
+---
+
+TABLE: masteremployeev
+  COLUMNS:
+    - EmployeeNo: VARCHAR(10), NOT NULL, PK
+    - VariableName: VARCHAR(20), NOT NULL, PK
+    - StartDate: DATE, NOT NULL, PK
+    - EndDate: DATE, NOT NULL
+    - StringValue: VARCHAR(100)
+    - DecimalValue: DECIMAL(18, 4)
+    - BoolValue: BIT
+    - DateValue: DATE
+    - CreatedBy: VARCHAR(16), NOT NULL
+    - CreatedDate: DATETIME, NOT NULL
+    - ChangedBy: VARCHAR(16), NOT NULL
+    - ChangedDate: DATETIME, NOT NULL
+  PRIMARY KEY: (EmployeeNo, VariableName, StartDate)
+
+---
+
+TABLE: masterexchangerate
+  COLUMNS:
+    - Periode: DATE, NOT NULL, PK
+    - Currency: VARCHAR(3), NOT NULL, PK
+    - ExchangeRate: DECIMAL(18, 4), NOT NULL
+    - CreatedBy: VARCHAR(16), NOT NULL
+    - CreatedDate: DATETIME, NOT NULL
+    - ChangedBy: VARCHAR(16), NOT NULL
+    - ChangedDate: DATETIME, NOT NULL
+  PRIMARY KEY: (Periode, Currency)
+
+---
+
+TABLE: masterformshortcut
+  COLUMNS:
+    - Form: VARCHAR(50), NOT NULL, PK
+    - Ctrl: BIT, NOT NULL, PK
+    - Alt: BIT, NOT NULL, PK
+    - Key: VARCHAR(20), NOT NULL, PK
+    - Description: VARCHAR(255), NOT NULL
+    - Instruction: VARCHAR(255), NOT NULL
+    - CreatedBy: VARCHAR(16), NOT NULL
+    - CreatedDate: DATETIME, NOT NULL
+    - ChangedBy: VARCHAR(16), NOT NULL
+    - ChangedDate: DATETIME, NOT NULL
+  PRIMARY KEY: (Form, Ctrl, Alt, Key)
+
+---
+
+TABLE: masterglseriescontent
+  COLUMNS:
+    - GLSeries: VARCHAR(3), NOT NULL, PK
+    - DocType: VARCHAR(20), NOT NULL, PK
+    - DocSeries: VARCHAR(3), NOT NULL, PK
+    - CreatedBy: VARCHAR(16), NOT NULL
+    - CreatedDate: DATETIME
+    - ChangedBy: VARCHAR(16), NOT NULL
+    - ChangedDate: DATETIME
+  PRIMARY KEY: (GLSeries, DocType, DocSeries)
+
+---
+
+TABLE: masterhrcomponent
+  COLUMNS:
+    - Code: VARCHAR(50), NOT NULL, PK
+    - Name: VARCHAR(100), NOT NULL
+    - RootComponent: VARCHAR(50), NOT NULL
+    - IsSaveToDatabase: BIT, NOT NULL
+    - ViewRoles: VARCHAR(1024), NOT NULL
+    - ProcessRoles: VARCHAR(1024), NOT NULL
+    - CreatedBy: VARCHAR(16), NOT NULL
+    - CreatedDate: DATETIME, NOT NULL
+    - ChangedBy: VARCHAR(16), NOT NULL
+    - ChangedDate: DATETIME, NOT NULL
+  PRIMARY KEY: (Code)
+
+---
+
+TABLE: masterhrdynamicvariable
+  COLUMNS:
+    - Name: VARCHAR(20), NOT NULL, PK
+    - Query: TEXT, NOT NULL
+    - CreatedBy: VARCHAR(16), NOT NULL
+    - CreatedDate: DATETIME, NOT NULL
+    - ChangedBy: VARCHAR(16), NOT NULL
+    - ChangedDate: DATETIME, NOT NULL
+  PRIMARY KEY: (Name)
+
+---
+
+TABLE: masterhrfilter
+  COLUMNS:
+    - VariableName: VARCHAR(20), NOT NULL, PK
+    - FilterName: VARCHAR(50), NOT NULL, PK
+    - Roles: VARCHAR(1024), NOT NULL
+    - MenuNames: VARCHAR(2048), NOT NULL
+    - VariableValue: VARCHAR(2048), NOT NULL
+    - CreatedBy: VARCHAR(16), NOT NULL
+    - CreatedDate: DATETIME, NOT NULL
+    - ChangedBy: VARCHAR(16), NOT NULL
+    - ChangedDate: DATETIME, NOT NULL
+  PRIMARY KEY: (VariableName, FilterName)
+
+---
+
+TABLE: masterhrformula
+  COLUMNS:
+    - Component: VARCHAR(50), NOT NULL, PK
+    - StartDate: DATE, NOT NULL, PK
+    - EndDate: DATE, NOT NULL
+    - Number: INTEGER, NOT NULL, PK
+    - Condition: VARCHAR(2048), NOT NULL
+    - Formula: VARCHAR(2048)
+    - CreatedBy: VARCHAR(16), NOT NULL
+    - CreatedDate: DATETIME, NOT NULL
+    - ChangedBy: VARCHAR(16), NOT NULL
+    - ChangedDate: DATETIME, NOT NULL
+  PRIMARY KEY: (Component, StartDate, Number)
+
+---
+
+TABLE: masterhrglobalvariable
+  COLUMNS:
+    - Name: VARCHAR(20), NOT NULL, PK
+    - StartDate: DATE, NOT NULL, PK
+    - EndDate: DATE, NOT NULL
+    - Value: DECIMAL(18, 4)
+    - CreatedBy: VARCHAR(16), NOT NULL
+    - CreatedDate: DATETIME, NOT NULL
+    - ChangedBy: VARCHAR(16), NOT NULL
+    - ChangedDate: DATETIME, NOT NULL
+  PRIMARY KEY: (Name, StartDate)
+
+---
+
+TABLE: masterhrholiday
+  COLUMNS:
+    - HolidayDate: DATE, NOT NULL, PK
+    - Description: VARCHAR(50), NOT NULL
+    - Shift: VARCHAR(20), NOT NULL
+    - ExcludedWorkgroups: VARCHAR(2048), NOT NULL
+    - CreatedBy: VARCHAR(16), NOT NULL
+    - CreatedDate: DATETIME, NOT NULL
+    - ChangedBy: VARCHAR(16), NOT NULL
+    - ChangedDate: DATETIME, NOT NULL
+  PRIMARY KEY: (HolidayDate)
+
+---
+
+TABLE: masterhrorganizationalunit
+  COLUMNS:
+    - Type: VARCHAR(20), NOT NULL, PK
+    - Code: VARCHAR(20), NOT NULL, PK
+    - Name: VARCHAR(50), NOT NULL
+    - Level: INTEGER, NOT NULL
+    - Parent: VARCHAR(20), NOT NULL
+    - IsLeaf: BIT, NOT NULL
+    - CreatedBy: VARCHAR(16), NOT NULL
+    - CreatedDate: DATETIME, NOT NULL
+    - ChangedBy: VARCHAR(16), NOT NULL
+    - ChangedDate: DATETIME, NOT NULL
+  PRIMARY KEY: (Type, Code)
+
+---
+
+TABLE: masterhrperiod
+  COLUMNS:
+    - Code: VARCHAR(20), NOT NULL, PK
+    - Name: VARCHAR(50), NOT NULL
+    - CreatedBy: VARCHAR(16), NOT NULL
+    - CreatedDate: DATETIME, NOT NULL
+    - ChangedBy: VARCHAR(16), NOT NULL
+    - ChangedDate: DATETIME, NOT NULL
+  PRIMARY KEY: (Code)
+
+---
+
+TABLE: masterhrperiodcycle
+  COLUMNS:
+    - Period: VARCHAR(20), NOT NULL, PK
+    - Component: VARCHAR(50), NOT NULL, PK
+    - StartDate: DATE, NOT NULL, PK
+    - EndDate: DATE, NOT NULL
+    - Status: VARCHAR(20), NOT NULL
+    - CreatedBy: VARCHAR(16), NOT NULL
+    - CreatedDate: DATETIME, NOT NULL
+    - ChangedBy: VARCHAR(16), NOT NULL
+    - ChangedDate: DATETIME, NOT NULL
+  PRIMARY KEY: (Period, Component, StartDate)
+
+---
+
+TABLE: masterhrpermissiontype
+  COLUMNS:
+    - Code: VARCHAR(20), NOT NULL, PK
+    - Name: VARCHAR(50), NOT NULL
+    - Quota: VARCHAR(20), NOT NULL
+    - QuotaValue: DECIMAL(18, 4), NOT NULL
+    - QuotaValueFormula: VARCHAR(50), NOT NULL
+    - IsQuotaValueEditable: BIT, NOT NULL
+    - IsMultiDays: BIT, NOT NULL
+    - IsSkipHoliday: BIT, NOT NULL
+    - IsNoAttendance: BIT, NOT NULL
+    - IsPaid: BIT, NOT NULL
+    - IsLossTime: BIT, NOT NULL
+    - IsFixShift: BIT, NOT NULL
+    - IsFixWorkingStartTime: BIT, NOT NULL
+    - IsFixWorkingEndTime: BIT, NOT NULL
+    - IsFixBreak1StartTime: BIT, NOT NULL
+    - IsFixBreak1EndTime: BIT, NOT NULL
+    - IsFixBreak2StartTime: BIT, NOT NULL
+    - IsFixBreak2EndTime: BIT, NOT NULL
+    - IsFixValid: BIT, NOT NULL
+    - CreatedBy: VARCHAR(16), NOT NULL
+    - CreatedDate: DATETIME, NOT NULL
+    - ChangedBy: VARCHAR(16), NOT NULL
+    - ChangedDate: DATETIME, NOT NULL
+  PRIMARY KEY: (Code)
+
+---
+
+TABLE: masterhrquota
+  COLUMNS:
+    - Code: VARCHAR(20), NOT NULL, PK
+    - Name: VARCHAR(50), NOT NULL
+    - MaxValue: DECIMAL(18, 4), NOT NULL
+    - IsAllowNegative: BIT, NOT NULL
+    - IsAutomaticRollOver: BIT, NOT NULL
+    - IsProportional: BIT, NOT NULL
+    - EmployeeCondition: TEXT, NOT NULL
+    - CreatedBy: VARCHAR(16), NOT NULL
+    - CreatedDate: DATETIME, NOT NULL
+    - ChangedBy: VARCHAR(16), NOT NULL
+    - ChangedDate: DATETIME, NOT NULL
+  PRIMARY KEY: (Code)
+
+---
+
+TABLE: masterhrshift
+  COLUMNS:
+    - Code: VARCHAR(20), NOT NULL, PK
+    - StartDate: DATE, NOT NULL, PK
+    - EndDate: DATE, NOT NULL
+    - Name: VARCHAR(50), NOT NULL
+    - WorkingStartTime: TIME, NOT NULL
+    - WorkingEndTime: TIME, NOT NULL
+    - WorkingDuration: DECIMAL(18, 4), NOT NULL
+    - Break1StartTime: TIME, NOT NULL
+    - Break1EndTime: TIME, NOT NULL
+    - Break1Duration: DECIMAL(18, 4), NOT NULL
+    - Break2StartTime: TIME, NOT NULL
+    - Break2EndTime: TIME, NOT NULL
+    - Break2Duration: DECIMAL(18, 4), NOT NULL
+    - NettoWorkingDuration: DECIMAL(18, 4), NOT NULL
+    - CreatedBy: VARCHAR(16), NOT NULL
+    - CreatedDate: DATETIME, NOT NULL
+    - ChangedBy: VARCHAR(16), NOT NULL
+    - ChangedDate: DATETIME, NOT NULL
+  PRIMARY KEY: (Code, StartDate)
+
+---
+
+TABLE: masterhrvariable
+  COLUMNS:
+    - Name: VARCHAR(20), NOT NULL, PK
+    - Label: VARCHAR(50), NOT NULL
+    - Type: CHAR(10), NOT NULL
+    - RangeSelector: VARCHAR(40), NOT NULL
+    - IsRequired: BIT, NOT NULL
+    - ViewRoles: VARCHAR(1024), NOT NULL
+    - EditRoles: VARCHAR(1024), NOT NULL
+    - IsSystem: BIT, NOT NULL
+    - CreatedBy: VARCHAR(16), NOT NULL
+    - CreatedDate: DATETIME, NOT NULL
+    - ChangedBy: VARCHAR(16), NOT NULL
+    - ChangedDate: DATETIME, NOT NULL
+  PRIMARY KEY: (Name)
+
+---
+
+TABLE: masterhrvariableview
+  COLUMNS:
+    - MenuName: VARCHAR(50), NOT NULL, PK
+    - Number: INTEGER, NOT NULL, PK
+    - VariableName: VARCHAR(20), NOT NULL
+    - CreatedBy: VARCHAR(16), NOT NULL
+    - CreatedDate: DATETIME, NOT NULL
+    - ChangedBy: VARCHAR(16), NOT NULL
+    - ChangedDate: DATETIME, NOT NULL
+  PRIMARY KEY: (MenuName, Number)
+
+---
+
+TABLE: masterhrworkgroup
+  COLUMNS:
+    - Code: VARCHAR(20), NOT NULL, PK
+    - Name: VARCHAR(50), NOT NULL
+    - CreatedBy: VARCHAR(16), NOT NULL
+    - CreatedDate: DATETIME, NOT NULL
+    - ChangedBy: VARCHAR(16), NOT NULL
+    - ChangedDate: DATETIME, NOT NULL
+  PRIMARY KEY: (Code)
+
+---
+
+TABLE: masterinstructionsetd
+  COLUMNS:
+    - Name: VARCHAR(50), NOT NULL, PK
+    - ColumnName: VARCHAR(50), NOT NULL, PK
+    - OrderNo: INTEGER, NOT NULL
+    - Instruction: VARCHAR(255), NOT NULL
+    - AutoFlag: VARCHAR(255), NOT NULL
+    - AutoNumber: VARCHAR(255), NOT NULL
+  PRIMARY KEY: (Name, ColumnName)
+
+---
+
+TABLE: masterinstructionseth
+  COLUMNS:
+    - Name: VARCHAR(50), NOT NULL, PK
+    - Description: VARCHAR(255), NOT NULL
+    - Form: VARCHAR(50), NOT NULL
+    - CreatedBy: VARCHAR(16), NOT NULL
+    - CreatedDate: DATETIME, NOT NULL
+    - ChangedBy: VARCHAR(16), NOT NULL
+    - ChangedDate: DATETIME, NOT NULL
+  PRIMARY KEY: (Name)
+
+---
+
+TABLE: masterlanguage
+  COLUMNS:
+    - Language: VARCHAR(2), NOT NULL, PK
+    - Sentence: VARCHAR(255), NOT NULL, PK
+    - Translation: VARCHAR(255), NOT NULL
+  PRIMARY KEY: (Language, Sentence)
+
+---
+
+TABLE: masterlocation
+  COLUMNS:
+    - Code: VARCHAR(5), NOT NULL, PK
+    - Name: VARCHAR(40), NOT NULL
+    - IsWarehouseManagement: BIT, NOT NULL
+    - IsQualityControl: BIT, NOT NULL
+    - VolumeCapacity: DECIMAL(18, 0), NOT NULL
+    - Address: VARCHAR(80), NOT NULL
+    - Address2: VARCHAR(80), NOT NULL
+    - City: VARCHAR(80), NOT NULL
+    - Country: VARCHAR(80), NOT NULL
+    - Latitude: DECIMAL(18, 7), NOT NULL
+    - Longitude: DECIMAL(18, 7), NOT NULL
+    - CreatedBy: VARCHAR(16), NOT NULL
+    - CreatedDate: DATETIME, NOT NULL
+    - ChangedBy: VARCHAR(16), NOT NULL
+    - ChangedDate: DATETIME, NOT NULL
+  PRIMARY KEY: (Code)
+
+---
+
+TABLE: mastermachine
+  COLUMNS:
+    - Code: VARCHAR(10), NOT NULL, PK
+    - Description: VARCHAR(40), NOT NULL
+    - Department: VARCHAR(10), NOT NULL
+    - CapacityPerHour: DECIMAL(18, 4), NOT NULL
+    - Unit: VARCHAR(5), NOT NULL
+    - CreatedBy: VARCHAR(16), NOT NULL
+    - CreatedDate: DATETIME, NOT NULL
+    - ChangedBy: VARCHAR(16), NOT NULL
+    - ChangedDate: DATETIME, NOT NULL
+  PRIMARY KEY: (Code)
+
+---
+
+TABLE: mastermasterh
+  COLUMNS:
+    - MasterTable: VARCHAR(50), NOT NULL, PK
+    - Title: VARCHAR(50), NOT NULL
+    - HeaderMaxControl: INTEGER, NOT NULL
+    - KeyColumn: VARCHAR(50), NOT NULL
+    - KeySize: INTEGER, NOT NULL
+    - Information: VARCHAR(255), NOT NULL
+    - CreatedBy: VARCHAR(16), NOT NULL
+    - CreatedDate: DATETIME, NOT NULL
+    - ChangedBy: VARCHAR(16), NOT NULL
+    - ChangedDate: DATETIME, NOT NULL
+  PRIMARY KEY: (MasterTable)
+
+---
+
+TABLE: mastermaterial
+  COLUMNS:
+    - Code: VARCHAR(20), NOT NULL, PK
+    - Name: VARCHAR(80), NOT NULL
+    - NameInPO: VARCHAR(80), NOT NULL
+    - Substitute: VARCHAR(20), NOT NULL
+    - SmallestUnit: VARCHAR(5), NOT NULL
+    - SoldUnit: VARCHAR(5), NOT NULL
+    - SKUUnit: VARCHAR(5), NOT NULL
+    - Group1: VARCHAR(10), NOT NULL
+    - Group2: VARCHAR(10), NOT NULL
+    - Group3: VARCHAR(10), NOT NULL
+    - Type: VARCHAR(5), NOT NULL
+    - IsBatch: BIT, NOT NULL
+    - IsService: BIT, NOT NULL
+    - IsAsset: BIT, NOT NULL
+    - IsPPh: BIT, NOT NULL
+    - HS: VARCHAR(20), NOT NULL
+    - Barcode: VARCHAR(20), NOT NULL
+    - MinStock: DECIMAL(18, 0), NOT NULL
+    - MaxStock: DECIMAL(18, 0), NOT NULL
+    - Currency: VARCHAR(3), NOT NULL
+    - DefaultPrice: DECIMAL(18, 4), NOT NULL
+    - TransactionType1: VARCHAR(20), NOT NULL
+    - TransactionType2: VARCHAR(20), NOT NULL
+    - TransactionType3: VARCHAR(20), NOT NULL
+    - TransactionType4: VARCHAR(20), NOT NULL
+    - TransactionType5: VARCHAR(20), NOT NULL
+    - Info: VARCHAR(255), NOT NULL
+    - CreatedBy: VARCHAR(16), NOT NULL
+    - CreatedDate: DATETIME, NOT NULL
+    - ChangedBy: VARCHAR(16), NOT NULL
+    - ChangedDate: DATETIME, NOT NULL
+  PRIMARY KEY: (Code)
+
+---
+
+TABLE: mastermaterialgroup1
+  COLUMNS:
+    - Code: VARCHAR(10), NOT NULL, PK
+    - Name: VARCHAR(40), NOT NULL
+    - CreatedBy: VARCHAR(16), NOT NULL
+    - CreatedDate: DATETIME, NOT NULL
+    - ChangedBy: VARCHAR(16), NOT NULL
+    - ChangedDate: DATETIME, NOT NULL
+  PRIMARY KEY: (Code)
+
+---
+
+TABLE: mastermaterialgroup2
+  COLUMNS:
+    - Group1: VARCHAR(10), NOT NULL, PK
+    - Code: VARCHAR(10), NOT NULL, PK
+    - Name: VARCHAR(40), NOT NULL
+    - CreatedBy: VARCHAR(16), NOT NULL
+    - CreatedDate: DATETIME, NOT NULL
+    - ChangedBy: VARCHAR(16), NOT NULL
+    - ChangedDate: DATETIME, NOT NULL
+  PRIMARY KEY: (Group1, Code)
+  FOREIGN KEYS:
+    - (Group1) -> mastermaterialgroup1(Code)
+
+---
+
+TABLE: mastermaterialgroup3
+  COLUMNS:
+    - Group1: VARCHAR(10), NOT NULL, PK
+    - Group2: VARCHAR(10), NOT NULL, PK
+    - Code: VARCHAR(10), NOT NULL, PK
+    - Name: VARCHAR(40), NOT NULL
+    - CreatedBy: VARCHAR(16), NOT NULL
+    - CreatedDate: DATETIME, NOT NULL
+    - ChangedBy: VARCHAR(16), NOT NULL
+    - ChangedDate: DATETIME, NOT NULL
+  PRIMARY KEY: (Group1, Group2, Code)
+  FOREIGN KEYS:
+    - (Group1, Group2) -> mastermaterialgroup2(Group1, Code)
+
+---
+
+TABLE: mastermaterialpromo
+  COLUMNS:
+    - Code: VARCHAR(50), NOT NULL, PK
+    - Name: VARCHAR(255), NOT NULL
+    - PromoType: VARCHAR(20), NOT NULL
+    - Description: VARCHAR(1024), NOT NULL
+    - StartDate: DATE, NOT NULL
+    - EndDate: DATE, NOT NULL
+    - OrderNo: INTEGER, NOT NULL
+    - CustomerFilter: VARCHAR(1024), NOT NULL
+    - Filename: VARCHAR(255), NOT NULL
+    - CreatedBy: VARCHAR(16), NOT NULL
+    - CreatedDate: DATETIME, NOT NULL
+    - ChangedBy: VARCHAR(16), NOT NULL
+    - ChangedDate: DATETIME, NOT NULL
+  PRIMARY KEY: (Code)
+
+---
+
+TABLE: mastermaterials
+  COLUMNS:
+    - Code: VARCHAR(20), NOT NULL, PK
+    - SupplierCode: VARCHAR(10), NOT NULL, PK
+    - Priority: INTEGER, NOT NULL
+  PRIMARY KEY: (Code, SupplierCode)
+
+---
+
+TABLE: mastermaterialtype
+  COLUMNS:
+    - Code: VARCHAR(5), NOT NULL, PK
+    - Name: VARCHAR(40), NOT NULL
+    - IsWaste: BIT, NOT NULL
+    - CreatedBy: VARCHAR(16), NOT NULL
+    - CreatedDate: DATETIME, NOT NULL
+    - ChangedBy: VARCHAR(16), NOT NULL
+    - ChangedDate: DATETIME, NOT NULL
+  PRIMARY KEY: (Code)
+
+---
+
+TABLE: mastermobilereportd
+  COLUMNS:
+    - Code: VARCHAR(20), NOT NULL, PK
+    - Number: INTEGER, NOT NULL, PK
+    - Type: VARCHAR(50), NOT NULL
+    - Title: VARCHAR(50), NOT NULL
+  PRIMARY KEY: (Code, Number)
+
+---
+
+TABLE: mastermobilereporth
+  COLUMNS:
+    - Code: VARCHAR(20), NOT NULL, PK
+    - Title: VARCHAR(100), NOT NULL
+    - ReportGroup: VARCHAR(50), NOT NULL
+    - Roles: VARCHAR(255), NOT NULL
+    - Query: MEDIUMTEXT, NOT NULL
+    - Javascript: MEDIUMTEXT, NOT NULL
+    - CreatedBy: VARCHAR(16), NOT NULL
+    - CreatedDate: DATETIME, NOT NULL
+    - ChangedBy: VARCHAR(16), NOT NULL
+    - ChangedDate: DATETIME, NOT NULL
+  PRIMARY KEY: (Code)
+
+---
+
+TABLE: mastermpmaterialconversion
+  COLUMNS:
+    - SKU: VARCHAR(20), NOT NULL, PK
+    - Variant: VARCHAR(40), NOT NULL, PK
+    - MaterialCode: VARCHAR(20), NOT NULL
+    - CreatedBy: VARCHAR(16), NOT NULL
+    - CreatedDate: DATETIME, NOT NULL
+    - ChangedBy: VARCHAR(16), NOT NULL
+    - ChangedDate: DATETIME, NOT NULL
+  PRIMARY KEY: (SKU, Variant)
+
+---
+
+TABLE: mastermpshop
+  COLUMNS:
+    - ShopId: VARCHAR(20), NOT NULL, PK
+    - ShopName: VARCHAR(50), NOT NULL
+    - MarketPlace: VARCHAR(20), NOT NULL
+    - ClientId: VARCHAR(50), NOT NULL
+    - ClientSecret: VARCHAR(100), NOT NULL
+    - AppId: VARCHAR(50), NOT NULL
+    - IsDownload: BIT, NOT NULL
+    - SOSeries: VARCHAR(3), NOT NULL
+    - CustomerCode: VARCHAR(10), NOT NULL
+    - ShipToCode: VARCHAR(10), NOT NULL
+    - TaxToCode: VARCHAR(10), NOT NULL
+    - SalesCode: VARCHAR(10), NOT NULL
+    - CreatedBy: VARCHAR(16), NOT NULL
+    - CreatedDate: DATETIME, NOT NULL
+    - ChangedBy: VARCHAR(16), NOT NULL
+    - ChangedDate: DATETIME, NOT NULL
+  PRIMARY KEY: (ShopId)
+
+---
+
+TABLE: mastermpstatus
+  COLUMNS:
+    - MarketPlace: VARCHAR(20), NOT NULL, PK
+    - StatusCode: VARCHAR(20), NOT NULL, PK
+    - StatusText: VARCHAR(100), NOT NULL
+    - InternalStatus: VARCHAR(20), NOT NULL
+    - CanCreateSO: BIT, NOT NULL
+    - CreatedBy: VARCHAR(16), NOT NULL
+    - CreatedDate: DATETIME, NOT NULL
+    - ChangedBy: VARCHAR(16), NOT NULL
+    - ChangedDate: DATETIME, NOT NULL
+  PRIMARY KEY: (MarketPlace, StatusCode)
+
+---
+
+TABLE: masterperiode
+  COLUMNS:
+    - Periode: DATE, NOT NULL, PK
+    - IsClosed: BIT, NOT NULL
+    - CreatedBy: VARCHAR(16), NOT NULL
+    - CreatedDate: DATETIME, NOT NULL
+    - ChangedBy: VARCHAR(16), NOT NULL
+    - ChangedDate: DATETIME, NOT NULL
+  PRIMARY KEY: (Periode)
+
+---
+
+TABLE: masterprice
+  COLUMNS:
+    - Begda: DATE, NOT NULL, PK
+    - Endda: DATE, NOT NULL
+    - PriceListType: VARCHAR(5), NOT NULL, PK
+    - MaterialCode: VARCHAR(20), NOT NULL, PK
+    - Currency: VARCHAR(3), NOT NULL, PK
+    - Unit: VARCHAR(5), NOT NULL, PK
+    - MinQty: DECIMAL(18, 4), NOT NULL, PK
+    - MaxQty: DECIMAL(18, 4), NOT NULL
+    - Price: DECIMAL(18, 4), NOT NULL
+    - PercentDisc: DECIMAL(18, 4), NOT NULL
+    - PercentDisc2: DECIMAL(18, 4), NOT NULL
+    - PercentDisc3: DECIMAL(18, 4), NOT NULL
+    - ValueDisc: DECIMAL(18, 4), NOT NULL
+    - CreatedBy: VARCHAR(16), NOT NULL
+    - CreatedDate: DATETIME, NOT NULL
+    - ChangedBy: VARCHAR(16), NOT NULL
+    - ChangedDate: DATETIME, NOT NULL
+  PRIMARY KEY: (Begda, PriceListType, MaterialCode, Currency, Unit, MinQty)
+  FOREIGN KEYS:
+    - (Currency) -> mastercurrency(Code)
+    - (PriceListType) -> masterpricelisttype(Code)
+    - (MaterialCode, Unit) -> masterunitconversion(MaterialCode, Unit)
+
+---
+
+TABLE: masterpricelisttype
+  COLUMNS:
+    - Code: VARCHAR(5), NOT NULL, PK
+    - Name: VARCHAR(50), NOT NULL
+    - CreatedBy: VARCHAR(16), NOT NULL
+    - CreatedDate: DATETIME, NOT NULL
+    - ChangedBy: VARCHAR(16), NOT NULL
+    - ChangedDate: DATETIME, NOT NULL
+  PRIMARY KEY: (Code)
+
+---
+
+TABLE: masterpromoc
+  COLUMNS:
+    - MaterialCode: VARCHAR(20), NOT NULL, PK
+    - StartDate: DATE, NOT NULL, PK
+    - Number: INTEGER, NOT NULL, PK
+    - Field: VARCHAR(50), NOT NULL
+    - Value: VARCHAR(50), NOT NULL
+  PRIMARY KEY: (MaterialCode, StartDate, Number)
+
+---
+
+TABLE: masterpromofg
+  COLUMNS:
+    - MaterialCode: VARCHAR(20), NOT NULL, PK
+    - StartDate: DATE, NOT NULL, PK
+    - Number: INTEGER, NOT NULL, PK
+    - Field1: VARCHAR(50), NOT NULL
+    - Value1: VARCHAR(50), NOT NULL
+    - Field2: VARCHAR(50), NOT NULL
+    - Value2: VARCHAR(50), NOT NULL
+    - Field3: VARCHAR(50), NOT NULL
+    - Value3: VARCHAR(50), NOT NULL
+    - Unit: VARCHAR(5), NOT NULL
+    - Qty: DECIMAL(18, 4), NOT NULL
+  PRIMARY KEY: (MaterialCode, StartDate, Number)
+
+---
+
+TABLE: masterpromoh
+  COLUMNS:
+    - MaterialCode: VARCHAR(20), NOT NULL, PK
+    - StartDate: DATE, NOT NULL, PK
+    - EndDate: DATE, NOT NULL
+    - StartTime: TIME, NOT NULL
+    - EndTime: TIME, NOT NULL
+    - DocumentSeries: VARCHAR(255), NOT NULL
+    - ExclusiveGroup: VARCHAR(20), NOT NULL
+    - IsSuggested: BIT, NOT NULL
+    - Currency: VARCHAR(3), NOT NULL
+    - MinTotalGross: DECIMAL(18, 4), NOT NULL
+    - ExcludeRequirement: BIT, NOT NULL
+    - MustMultiple: BIT, NOT NULL
+    - CustomerCondition: VARCHAR(50), NOT NULL
+    - RequirementCondition: VARCHAR(50), NOT NULL
+    - MaxMultiple: INTEGER, NOT NULL
+    - DiscValue: DECIMAL(18, 4), NOT NULL
+    - Information: VARCHAR(255), NOT NULL
+    - CreatedBy: VARCHAR(16), NOT NULL
+    - CreatedDate: DATETIME, NOT NULL
+    - ChangedBy: VARCHAR(16), NOT NULL
+    - ChangedDate: DATETIME, NOT NULL
+  PRIMARY KEY: (MaterialCode, StartDate)
+
+---
+
+TABLE: masterpromor
+  COLUMNS:
+    - MaterialCode: VARCHAR(20), NOT NULL, PK
+    - StartDate: DATE, NOT NULL, PK
+    - Number: INTEGER, NOT NULL, PK
+    - Field1: VARCHAR(50), NOT NULL
+    - Value1: VARCHAR(50), NOT NULL
+    - Field2: VARCHAR(50), NOT NULL
+    - Value2: VARCHAR(50), NOT NULL
+    - Field3: VARCHAR(50), NOT NULL
+    - Value3: VARCHAR(50), NOT NULL
+    - Unit: VARCHAR(5), NOT NULL
+    - MinQty: DECIMAL(18, 4), NOT NULL
+    - MinNetto: DECIMAL(18, 4), NOT NULL
+  PRIMARY KEY: (MaterialCode, StartDate, Number)
+
+---
+
+TABLE: masterprovince
+  COLUMNS:
+    - Country: VARCHAR(5), NOT NULL, PK
+    - Code: VARCHAR(20), NOT NULL, PK
+    - Name: VARCHAR(50), NOT NULL
+    - CreatedBy: VARCHAR(16), NOT NULL
+    - CreatedDate: DATETIME, NOT NULL
+    - ChangedBy: VARCHAR(16), NOT NULL
+    - ChangedDate: DATETIME, NOT NULL
+  PRIMARY KEY: (Country, Code)
+
+---
+
+TABLE: masterrangeselector
+  COLUMNS:
+    - Name: VARCHAR(50), NOT NULL, PK
+    - Description: VARCHAR(50), NOT NULL
+    - Condition: VARCHAR(1024), NOT NULL
+    - DialogTitle: VARCHAR(50), NOT NULL
+    - FieldName: VARCHAR(50), NOT NULL
+    - LabelField: VARCHAR(50), NOT NULL
+    - FilterFields: VARCHAR(1024), NOT NULL
+    - SelectFields: VARCHAR(1024), NOT NULL
+    - GridFields: VARCHAR(1024), NOT NULL
+    - OrderBy: VARCHAR(1024), NOT NULL
+    - SimpleMode: BIT, NOT NULL
+    - SqlQuery: VARCHAR(1024), NOT NULL
+    - TableName: VARCHAR(1024), NOT NULL
+    - CreatedBy: VARCHAR(16), NOT NULL
+    - CreatedDate: DATETIME, NOT NULL
+    - ChangedBy: VARCHAR(16), NOT NULL
+    - ChangedDate: DATETIME, NOT NULL
+  PRIMARY KEY: (Name)
+
+---
+
+TABLE: masterrebatec
+  COLUMNS:
+    - Code: VARCHAR(10), NOT NULL, PK
+    - ValidFrom: DATE, NOT NULL, PK
+    - Number: INTEGER, NOT NULL, PK
+    - Condition: VARCHAR(2014), NOT NULL
+    - RebatePercent: DECIMAL(18, 4), NOT NULL
+  PRIMARY KEY: (Code, ValidFrom, Number)
+
+---
+
+TABLE: masterrebateh
+  COLUMNS:
+    - Code: VARCHAR(10), NOT NULL, PK
+    - Name: VARCHAR(40), NOT NULL
+    - ValidFrom: DATE, NOT NULL, PK
+    - ValidTo: DATE, NOT NULL
+    - CreatedBy: VARCHAR(16), NOT NULL
+    - CreatedDate: DATETIME
+    - ChangedBy: VARCHAR(16), NOT NULL
+    - ChangedDate: DATETIME
+  PRIMARY KEY: (Code, ValidFrom)
+
+---
+
+TABLE: masterrebates
+  COLUMNS:
+    - Code: VARCHAR(10), NOT NULL, PK
+    - ValidFrom: DATE, NOT NULL, PK
+    - SupplierCode: VARCHAR(10), NOT NULL, PK
+  PRIMARY KEY: (Code, ValidFrom, SupplierCode)
+
+---
+
+TABLE: masterreminder
+  COLUMNS:
+    - Name: VARCHAR(50), NOT NULL, PK
+    - Description: VARCHAR(100), NOT NULL
+    - Query: MEDIUMTEXT, NOT NULL
+    - Users: VARCHAR(512), NOT NULL
+    - CreatedBy: VARCHAR(16), NOT NULL
+    - CreatedDate: DATETIME, NOT NULL
+    - ChangedBy: VARCHAR(16), NOT NULL
+    - ChangedDate: DATETIME, NOT NULL
+  PRIMARY KEY: (Name)
+
+---
+
+TABLE: masterreportd
+  COLUMNS:
+    - Name: VARCHAR(50), NOT NULL, PK
+    - Variant: VARCHAR(50), NOT NULL, PK
+    - Number: INTEGER, NOT NULL, PK
+    - RangeSelector: VARCHAR(40), NOT NULL
+    - Field: VARCHAR(255), NOT NULL
+  PRIMARY KEY: (Name, Variant, Number)
+
+---
+
+TABLE: masterreporth
+  COLUMNS:
+    - Name: VARCHAR(50), NOT NULL, PK
+    - Variant: VARCHAR(50), NOT NULL, PK
+    - Description: VARCHAR(100), NOT NULL
+    - Enabled: BIT, NOT NULL
+    - Query: TEXT, NOT NULL
+    - OrderQuery: VARCHAR(512), NOT NULL
+    - ReportPassword: VARCHAR(50), NOT NULL
+    - CreatedBy: VARCHAR(16), NOT NULL
+    - CreatedDate: DATETIME, NOT NULL
+    - ChangedBy: VARCHAR(16), NOT NULL
+    - ChangedDate: DATETIME, NOT NULL
+  PRIMARY KEY: (Name, Variant)
+
+---
+
+TABLE: masterreportscheduleh
+  COLUMNS:
+    - Name: VARCHAR(50), NOT NULL, PK
+    - IsEnabled: BIT, NOT NULL
+    - EmailTo: VARCHAR(512), NOT NULL
+    - EmailCC: VARCHAR(512), NOT NULL
+    - EmailBCC: VARCHAR(512), NOT NULL
+    - Subject: VARCHAR(255), NOT NULL
+    - Body: TEXT, NOT NULL
+    - Api: VARCHAR(255), NOT NULL
+    - Parameters: TEXT, NOT NULL
+    - FilterText: VARCHAR(512), NOT NULL
+    - Filename: VARCHAR(255), NOT NULL
+    - User: VARCHAR(16), NOT NULL
+    - Password: VARCHAR(50), NOT NULL
+    - Status: VARCHAR(20), NOT NULL
+    - NextRun: DATETIME
+    - LastRun: DATETIME
+    - LastError: VARCHAR(512), NOT NULL
+    - VariableQuery: TEXT, NOT NULL
+    - CreatedBy: VARCHAR(16), NOT NULL
+    - CreatedDate: DATETIME, NOT NULL
+    - ChangedBy: VARCHAR(16), NOT NULL
+    - ChangedDate: DATETIME, NOT NULL
+  PRIMARY KEY: (Name)
+
+---
+
+TABLE: masterreportschedulet
+  COLUMNS:
+    - Name: VARCHAR(50), NOT NULL, PK
+    - Repeat: VARCHAR(10), NOT NULL, PK
+    - Day: VARCHAR(10), NOT NULL, PK
+    - Date: INTEGER, NOT NULL, PK
+    - Time: TIME, NOT NULL, PK
+  PRIMARY KEY: (Name, Repeat, Day, Date, Time)
+
+---
+
+TABLE: masterroute
+  COLUMNS:
+    - Code: VARCHAR(10), NOT NULL, PK
+    - From: VARCHAR(5), NOT NULL
+    - Destination: VARCHAR(5), NOT NULL
+    - Distance: DECIMAL(18, 4), NOT NULL
+    - CreatedBy: VARCHAR(16), NOT NULL
+    - CreatedDate: DATETIME, NOT NULL
+    - ChangedBy: VARCHAR(16), NOT NULL
+    - ChangedDate: DATETIME, NOT NULL
+  PRIMARY KEY: (Code)
+
+---
+
+TABLE: mastersales
+  COLUMNS:
+    - Code: VARCHAR(10), NOT NULL, PK
+    - Name: VARCHAR(40), NOT NULL
+    - Address: VARCHAR(80), NOT NULL
+    - City: VARCHAR(20), NOT NULL
+    - Phone: VARCHAR(20), NOT NULL
+    - Mobile: VARCHAR(20), NOT NULL
+    - CreatedBy: VARCHAR(16), NOT NULL
+    - CreatedDate: DATETIME, NOT NULL
+    - ChangedBy: VARCHAR(16), NOT NULL
+    - ChangedDate: DATETIME, NOT NULL
+  PRIMARY KEY: (Code)
+
+---
+
+TABLE: mastersalesarea1
+  COLUMNS:
+    - Code: VARCHAR(10), NOT NULL, PK
+    - Name: VARCHAR(40), NOT NULL
+    - CreatedBy: VARCHAR(16), NOT NULL
+    - CreatedDate: DATETIME, NOT NULL
+    - ChangedBy: VARCHAR(16), NOT NULL
+    - ChangedDate: DATETIME, NOT NULL
+  PRIMARY KEY: (Code)
+
+---
+
+TABLE: mastersalesarea2
+  COLUMNS:
+    - Area1: VARCHAR(10), NOT NULL, PK
+    - Code: VARCHAR(10), NOT NULL, PK
+    - Name: VARCHAR(40), NOT NULL
+    - CreatedBy: VARCHAR(16), NOT NULL
+    - CreatedDate: DATETIME, NOT NULL
+    - ChangedBy: VARCHAR(16), NOT NULL
+    - ChangedDate: DATETIME, NOT NULL
+  PRIMARY KEY: (Area1, Code)
+  FOREIGN KEYS:
+    - (Area1) -> mastersalesarea1(Code)
+
+---
+
+TABLE: mastersalesarea3
+  COLUMNS:
+    - Area1: VARCHAR(10), NOT NULL, PK
+    - Area2: VARCHAR(10), NOT NULL, PK
+    - Code: VARCHAR(10), NOT NULL, PK
+    - Name: VARCHAR(40), NOT NULL
+    - CreatedBy: VARCHAR(16), NOT NULL
+    - CreatedDate: DATETIME, NOT NULL
+    - ChangedBy: VARCHAR(16), NOT NULL
+    - ChangedDate: DATETIME, NOT NULL
+  PRIMARY KEY: (Area1, Area2, Code)
+  FOREIGN KEYS:
+    - (Area1, Area2) -> mastersalesarea2(Area1, Code)
+
+---
+
+TABLE: masterserver
+  COLUMNS:
+    - Name: VARCHAR(10), NOT NULL, PK
+    - Address: VARCHAR(50), NOT NULL
+    - Port: INTEGER, NOT NULL
+    - Database: VARCHAR(20), NOT NULL
+    - User: VARCHAR(20), NOT NULL
+    - Password: VARCHAR(20), NOT NULL
+    - ODBCConnectionString: VARCHAR(512), NOT NULL
+    - CreatedBy: VARCHAR(16), NOT NULL
+    - CreatedDate: DATETIME, NOT NULL
+    - ChangedBy: VARCHAR(16), NOT NULL
+    - ChangedDate: DATETIME, NOT NULL
+  PRIMARY KEY: (Name)
+
+---
+
+TABLE: mastersetting
+  COLUMNS:
+    - Name: VARCHAR(50), NOT NULL, PK
+    - Value: VARCHAR(512), NOT NULL
+  PRIMARY KEY: (Name)
+
+---
+
+TABLE: mastersmltarget
+  COLUMNS:
+    - Periode: DATE, NOT NULL, PK
+    - TargetSalesInvoice: DECIMAL(18, 4), NOT NULL
+    - TargetPOS: DECIMAL(18, 4), NOT NULL
+    - CreatedBy: VARCHAR(16), NOT NULL
+    - CreatedDate: DATETIME, NOT NULL
+    - ChangedBy: VARCHAR(16), NOT NULL
+    - ChangedDate: DATETIME
+  PRIMARY KEY: (Periode)
+
+---
+
+TABLE: mastersupplier
+  COLUMNS:
+    - Code: VARCHAR(10), NOT NULL, PK
+    - Name: VARCHAR(120), NOT NULL
+    - Address: VARCHAR(80), NOT NULL
+    - Address2: VARCHAR(80), NOT NULL
+    - City: VARCHAR(20), NOT NULL
+    - Country: VARCHAR(5), NOT NULL
+    - Phone: VARCHAR(50), NOT NULL
+    - Fax: VARCHAR(50), NOT NULL
+    - Email: VARCHAR(50), NOT NULL
+    - Contact: VARCHAR(40), NOT NULL
+    - Mobile: VARCHAR(50), NOT NULL
+    - TaxNumber: VARCHAR(21), NOT NULL
+    - TOP: INTEGER, NOT NULL
+    - Currency: VARCHAR(3), NOT NULL
+    - Limit: DECIMAL(18, 4), NOT NULL
+    - TransactionType: VARCHAR(20), NOT NULL
+    - TransactionType2: VARCHAR(20), NOT NULL
+    - CutPPh: BIT, NOT NULL
+    - CreatedBy: VARCHAR(16), NOT NULL
+    - CreatedDate: DATETIME, NOT NULL
+    - ChangedBy: VARCHAR(16), NOT NULL
+    - ChangedDate: DATETIME, NOT NULL
+  PRIMARY KEY: (Code)
+  FOREIGN KEYS:
+    - (Country) -> mastercountry(Code)
+    - (Currency) -> mastercurrency(Code)
+
+---
+
+TABLE: mastersupplierpartner
+  COLUMNS:
+    - SupplierCode: VARCHAR(10), NOT NULL, PK
+    - PartnerFunc: VARCHAR(10), NOT NULL, PK
+    - PartnerCode: VARCHAR(10), NOT NULL, PK
+  PRIMARY KEY: (SupplierCode, PartnerFunc, PartnerCode)
+  FOREIGN KEYS:
+    - (SupplierCode) -> mastersupplier(Code)
+
+---
+
+TABLE: mastersurveya
+  COLUMNS:
+    - Code: VARCHAR(20), NOT NULL, PK
+    - QuestionNo: INTEGER, NOT NULL, PK
+    - AnswerNo: INTEGER, NOT NULL, PK
+    - Answer: VARCHAR(50), NOT NULL
+    - IsAllowFreeText: BIT, NOT NULL
+    - Score: INTEGER, NOT NULL
+    - NextQuestion: INTEGER
+  PRIMARY KEY: (Code, QuestionNo, AnswerNo)
+
+---
+
+TABLE: mastersurveyh
+  COLUMNS:
+    - Code: VARCHAR(20), NOT NULL, PK
+    - Name: VARCHAR(80), NOT NULL
+    - StartDate: DATE, NOT NULL
+    - EndDate: DATE, NOT NULL
+    - CreatedBy: VARCHAR(16), NOT NULL
+    - CreatedDate: DATETIME, NOT NULL
+    - ChangedBy: VARCHAR(16), NOT NULL
+    - ChangedDate: DATETIME, NOT NULL
+  PRIMARY KEY: (Code)
+
+---
+
+TABLE: mastersurveyq
+  COLUMNS:
+    - Code: VARCHAR(20), NOT NULL, PK
+    - QuestionNo: INTEGER, NOT NULL, PK
+    - Question: VARCHAR(2048), NOT NULL
+    - ShortQuestion: VARCHAR(50), NOT NULL
+    - Option: VARCHAR(10), NOT NULL
+  PRIMARY KEY: (Code, QuestionNo)
+
+---
+
+TABLE: mastertransactionh
+  COLUMNS:
+    - Document: VARCHAR(20), NOT NULL, PK
+    - Title: VARCHAR(50), NOT NULL
+    - HeaderTable: VARCHAR(50), NOT NULL
+    - HeaderMaxControl: INTEGER, NOT NULL
+    - SeriesRangeSelector: VARCHAR(40), NOT NULL
+    - DocNoRangeSelector: VARCHAR(40), NOT NULL
+    - DetailTable1: VARCHAR(50), NOT NULL
+    - DetailCaption1: VARCHAR(50), NOT NULL
+    - DetailTable2: VARCHAR(50), NOT NULL
+    - DetailCaption2: VARCHAR(50), NOT NULL
+    - DetailTable3: VARCHAR(50), NOT NULL
+    - DetailCaption3: VARCHAR(50), NOT NULL
+    - IsApprovable: BIT, NOT NULL
+    - ApprovableValueColumn: VARCHAR(50), NOT NULL
+    - IsPrintable: BIT, NOT NULL
+    - ResetPrintCounterStatus: VARCHAR(20), NOT NULL
+    - PrintQuery: TEXT, NOT NULL
+    - Information: VARCHAR(255), NOT NULL
+    - CreatedBy: VARCHAR(16), NOT NULL
+    - CreatedDate: DATETIME, NOT NULL
+    - ChangedBy: VARCHAR(16), NOT NULL
+    - ChangedDate: DATETIME, NOT NULL
+  PRIMARY KEY: (Document)
+
+---
+
+TABLE: mastertransactiontype
+  COLUMNS:
+    - Type: VARCHAR(20), NOT NULL, PK
+    - Description: VARCHAR(40), NOT NULL
+    - AccountNo: VARCHAR(20), NOT NULL
+    - Purpose: VARCHAR(20), NOT NULL
+    - CreatedBy: VARCHAR(16), NOT NULL
+    - CreatedDate: DATETIME, NOT NULL
+    - ChangedBy: VARCHAR(16), NOT NULL
+    - ChangedDate: DATETIME, NOT NULL
+  PRIMARY KEY: (Type)
+
+---
+
+TABLE: mastertransportarea
+  COLUMNS:
+    - City: VARCHAR(20), NOT NULL, PK
+    - Address: VARCHAR(80), NOT NULL, PK
+    - PostalCode: VARCHAR(10), NOT NULL
+    - Area: VARCHAR(30), NOT NULL
+    - SubArea: VARCHAR(30), NOT NULL
+    - CreatedBy: VARCHAR(16), NOT NULL
+    - CreatedDate: DATETIME, NOT NULL
+    - ChangedBy: VARCHAR(16), NOT NULL
+    - ChangedDate: DATETIME, NOT NULL
+  PRIMARY KEY: (City, Address)
+
+---
+
+TABLE: mastertransportpackagetype
+  COLUMNS:
+    - Code: VARCHAR(10), NOT NULL, PK
+    - Description: VARCHAR(40), NOT NULL
+    - CreatedBy: VARCHAR(16), NOT NULL
+    - CreatedDate: DATETIME, NOT NULL
+    - ChangedBy: VARCHAR(16), NOT NULL
+    - ChangedDate: DATETIME, NOT NULL
+  PRIMARY KEY: (Code)
+
+---
+
+TABLE: mastertransportprice
+  COLUMNS:
+    - Begda: DATE, NOT NULL, PK
+    - Endda: DATE, NOT NULL, PK
+    - PackageType: VARCHAR(10), NOT NULL, PK
+    - ServiceType: VARCHAR(10), NOT NULL, PK
+    - Route: VARCHAR(10), NOT NULL, PK
+    - VehicleType: VARCHAR(10), NOT NULL, PK
+    - PriceListType: VARCHAR(5), NOT NULL
+    - PriceList: DECIMAL(18, 4), NOT NULL
+    - PricePerDay: DECIMAL(18, 4), NOT NULL
+    - MinTonage: DECIMAL(18, 4), NOT NULL
+    - MinTonageCharge: DECIMAL(18, 4), NOT NULL
+    - PricePerKG: DECIMAL(18, 4), NOT NULL
+    - MinVolume: DECIMAL(18, 4), NOT NULL
+    - MinVolumeCharge: DECIMAL(18, 4), NOT NULL
+    - PricePerM3: DECIMAL(18, 4), NOT NULL
+    - MaxLength: DECIMAL(18, 4), NOT NULL
+    - MaxLengthCharge: DECIMAL(18, 4), NOT NULL
+    - Coefficient: DECIMAL(18, 4), NOT NULL
+    - CreatedBy: VARCHAR(16), NOT NULL
+    - CreatedDate: DATETIME, NOT NULL
+    - ChangedBy: VARCHAR(16), NOT NULL
+    - ChangedDate: DATETIME, NOT NULL
+  PRIMARY KEY: (Begda, Endda, PackageType, ServiceType, Route, VehicleType)
+
+---
+
+TABLE: mastertransportservicetype
+  COLUMNS:
+    - Code: VARCHAR(10), NOT NULL, PK
+    - Description: VARCHAR(40), NOT NULL
+    - CreatedBy: VARCHAR(16), NOT NULL
+    - CreatedDate: DATETIME, NOT NULL
+    - ChangedBy: VARCHAR(16), NOT NULL
+    - ChangedDate: DATETIME, NOT NULL
+  PRIMARY KEY: (Code)
+
+---
+
+TABLE: masterunit
+  COLUMNS:
+    - Code: VARCHAR(5), NOT NULL, PK
+    - Name: VARCHAR(40), NOT NULL
+    - CreatedBy: VARCHAR(16), NOT NULL
+    - CreatedDate: DATETIME, NOT NULL
+    - ChangedBy: VARCHAR(16), NOT NULL
+    - ChangedDate: DATETIME, NOT NULL
+  PRIMARY KEY: (Code)
+
+---
+
+TABLE: masterunitconversion
+  COLUMNS:
+    - MaterialCode: VARCHAR(20), NOT NULL, PK
+    - Unit: VARCHAR(5), NOT NULL, PK
+    - Content: DECIMAL(18, 4), NOT NULL
+    - Weight: DECIMAL(18, 4), NOT NULL
+    - Volume: DECIMAL(18, 4), NOT NULL
+    - IsInactive: BIT, NOT NULL
+    - CreatedBy: VARCHAR(16), NOT NULL
+    - CreatedDate: DATETIME, NOT NULL
+    - ChangedBy: VARCHAR(16), NOT NULL
+    - ChangedDate: DATETIME, NOT NULL
+  PRIMARY KEY: (MaterialCode, Unit)
+  FOREIGN KEYS:
+    - (MaterialCode) -> mastermaterial(Code)
+    - (Unit) -> masterunit(Code)
+
+---
+
+TABLE: mastervehicle
+  COLUMNS:
+    - Code: VARCHAR(10), NOT NULL, PK
+    - LicensePlate: VARCHAR(10), NOT NULL
+    - VehicleType: VARCHAR(10), NOT NULL
+    - Tonage: DECIMAL(18, 4), NOT NULL
+    - Volume: DECIMAL(18, 4), NOT NULL
+    - DefaultDriver: VARCHAR(10), NOT NULL
+    - Route: VARCHAR(10), NOT NULL
+    - Location: VARCHAR(5), NOT NULL
+    - CreatedBy: VARCHAR(16), NOT NULL
+    - CreatedDate: DATETIME, NOT NULL
+    - ChangedBy: VARCHAR(16), NOT NULL
+    - ChangedDate: DATETIME, NOT NULL
+  PRIMARY KEY: (Code)
+
+---
+
+TABLE: mastervehicletype
+  COLUMNS:
+    - Code: VARCHAR(10), NOT NULL, PK
+    - Description: VARCHAR(40), NOT NULL
+    - CreatedBy: VARCHAR(16), NOT NULL
+    - CreatedDate: DATETIME, NOT NULL
+    - ChangedBy: VARCHAR(16), NOT NULL
+    - ChangedDate: DATETIME, NOT NULL
+  PRIMARY KEY: (Code)
+
+---
+
+TABLE: masterwmequipment
+  COLUMNS:
+    - Code: VARCHAR(10), NOT NULL, PK
+    - Name: VARCHAR(40), NOT NULL
+    - VolumeCapacity: DECIMAL(18, 0), NOT NULL
+    - CreatedBy: VARCHAR(16), NOT NULL
+    - CreatedDate: DATETIME
+    - ChangedBy: VARCHAR(16), NOT NULL
+    - ChangedDate: DATETIME
+  PRIMARY KEY: (Code)
+
+---
+
+TABLE: masterwmroute
+  COLUMNS:
+    - Location: VARCHAR(5), NOT NULL, PK
+    - Group1: VARCHAR(10), NOT NULL, PK
+    - Group2: VARCHAR(10), NOT NULL, PK
+    - Group3: VARCHAR(10), NOT NULL, PK
+    - Zone: VARCHAR(10), NOT NULL, PK
+    - Unit: VARCHAR(5), NOT NULL
+    - PickingPriority: INTEGER, NOT NULL
+    - PutawayPriority: INTEGER, NOT NULL
+    - CreatedBy: VARCHAR(16), NOT NULL
+    - CreatedDate: DATETIME
+    - ChangedBy: VARCHAR(16), NOT NULL
+    - ChangedDate: DATETIME
+  PRIMARY KEY: (Location, Group1, Group2, Group3, Zone)
+
+---
+
+TABLE: masterworkordertemplated
+  COLUMNS:
+    - Code: VARCHAR(40), NOT NULL, PK
+    - Number: INTEGER, NOT NULL, PK
+    - Formula: VARCHAR(40), NOT NULL
+    - MaterialCode: VARCHAR(20), NOT NULL
+    - Unit: VARCHAR(5), NOT NULL
+    - Qty: DECIMAL(18, 4), NOT NULL
+    - Series: VARCHAR(3), NOT NULL
+    - Department: VARCHAR(10), NOT NULL
+    - Location: VARCHAR(5), NOT NULL
+    - Information: VARCHAR(255), NOT NULL
+  PRIMARY KEY: (Code, Number)
+
+---
+
+TABLE: masterworkordertemplateh
+  COLUMNS:
+    - Code: VARCHAR(40), NOT NULL, PK
+    - Formula: VARCHAR(40), NOT NULL
+    - MaterialCode: VARCHAR(20), NOT NULL
+    - Unit: VARCHAR(5), NOT NULL
+    - Qty: DECIMAL(18, 4), NOT NULL
+    - CheckQtyOutput: BIT, NOT NULL
+    - Information: VARCHAR(255), NOT NULL
+    - CreatedBy: VARCHAR(16), NOT NULL
+    - CreatedDate: DATETIME, NOT NULL
+    - ChangedBy: VARCHAR(16), NOT NULL
+    - ChangedDate: DATETIME, NOT NULL
+  PRIMARY KEY: (Code)
+
+---
+
+TABLE: masterzone
+  COLUMNS:
+    - Location: VARCHAR(5), NOT NULL, PK
+    - Code: VARCHAR(10), NOT NULL, PK
+    - Name: VARCHAR(40), NOT NULL
+    - Type: VARCHAR(15), NOT NULL
+    - VolumeCapacity: DECIMAL(18, 0), NOT NULL
+    - CreatedBy: VARCHAR(16), NOT NULL
+    - CreatedDate: DATETIME
+    - ChangedBy: VARCHAR(16), NOT NULL
+    - ChangedDate: DATETIME
+  PRIMARY KEY: (Location, Code)
+
+---
+
+TABLE: materialusaged
+  COLUMNS:
+    - DocNo: VARCHAR(15), NOT NULL, PK
+    - MaterialCode: VARCHAR(20), NOT NULL, PK
+    - TagNo: VARCHAR(10), NOT NULL, PK
+    - Unit: VARCHAR(5), NOT NULL
+    - Qty: DECIMAL(18, 4), NOT NULL
+    - BaseQty: DECIMAL(18, 4), NOT NULL
+    - Cost: DECIMAL(18, 4), NOT NULL
+  PRIMARY KEY: (DocNo, MaterialCode, TagNo)
+  FOREIGN KEYS:
+    - (MaterialCode, Unit) -> masterunitconversion(MaterialCode, Unit)
+
+---
+
+TABLE: materialusagegeneratorb
+  COLUMNS:
+    - DocNo: VARCHAR(15), NOT NULL, PK
+    - TagNo: VARCHAR(10), NOT NULL, PK
+    - MaterialCode: VARCHAR(20), NOT NULL, PK
+    - Location: VARCHAR(5), NOT NULL, PK
+    - Zone: VARCHAR(10), NOT NULL, PK
+    - Bin: VARCHAR(10), NOT NULL, PK
+    - Qty: DECIMAL(18, 4), NOT NULL
+  PRIMARY KEY: (DocNo, TagNo, MaterialCode, Location, Zone, Bin)
+
+---
+
+TABLE: materialusagegeneratorc
+  COLUMNS:
+    - DocNo: VARCHAR(15), NOT NULL, PK
+    - JRDocNo: VARCHAR(15), NOT NULL, PK
+    - MaterialCode: VARCHAR(20), NOT NULL, PK
+    - TagNo: VARCHAR(10), NOT NULL, PK
+    - Unit: VARCHAR(5), NOT NULL
+    - Qty: DECIMAL(18, 4), NOT NULL
+  PRIMARY KEY: (DocNo, JRDocNo, MaterialCode, TagNo)
+
+---
+
+TABLE: materialusagegeneratord
+  COLUMNS:
+    - DocNo: VARCHAR(15), NOT NULL, PK
+    - JRDocNo: VARCHAR(15), NOT NULL, PK
+    - Series: VARCHAR(3), NOT NULL
+    - DocTime: TIME, NOT NULL
+    - Information: VARCHAR(255), NOT NULL
+    - MUDocNo: VARCHAR(15), NOT NULL
+  PRIMARY KEY: (DocNo, JRDocNo)
+
+---
+
+TABLE: materialusagegeneratordt
+  COLUMNS:
+    - DocNo: VARCHAR(15), NOT NULL, PK
+    - JRDocNo: VARCHAR(15), NOT NULL, PK
+    - StartDate: DATE, NOT NULL, PK
+    - StartTime: TIME, NOT NULL, PK
+    - EndDate: DATE, NOT NULL
+    - EndTime: TIME, NOT NULL
+    - Duration: DECIMAL(18, 4), NOT NULL
+    - Reason: VARCHAR(10), NOT NULL
+    - Info: VARCHAR(100), NOT NULL
+  PRIMARY KEY: (DocNo, JRDocNo, StartDate, StartTime)
+
+---
+
+TABLE: materialusagegeneratorh
+  COLUMNS:
+    - DocNo: VARCHAR(15), NOT NULL, PK
+    - Series: VARCHAR(3), NOT NULL
+    - DocDate: DATE, NOT NULL
+    - Location: VARCHAR(5), NOT NULL
+    - Information: VARCHAR(255), NOT NULL
+    - Status: VARCHAR(20), NOT NULL
+    - IsApproved: BIT, NOT NULL
+    - ApprovedBy: VARCHAR(16), NOT NULL
+    - ApprovedDate: DATETIME
+    - CreatedBy: VARCHAR(16), NOT NULL
+    - CreatedDate: DATETIME, NOT NULL
+    - ChangedBy: VARCHAR(16), NOT NULL
+    - ChangedDate: DATETIME, NOT NULL
+  PRIMARY KEY: (DocNo)
+
+---
+
+TABLE: materialusagegeneratorm
+  COLUMNS:
+    - DocNo: VARCHAR(15), NOT NULL, PK
+    - MaterialCode: VARCHAR(20), NOT NULL, PK
+    - TagNo: VARCHAR(10), NOT NULL, PK
+    - Unit: VARCHAR(5), NOT NULL
+    - Qty: DECIMAL(18, 4), NOT NULL
+  PRIMARY KEY: (DocNo, MaterialCode, TagNo)
+
+---
+
+TABLE: materialusageh
+  COLUMNS:
+    - DocNo: VARCHAR(15), NOT NULL, PK
+    - Series: VARCHAR(3), NOT NULL
+    - DocDate: DATE, NOT NULL
+    - DocTime: TIME, NOT NULL
+    - JODocNo: VARCHAR(15), NOT NULL
+    - Location: VARCHAR(5), NOT NULL
+    - Machine: VARCHAR(10), NOT NULL
+    - Information: VARCHAR(255), NOT NULL
+    - Status: VARCHAR(20), NOT NULL
+    - TotalCost: DECIMAL(18, 4), NOT NULL
+    - PrintCounter: INTEGER, NOT NULL
+    - PrintedBy: VARCHAR(16)
+    - PrintedDate: DATETIME
+    - CreatedBy: VARCHAR(16), NOT NULL
+    - CreatedDate: DATETIME, NOT NULL
+    - ChangedBy: VARCHAR(16), NOT NULL
+    - ChangedDate: DATETIME, NOT NULL
+    - Znotransfer: VARCHAR(15)
+  PRIMARY KEY: (DocNo)
+  FOREIGN KEYS:
+    - (Location) -> masterlocation(Code)
+
+---
+
+TABLE: materialusagereturnd
+  COLUMNS:
+    - DocNo: VARCHAR(15), NOT NULL, PK
+    - MaterialCode: VARCHAR(20), NOT NULL, PK
+    - TagNo: VARCHAR(10), NOT NULL, PK
+    - Unit: VARCHAR(5), NOT NULL
+    - Qty: DECIMAL(18, 4), NOT NULL
+    - Cost: DECIMAL(18, 4), NOT NULL
+  PRIMARY KEY: (DocNo, MaterialCode, TagNo)
+  FOREIGN KEYS:
+    - (MaterialCode, Unit) -> masterunitconversion(MaterialCode, Unit)
+
+---
+
+TABLE: materialusagereturnh
+  COLUMNS:
+    - DocNo: VARCHAR(15), NOT NULL, PK
+    - Series: VARCHAR(3), NOT NULL
+    - DocDate: DATE, NOT NULL
+    - MUDocNo: VARCHAR(15), NOT NULL
+    - JODocNo: VARCHAR(15), NOT NULL
+    - Location: VARCHAR(5), NOT NULL
+    - Information: VARCHAR(255), NOT NULL
+    - Status: VARCHAR(20), NOT NULL
+    - TotalCost: DECIMAL(18, 4), NOT NULL
+    - PrintCounter: INTEGER, NOT NULL
+    - PrintedBy: VARCHAR(16)
+    - PrintedDate: DATETIME
+    - CreatedBy: VARCHAR(16), NOT NULL
+    - CreatedDate: DATETIME, NOT NULL
+    - ChangedBy: VARCHAR(16), NOT NULL
+    - ChangedDate: DATETIME, NOT NULL
+  PRIMARY KEY: (DocNo)
+  FOREIGN KEYS:
+    - (Location) -> masterlocation(Code)
+
+---
+
+TABLE: menu
+  COLUMNS:
+    - Role: VARCHAR(16), NOT NULL, PK
+    - Menu: VARCHAR(50), NOT NULL, PK
+    - SubMenu: VARCHAR(50), NOT NULL, PK
+  PRIMARY KEY: (Role, Menu, SubMenu)
+
+---
+
+TABLE: menulist
+  COLUMNS:
+    - Menu: VARCHAR(50), NOT NULL, PK
+    - SubMenu: VARCHAR(50), NOT NULL, PK
+    - Filename: VARCHAR(50), NOT NULL
+    - FormName: VARCHAR(50), NOT NULL
+    - Parameters: VARCHAR(50)
+  PRIMARY KEY: (Menu, SubMenu)
+
+---
+
+TABLE: movingaverageprice
+  COLUMNS:
+    - MaterialCode: VARCHAR(20), NOT NULL, PK
+    - DocDate: DATE, NOT NULL, PK
+    - Number: INTEGER, NOT NULL, PK
+    - DocNo: VARCHAR(15), NOT NULL
+    - PrevValue: DECIMAL(18, 4), NOT NULL
+    - PrevQty: DECIMAL(18, 4), NOT NULL
+    - DocValue: DECIMAL(18, 4), NOT NULL
+    - DocQty: DECIMAL(18, 4), NOT NULL
+    - TotalValue: DECIMAL(18, 4), NOT NULL
+    - TotalQty: DECIMAL(18, 4), NOT NULL
+    - AveragePrice: DECIMAL(18, 4), NOT NULL
+  PRIMARY KEY: (MaterialCode, DocDate, Number)
+
+---
+
+TABLE: mporderd
+  COLUMNS:
+    - ShopId: VARCHAR(20), NOT NULL, PK
+    - OrderId: VARCHAR(40), NOT NULL, PK
+    - Number: INTEGER, NOT NULL, PK
+    - ItemId: VARCHAR(40), NOT NULL
+    - Variant: VARCHAR(40), NOT NULL
+    - MaterialCode: VARCHAR(20), NOT NULL
+    - Name: VARCHAR(255), NOT NULL
+    - Info: VARCHAR(1024), NOT NULL
+    - Qty: DECIMAL(18, 4), NOT NULL
+    - Price: DECIMAL(18, 4), NOT NULL
+    - TotalPrice: DECIMAL(18, 4), NOT NULL
+    - TotalWeight: DECIMAL(18, 4), NOT NULL
+  PRIMARY KEY: (ShopId, OrderId, Number)
+
+---
+
+TABLE: mporderh
+  COLUMNS:
+    - ShopId: VARCHAR(20), NOT NULL, PK
+    - OrderId: VARCHAR(40), NOT NULL, PK
+    - DocDate: DATE, NOT NULL
+    - SODocNo: VARCHAR(15), NOT NULL
+    - ReferenceNo: VARCHAR(50), NOT NULL
+    - BuyerId: VARCHAR(50), NOT NULL
+    - PaymentId: VARCHAR(20), NOT NULL
+    - PaymentDate: DATETIME
+    - RecipientName: VARCHAR(50), NOT NULL
+    - RecipientPhone: VARCHAR(50), NOT NULL
+    - RecipientAddress: VARCHAR(255), NOT NULL
+    - RecipientDistrict: VARCHAR(50), NOT NULL
+    - RecipientCity: VARCHAR(50), NOT NULL
+    - RecipientProvince: VARCHAR(50), NOT NULL
+    - RecipientCountry: VARCHAR(50), NOT NULL
+    - RecipientPostalCode: VARCHAR(50), NOT NULL
+    - RecipientGeo: VARCHAR(50), NOT NULL
+    - LogisticsShippingAgency: VARCHAR(50), NOT NULL
+    - LogisticsServiceType: VARCHAR(50), NOT NULL
+    - LogisticsAWB: VARCHAR(50), NOT NULL
+    - TotalProductPrice: DECIMAL(18, 4), NOT NULL
+    - ShippingCost: DECIMAL(18, 4), NOT NULL
+    - InsuranceCost: DECIMAL(18, 4), NOT NULL
+    - TotalAmount: DECIMAL(18, 4), NOT NULL
+    - OrderStatus: VARCHAR(20), NOT NULL
+    - CreatedDate: DATETIME, NOT NULL
+    - DownloadedDate: DATETIME, NOT NULL
+    - UpdatedDate: DATETIME, NOT NULL
+  PRIMARY KEY: (ShopId, OrderId)
+
+---
+
+TABLE: opendocument
+  COLUMNS:
+    - DocNo: VARCHAR(20), NOT NULL, PK
+    - User: VARCHAR(16), NOT NULL
+  PRIMARY KEY: (DocNo)
+
+---
+
+TABLE: packinglistd
+  COLUMNS:
+    - DocNo: VARCHAR(15), NOT NULL, PK
+    - GIDocNo: VARCHAR(15), NOT NULL, PK
+  PRIMARY KEY: (DocNo, GIDocNo)
+  FOREIGN KEYS:
+    - (GIDocNo) -> goodsissueh(DocNo)
+
+---
+
+TABLE: packinglisth
+  COLUMNS:
+    - DocNo: VARCHAR(15), NOT NULL, PK
+    - Series: VARCHAR(3), NOT NULL
+    - DocDate: DATE, NOT NULL
+    - ContainerNo: VARCHAR(30), NOT NULL
+    - Information: VARCHAR(255), NOT NULL
+    - Status: VARCHAR(20), NOT NULL
+    - PrintCounter: INTEGER, NOT NULL
+    - PrintedBy: VARCHAR(16)
+    - PrintedDate: DATETIME
+    - CreatedBy: VARCHAR(16), NOT NULL
+    - CreatedDate: DATETIME, NOT NULL
+    - ChangedBy: VARCHAR(16), NOT NULL
+    - ChangedDate: DATETIME, NOT NULL
+  PRIMARY KEY: (DocNo)
+
+---
+
+TABLE: plugind
+  COLUMNS:
+    - Plugin: VARCHAR(20), NOT NULL, PK
+    - Number: INTEGER, NOT NULL, PK
+    - MenuName: VARCHAR(50), NOT NULL
+    - MenuText: VARCHAR(50), NOT NULL
+    - ParentMenu: VARCHAR(50), NOT NULL
+    - Form: VARCHAR(50), NOT NULL
+    - Query: VARCHAR(1024), NOT NULL
+    - PrefixReportFile: VARCHAR(50), NOT NULL
+  PRIMARY KEY: (Plugin, Number)
+
+---
+
+TABLE: pluginh
+  COLUMNS:
+    - Plugin: VARCHAR(20), NOT NULL, PK
+    - Filename: VARCHAR(50), NOT NULL
+    - License: VARCHAR(50), NOT NULL
+  PRIMARY KEY: (Plugin)
+
+---
+
+TABLE: pointofsaled
+  COLUMNS:
+    - DocNo: VARCHAR(15), NOT NULL, PK
+    - Number: INTEGER, NOT NULL, PK
+    - MaterialCode: VARCHAR(20), NOT NULL
+    - Info: VARCHAR(1024), NOT NULL
+    - TagNo: VARCHAR(10), NOT NULL, PK
+    - Unit: VARCHAR(5), NOT NULL
+    - Qty: DECIMAL(18, 4), NOT NULL
+    - BaseQty: DECIMAL(18, 4), NOT NULL
+    - Price: DECIMAL(18, 4), NOT NULL
+    - Gross: DECIMAL(18, 4), NOT NULL
+    - DiscPercent: DECIMAL(18, 4), NOT NULL
+    - DiscPercent2: DECIMAL(18, 4), NOT NULL
+    - DiscPercent3: DECIMAL(18, 4), NOT NULL
+    - DiscValue: DECIMAL(18, 4), NOT NULL
+    - DiscNominal: DECIMAL(18, 4), NOT NULL
+    - Netto: DECIMAL(18, 4), NOT NULL
+    - Cost: DECIMAL(18, 4), NOT NULL
+    - PromoQty: DECIMAL(18, 4), NOT NULL
+  PRIMARY KEY: (DocNo, Number, TagNo)
+  FOREIGN KEYS:
+    - (MaterialCode, Unit) -> masterunitconversion(MaterialCode, Unit)
+
+---
+
+TABLE: pointofsaleh
+  COLUMNS:
+    - DocNo: VARCHAR(15), NOT NULL, PK
+    - Series: VARCHAR(3), NOT NULL
+    - DocDate: DATE, NOT NULL
+    - Location: VARCHAR(5), NOT NULL
+    - SalesCode: VARCHAR(10), NOT NULL
+    - CustomerCode: VARCHAR(15), NOT NULL
+    - CustomerName: VARCHAR(45), NOT NULL
+    - Address: VARCHAR(80), NOT NULL
+    - Address2: VARCHAR(80), NOT NULL
+    - City: VARCHAR(20), NOT NULL
+    - Mobile: VARCHAR(50), NOT NULL
+    - PONo: VARCHAR(50), NOT NULL
+    - TaxStatus: VARCHAR(10), NOT NULL
+    - TaxPercent: DECIMAL(18, 4), NOT NULL
+    - DiscPercent: DECIMAL(18, 4), NOT NULL
+    - TotalGross: DECIMAL(18, 4), NOT NULL
+    - TotalDisc: DECIMAL(18, 4), NOT NULL
+    - TaxValue: DECIMAL(18, 4), NOT NULL
+    - TotalNetto: DECIMAL(18, 4), NOT NULL
+    - Payment: DECIMAL(18, 4), NOT NULL
+    - Change: DECIMAL(18, 4), NOT NULL
+    - Rounding: DECIMAL(18, 4), NOT NULL
+    - TotalCost: DECIMAL(18, 4), NOT NULL
+    - Information: VARCHAR(255), NOT NULL
+    - Status: VARCHAR(20), NOT NULL
+    - PrintCounter: INTEGER, NOT NULL
+    - PrintedBy: VARCHAR(16)
+    - PrintedDate: DATETIME
+    - CreatedBy: VARCHAR(16), NOT NULL
+    - CreatedDate: DATETIME, NOT NULL
+    - ChangedBy: VARCHAR(16), NOT NULL
+    - ChangedDate: DATETIME, NOT NULL
+  PRIMARY KEY: (DocNo)
+  FOREIGN KEYS:
+    - (CustomerCode) -> mastercustomer(Code)
+    - (SalesCode) -> mastersales(Code)
+
+---
+
+TABLE: pointofsalett
+  COLUMNS:
+    - DocNo: VARCHAR(15), NOT NULL, PK
+    - TransactionType: VARCHAR(20), NOT NULL, PK
+    - Info: VARCHAR(255), NOT NULL, PK
+    - Payment: DECIMAL(18, 4), NOT NULL
+  PRIMARY KEY: (DocNo, TransactionType, Info)
+
+---
+
+TABLE: posstartbalanceh
+  COLUMNS:
+    - DocNo: VARCHAR(15), NOT NULL, PK
+    - Series: VARCHAR(3), NOT NULL
+    - DocDate: DATE, NOT NULL
+    - TransactionType: VARCHAR(20), NOT NULL
+    - User: VARCHAR(16), NOT NULL
+    - StartBalance: DECIMAL(18, 4), NOT NULL
+    - Information: VARCHAR(255), NOT NULL
+    - Status: VARCHAR(20), NOT NULL
+    - IsApproved: BIT, NOT NULL
+    - ApprovedBy: VARCHAR(16), NOT NULL
+    - ApprovedDate: DATETIME
+    - PrintCounter: INTEGER, NOT NULL
+    - PrintedBy: VARCHAR(16)
+    - PrintedDate: DATETIME
+    - CreatedBy: VARCHAR(16), NOT NULL
+    - CreatedDate: DATETIME, NOT NULL
+    - ChangedBy: VARCHAR(16), NOT NULL
+    - ChangedDate: DATETIME, NOT NULL
+  PRIMARY KEY: (DocNo)
+
+---
+
+TABLE: proformainvoiced
+  COLUMNS:
+    - DocNo: VARCHAR(15), NOT NULL, PK
+    - Number: INTEGER, NOT NULL, PK
+    - MaterialCode: VARCHAR(20), NOT NULL
+    - Info: VARCHAR(255), NOT NULL
+    - Unit: VARCHAR(5), NOT NULL
+    - Qty: DECIMAL(18, 4), NOT NULL
+  PRIMARY KEY: (DocNo, Number)
+
+---
+
+TABLE: proformainvoiceh
+  COLUMNS:
+    - DocNo: VARCHAR(15), NOT NULL, PK
+    - Series: VARCHAR(3), NOT NULL
+    - DocDate: DATE, NOT NULL
+    - SODocNo: VARCHAR(15), NOT NULL
+    - CustomerCode: VARCHAR(10), NOT NULL
+    - ShipToCode: VARCHAR(10), NOT NULL
+    - PONo: VARCHAR(50), NOT NULL
+    - Information: VARCHAR(255), NOT NULL
+    - Status: VARCHAR(20), NOT NULL
+    - PrintCounter: INTEGER, NOT NULL
+    - PrintedBy: VARCHAR(16)
+    - PrintedDate: DATETIME
+    - CreatedBy: VARCHAR(16), NOT NULL
+    - CreatedDate: DATETIME, NOT NULL
+    - ChangedBy: VARCHAR(16), NOT NULL
+    - ChangedDate: DATETIME, NOT NULL
+  PRIMARY KEY: (DocNo)
+
+---
+
+TABLE: purchasecostd
+  COLUMNS:
+    - DocNo: VARCHAR(15), NOT NULL, PK
+    - Description: VARCHAR(50), NOT NULL, PK
+    - Cost: DECIMAL(18, 4), NOT NULL
+  PRIMARY KEY: (DocNo, Description)
+
+---
+
+TABLE: purchasecosth
+  COLUMNS:
+    - DocNo: VARCHAR(15), NOT NULL, PK
+    - Series: VARCHAR(3), NOT NULL
+    - DocDate: DATE, NOT NULL
+    - TransactionType: VARCHAR(20), NOT NULL
+    - SupplierCode: VARCHAR(10), NOT NULL
+    - SupplierTaxTo: VARCHAR(10), NOT NULL
+    - SupplierInvNo: VARCHAR(20), NOT NULL
+    - TOP: INTEGER, NOT NULL
+    - TaxStatus: VARCHAR(10), NOT NULL
+    - TaxPercent: DECIMAL(18, 4), NOT NULL
+    - TaxPrefix: VARCHAR(3), NOT NULL
+    - TaxNo: VARCHAR(25), NOT NULL
+    - Currency: VARCHAR(3), NOT NULL
+    - ExchangeRate: DECIMAL(18, 4), NOT NULL
+    - TotalCost: DECIMAL(18, 4), NOT NULL
+    - TaxValue: DECIMAL(18, 4), NOT NULL
+    - TaxValueInTaxCur: DECIMAL(18, 4), NOT NULL
+    - TotalNetto: DECIMAL(18, 4), NOT NULL
+    - Information: VARCHAR(255), NOT NULL
+    - InvoiceDocNo: VARCHAR(15), NOT NULL
+    - Status: VARCHAR(20), NOT NULL
+    - IsApproved: BIT, NOT NULL
+    - ApprovedBy: VARCHAR(16)
+    - ApprovedDate: DATETIME
+    - PrintCounter: INTEGER, NOT NULL
+    - PrintedBy: VARCHAR(16)
+    - PrintedDate: DATETIME
+    - CreatedBy: VARCHAR(16), NOT NULL
+    - CreatedDate: DATETIME, NOT NULL
+    - ChangedBy: VARCHAR(16), NOT NULL
+    - ChangedDate: DATETIME, NOT NULL
+  PRIMARY KEY: (DocNo)
+  FOREIGN KEYS:
+    - (Currency) -> mastercurrency(Code)
+    - (SupplierCode) -> mastersupplier(Code)
+
+---
+
+TABLE: purchaseinvoicec
+  COLUMNS:
+    - DocNo: VARCHAR(15), NOT NULL, PK
+    - PCDocNo: VARCHAR(15), NOT NULL, PK
+  PRIMARY KEY: (DocNo, PCDocNo)
+
+---
+
+TABLE: purchaseinvoiced
+  COLUMNS:
+    - DocNo: VARCHAR(15), NOT NULL, PK
+    - Number: INTEGER, NOT NULL, PK
+    - MaterialCode: VARCHAR(20), NOT NULL, PK
+    - Info: VARCHAR(1024), NOT NULL
+    - TagNo: VARCHAR(10), NOT NULL, PK
+    - Unit: VARCHAR(5), NOT NULL
+    - Qty: DECIMAL(18, 4), NOT NULL
+    - Price: DECIMAL(18, 4), NOT NULL
+    - Gross: DECIMAL(18, 4), NOT NULL
+    - DiscPercent: DECIMAL(18, 4), NOT NULL
+    - DiscPercent2: DECIMAL(18, 4), NOT NULL
+    - DiscPercent3: DECIMAL(18, 4), NOT NULL
+    - DiscValue: DECIMAL(18, 4), NOT NULL
+    - DiscNominal: DECIMAL(18, 4), NOT NULL
+    - Netto: DECIMAL(18, 4), NOT NULL
+    - Cost: DECIMAL(18, 4), NOT NULL
+  PRIMARY KEY: (DocNo, Number, MaterialCode, TagNo)
+  FOREIGN KEYS:
+    - (MaterialCode, Unit) -> masterunitconversion(MaterialCode, Unit)
+
+---
+
+TABLE: purchaseinvoicedp
+  COLUMNS:
+    - DocNo: VARCHAR(15), NOT NULL, PK
+    - DPDocNo: VARCHAR(16), NOT NULL, PK
+    - Usage: DECIMAL(18, 4), NOT NULL
+  PRIMARY KEY: (DocNo, DPDocNo)
+
+---
+
+TABLE: purchaseinvoicegr
+  COLUMNS:
+    - DocNo: VARCHAR(15), NOT NULL, PK
+    - GRDocNo: VARCHAR(15), NOT NULL, PK
+  PRIMARY KEY: (DocNo, GRDocNo)
+
+---
+
+TABLE: purchaseinvoiceh
+  COLUMNS:
+    - DocNo: VARCHAR(15), NOT NULL, PK
+    - Series: VARCHAR(3), NOT NULL
+    - DocDate: DATE, NOT NULL
+    - PODocNo: VARCHAR(15), NOT NULL
+    - JODocNo: VARCHAR(15), NOT NULL
+    - Trip: VARCHAR(20), NOT NULL
+    - TransactionType: VARCHAR(20), NOT NULL
+    - GRDocNo: VARCHAR(15), NOT NULL
+    - Location: VARCHAR(5), NOT NULL
+    - SupplierCode: VARCHAR(10), NOT NULL
+    - SupplierTaxTo: VARCHAR(10), NOT NULL
+    - SupplierInvNo: VARCHAR(20), NOT NULL
+    - TOP: INTEGER, NOT NULL
+    - Currency: VARCHAR(3), NOT NULL
+    - ExchangeRate: DECIMAL(18, 4), NOT NULL
+    - TotalCost: DECIMAL(18, 4), NOT NULL
+    - CostDistribution: VARCHAR(10), NOT NULL
+    - TaxStatus: VARCHAR(10), NOT NULL
+    - TaxPercent: DECIMAL(18, 4), NOT NULL
+    - TaxPrefix: VARCHAR(3), NOT NULL
+    - TaxNo: VARCHAR(25), NOT NULL
+    - DiscPercent: DECIMAL(18, 4), NOT NULL
+    - TotalGross: DECIMAL(18, 4), NOT NULL
+    - TotalDisc: DECIMAL(18, 4), NOT NULL
+    - DownPayment: DECIMAL(18, 4), NOT NULL
+    - TaxValue: DECIMAL(18, 4), NOT NULL
+    - TaxValueInTaxCur: DECIMAL(18, 4), NOT NULL
+    - TotalNetto: DECIMAL(18, 4), NOT NULL
+    - CutPPh: BIT, NOT NULL
+    - PPhPercent: DECIMAL(18, 4), NOT NULL
+    - PPhValue: DECIMAL(18, 4), NOT NULL
+    - Information: VARCHAR(255), NOT NULL
+    - Status: VARCHAR(20), NOT NULL
+    - PrintCounter: INTEGER, NOT NULL
+    - PrintedBy: VARCHAR(16)
+    - PrintedDate: DATETIME
+    - CreatedBy: VARCHAR(16), NOT NULL
+    - CreatedDate: DATETIME, NOT NULL
+    - ChangedBy: VARCHAR(20), NOT NULL
+    - ChangedDate: DATETIME, NOT NULL
+  PRIMARY KEY: (DocNo)
+  FOREIGN KEYS:
+    - (Currency) -> mastercurrency(Code)
+    - (SupplierCode) -> mastersupplier(Code)
+    - (SupplierTaxTo) -> mastersupplier(Code)
+
+---
+
+TABLE: purchaseorderd
+  COLUMNS:
+    - DocNo: VARCHAR(15), NOT NULL, PK
+    - Number: INTEGER, NOT NULL, PK
+    - MaterialCode: VARCHAR(20), NOT NULL
+    - Info: VARCHAR(1024), NOT NULL
+    - Unit: VARCHAR(5), NOT NULL
+    - Qty: DECIMAL(18, 4), NOT NULL
+    - Price: DECIMAL(18, 4), NOT NULL
+    - Gross: DECIMAL(18, 4), NOT NULL
+    - DiscPercent: DECIMAL(18, 4), NOT NULL
+    - DiscPercent2: DECIMAL(18, 4), NOT NULL
+    - DiscPercent3: DECIMAL(18, 4), NOT NULL
+    - DiscValue: DECIMAL(18, 4), NOT NULL
+    - DiscNominal: DECIMAL(18, 4), NOT NULL
+    - Netto: DECIMAL(18, 4), NOT NULL
+    - QtyReceived: DECIMAL(18, 4), NOT NULL
+  PRIMARY KEY: (DocNo, Number)
+  FOREIGN KEYS:
+    - (MaterialCode, Unit) -> masterunitconversion(MaterialCode, Unit)
+
+---
+
+TABLE: purchaseorderh
+  COLUMNS:
+    - DocNo: VARCHAR(15), NOT NULL, PK
+    - Series: VARCHAR(3), NOT NULL
+    - TransactionType: VARCHAR(20), NOT NULL
+    - DocDate: DATE, NOT NULL
+    - SupplierCode: VARCHAR(10), NOT NULL
+    - DeliveryDate: DATE, NOT NULL
+    - TOP: INTEGER, NOT NULL
+    - DiscPercent: DECIMAL(18, 4), NOT NULL
+    - TaxStatus: VARCHAR(10), NOT NULL
+    - TaxPercent: DECIMAL(18, 4), NOT NULL
+    - Currency: VARCHAR(3), NOT NULL
+    - ExchangeRate: DECIMAL(18, 4), NOT NULL
+    - JODocNo: VARCHAR(15), NOT NULL
+    - Trip: VARCHAR(20), NOT NULL
+    - SIDocNo: VARCHAR(15), NOT NULL
+    - TotalGross: DECIMAL(18, 4), NOT NULL
+    - TotalDisc: DECIMAL(18, 4), NOT NULL
+    - TaxValue: DECIMAL(18, 4), NOT NULL
+    - TotalNetto: DECIMAL(18, 4), NOT NULL
+    - CutPPh: BIT, NOT NULL
+    - PPhPercent: DECIMAL(18, 4), NOT NULL
+    - PPhValue: DECIMAL(18, 4), NOT NULL
+    - SendTo: VARCHAR(50), NOT NULL
+    - Information: VARCHAR(255), NOT NULL
+    - Status: VARCHAR(20), NOT NULL
+    - IsApproved: BIT, NOT NULL
+    - ApprovedBy: VARCHAR(16)
+    - ApprovedDate: DATETIME
+    - PrintCounter: INTEGER, NOT NULL
+    - PrintedBy: VARCHAR(16)
+    - PrintedDate: DATETIME
+    - IsSalesReturn: BIT, NOT NULL
+    - CreatedBy: VARCHAR(16), NOT NULL
+    - CreatedDate: DATETIME, NOT NULL
+    - ChangedBy: VARCHAR(16), NOT NULL
+    - ChangedDate: DATETIME, NOT NULL
+  PRIMARY KEY: (DocNo)
+
+---
+
+TABLE: purchaseorderpr
+  COLUMNS:
+    - DocNo: VARCHAR(15), NOT NULL, PK
+    - PRDocNo: VARCHAR(15), NOT NULL, PK
+    - MaterialCode: VARCHAR(20), NOT NULL, PK
+    - Unit: VARCHAR(5), NOT NULL
+    - QtyPO: DECIMAL(18, 4), NOT NULL
+  PRIMARY KEY: (DocNo, PRDocNo, MaterialCode)
+
+---
+
+TABLE: purchaserequestd
+  COLUMNS:
+    - DocNo: VARCHAR(15), NOT NULL, PK
+    - MaterialCode: VARCHAR(20), NOT NULL, PK
+    - Info: VARCHAR(1024), NOT NULL
+    - Unit: VARCHAR(5), NOT NULL
+    - Qty: DECIMAL(18, 4), NOT NULL
+    - RequiredDate: DATE, NOT NULL
+    - QtyPO: DECIMAL(18, 4), NOT NULL
+  PRIMARY KEY: (DocNo, MaterialCode)
+
+---
+
+TABLE: purchaserequesth
+  COLUMNS:
+    - DocNo: VARCHAR(15), NOT NULL, PK
+    - Series: VARCHAR(3), NOT NULL
+    - DocDate: DATE, NOT NULL
+    - JODocNo: VARCHAR(15), NOT NULL
+    - Trip: VARCHAR(20), NOT NULL
+    - Department: VARCHAR(10), NOT NULL
+    - Information: VARCHAR(255), NOT NULL
+    - Status: VARCHAR(20), NOT NULL
+    - IsApproved: BIT, NOT NULL
+    - ApprovedBy: VARCHAR(16)
+    - ApprovedDate: DATETIME
+    - CreatedBy: VARCHAR(16), NOT NULL
+    - CreatedDate: DATETIME, NOT NULL
+    - ChangedBy: VARCHAR(16), NOT NULL
+    - ChangedDate: DATETIME, NOT NULL
+  PRIMARY KEY: (DocNo)
+
+---
+
+TABLE: purchasereturnd
+  COLUMNS:
+    - DocNo: VARCHAR(15), NOT NULL, PK
+    - Number: INTEGER, NOT NULL, PK
+    - MaterialCode: VARCHAR(20), NOT NULL, PK
+    - Info: VARCHAR(1024), NOT NULL
+    - TagNo: VARCHAR(10), NOT NULL, PK
+    - Unit: VARCHAR(5), NOT NULL
+    - Qty: DECIMAL(18, 4), NOT NULL
+    - Price: DECIMAL(18, 4), NOT NULL
+    - Gross: DECIMAL(18, 4), NOT NULL
+    - DiscPercent: DECIMAL(18, 4), NOT NULL
+    - DiscPercent2: DECIMAL(18, 4), NOT NULL
+    - DiscPercent3: DECIMAL(18, 4), NOT NULL
+    - DiscValue: DECIMAL(18, 4), NOT NULL
+    - DiscNominal: DECIMAL(18, 4), NOT NULL
+    - Netto: DECIMAL(18, 4), NOT NULL
+    - Cost: DECIMAL(18, 4), NOT NULL
+  PRIMARY KEY: (DocNo, Number, MaterialCode, TagNo)
+  FOREIGN KEYS:
+    - (MaterialCode, Unit) -> masterunitconversion(MaterialCode, Unit)
+
+---
+
+TABLE: purchasereturnh
+  COLUMNS:
+    - DocNo: VARCHAR(15), NOT NULL, PK
+    - Series: VARCHAR(3), NOT NULL
+    - DocDate: DATE, NOT NULL
+    - SODocNo: VARCHAR(15), NOT NULL
+    - GIDocNo: VARCHAR(15), NOT NULL
+    - SupplierCode: VARCHAR(10), NOT NULL
+    - SupplierTaxTo: VARCHAR(10), NOT NULL
+    - SupplierDocNo: VARCHAR(20), NOT NULL
+    - TaxNo: VARCHAR(20), NOT NULL
+    - TaxDate: DATE, NOT NULL
+    - Currency: VARCHAR(3), NOT NULL
+    - ExchangeRate: DECIMAL(18, 4), NOT NULL
+    - TaxStatus: VARCHAR(10), NOT NULL
+    - TaxPercent: DECIMAL(18, 4), NOT NULL
+    - TaxPrefix: VARCHAR(3), NOT NULL
+    - DiscPercent: DECIMAL(18, 4), NOT NULL
+    - TotalGross: DECIMAL(18, 4), NOT NULL
+    - TotalDisc: DECIMAL(18, 4), NOT NULL
+    - TaxValue: DECIMAL(18, 4), NOT NULL
+    - TaxValueInTaxCur: DECIMAL(18, 4), NOT NULL
+    - TotalNetto: DECIMAL(18, 4), NOT NULL
+    - TotalCost: DECIMAL(18, 4), NOT NULL
+    - Information: VARCHAR(255), NOT NULL
+    - Status: VARCHAR(20), NOT NULL
+    - PrintCounter: INTEGER, NOT NULL
+    - PrintedBy: VARCHAR(16)
+    - PrintedDate: DATETIME
+    - CreatedBy: VARCHAR(16), NOT NULL
+    - CreatedDate: DATETIME, NOT NULL
+    - ChangedBy: VARCHAR(16), NOT NULL
+    - ChangedDate: DATETIME, NOT NULL
+  PRIMARY KEY: (DocNo)
+  FOREIGN KEYS:
+    - (Currency) -> mastercurrency(Code)
+    - (SupplierCode) -> mastersupplier(Code)
+    - (SupplierTaxTo) -> mastersupplier(Code)
+
+---
+
+TABLE: putawaylistd
+  COLUMNS:
+    - DocNo: VARCHAR(15), NOT NULL, PK
+    - Number: INTEGER, NOT NULL, PK
+    - MaterialCode: VARCHAR(15), NOT NULL
+    - TagNo: VARCHAR(10), NOT NULL
+    - Unit: VARCHAR(5), NOT NULL
+    - Qty: DECIMAL(18, 4), NOT NULL
+  PRIMARY KEY: (DocNo, Number)
+
+---
+
+TABLE: putawaylisth
+  COLUMNS:
+    - DocNo: VARCHAR(15), NOT NULL, PK
+    - Series: VARCHAR(3), NOT NULL
+    - DocDate: DATE, NOT NULL
+    - Location: VARCHAR(5), NOT NULL
+    - Information: VARCHAR(255), NOT NULL
+    - Status: VARCHAR(20), NOT NULL
+    - CreatedBy: VARCHAR(16), NOT NULL
+    - CreatedDate: DATETIME
+    - ChangedBy: VARCHAR(16), NOT NULL
+    - ChangedDate: DATETIME
+  PRIMARY KEY: (DocNo)
+
+---
+
+TABLE: putawaylistr
+  COLUMNS:
+    - DocNo: VARCHAR(15), NOT NULL, PK
+    - Number: INTEGER, NOT NULL, PK
+    - Zone: VARCHAR(10), NOT NULL, PK
+    - Bin: VARCHAR(10), NOT NULL, PK
+    - Qty: DECIMAL(18, 4), NOT NULL
+  PRIMARY KEY: (DocNo, Number, Zone, Bin)
+
+---
+
+TABLE: qualitycontrol
+  COLUMNS:
+    - DocNo: VARCHAR(15), NOT NULL, PK
+    - TagNo: VARCHAR(10), NOT NULL, PK
+    - MaterialCode: VARCHAR(20), NOT NULL, PK
+    - Series: VARCHAR(3), NOT NULL
+    - QCStatus: VARCHAR(10), NOT NULL
+    - QCInfo: VARCHAR(255), NOT NULL
+    - CheckedBy: VARCHAR(16), NOT NULL
+    - CheckedDate: DATETIME, NOT NULL
+    - QtyGood: DECIMAL(18, 4), NOT NULL
+    - QtyBad: DECIMAL(18, 4), NOT NULL
+    - SeriesGood: VARCHAR(3), NOT NULL
+    - SeriesBad: VARCHAR(3), NOT NULL
+    - TransferDateGood: DATE
+    - TransferDateBad: DATE
+    - LocationGood: VARCHAR(5), NOT NULL
+    - LocationBad: VARCHAR(5), NOT NULL
+    - TransferDocNoGood: VARCHAR(15), NOT NULL
+    - TransferDocNoBad: VARCHAR(15), NOT NULL
+  PRIMARY KEY: (DocNo, TagNo, MaterialCode)
+
+---
+
+TABLE: refreshcubelog
+  COLUMNS:
+    - Periode: DATE, NOT NULL, PK
+    - Name: VARCHAR(50), NOT NULL, PK
+    - RefreshedBy: VARCHAR(16), NOT NULL
+    - RefreshedDate: DATETIME, NOT NULL
+    - TotalRow: INTEGER, NOT NULL
+  PRIMARY KEY: (Name, Periode)
+
+---
+
+TABLE: reportfile
+  COLUMNS:
+    - Filename: VARCHAR(255), NOT NULL, PK
+  PRIMARY KEY: (Filename)
+
+---
+
+TABLE: reportmanagement
+  COLUMNS:
+    - Role: VARCHAR(16), NOT NULL, PK
+    - MenuName: VARCHAR(50), NOT NULL, PK
+    - IsNoShowGrid: BIT, NOT NULL
+    - IsNoPrint: BIT, NOT NULL
+    - IsNoExport: BIT, NOT NULL
+    - DefaultReportFile: VARCHAR(100), NOT NULL
+    - HiddenReportFiles: TEXT, NOT NULL
+    - ChangedBy: VARCHAR(16), NOT NULL
+    - ChangedDate: DATETIME, NOT NULL
+  PRIMARY KEY: (Role, MenuName)
+
+---
+
+TABLE: reportrequest
+  COLUMNS:
+    - ID: VARCHAR(50), NOT NULL, PK
+    - Api: VARCHAR(255), NOT NULL
+    - Parameters: TEXT, NOT NULL
+    - FilterText: VARCHAR(512), NOT NULL
+    - Filename: VARCHAR(255), NOT NULL
+    - Token: VARCHAR(512), NOT NULL
+    - CreatedBy: VARCHAR(16), NOT NULL
+    - CreatedDate: DATETIME, NOT NULL
+    - StartedDate: DATETIME
+    - CompletedDate: DATETIME
+    - Status: VARCHAR(20), NOT NULL
+    - ErrorMessage: VARCHAR(512), NOT NULL
+  PRIMARY KEY: (ID)
+
+---
+
+TABLE: resetprintcounterlog
+  COLUMNS:
+    - ResetTime: DATETIME, NOT NULL, PK
+    - ResetBy: VARCHAR(16), NOT NULL, PK
+    - Document: VARCHAR(20), NOT NULL, PK
+    - DocNo: VARCHAR(15), NOT NULL, PK
+    - Reason: VARCHAR(100), NOT NULL
+  PRIMARY KEY: (ResetTime, ResetBy, Document, DocNo)
+
+---
+
+TABLE: role
+  COLUMNS:
+    - Role: VARCHAR(16), NOT NULL, PK
+    - User: VARCHAR(16), NOT NULL, PK
+  PRIMARY KEY: (Role, User)
+
+---
+
+TABLE: salesinvoiced
+  COLUMNS:
+    - DocNo: VARCHAR(15), NOT NULL, PK
+    - Number: INTEGER, NOT NULL, PK
+    - MaterialCode: VARCHAR(20), NOT NULL
+    - Info: VARCHAR(1024), NOT NULL
+    - TagNo: VARCHAR(10), NOT NULL, PK
+    - Unit: VARCHAR(5), NOT NULL
+    - Qty: DECIMAL(18, 4), NOT NULL
+    - Price: DECIMAL(18, 4), NOT NULL
+    - Gross: DECIMAL(18, 4), NOT NULL
+    - DiscPercent: DECIMAL(18, 4), NOT NULL
+    - DiscPercent2: DECIMAL(18, 4), NOT NULL
+    - DiscPercent3: DECIMAL(18, 4), NOT NULL
+    - DiscValue: DECIMAL(18, 4), NOT NULL
+    - DiscNominal: DECIMAL(18, 4), NOT NULL
+    - Netto: DECIMAL(18, 4), NOT NULL
+    - Cost: DECIMAL(18, 4), NOT NULL
+  PRIMARY KEY: (DocNo, Number, TagNo)
+  FOREIGN KEYS:
+    - (MaterialCode, Unit) -> masterunitconversion(MaterialCode, Unit)
+
+---
+
+TABLE: salesinvoicedp
+  COLUMNS:
+    - DocNo: VARCHAR(15), NOT NULL, PK
+    - DPDocNo: VARCHAR(16), NOT NULL, PK
+    - Usage: DECIMAL(18, 4), NOT NULL
+  PRIMARY KEY: (DocNo, DPDocNo)
+
+---
+
+TABLE: salesinvoicegi
+  COLUMNS:
+    - DocNo: VARCHAR(15), NOT NULL, PK
+    - GIDocNo: VARCHAR(15), NOT NULL, PK
+  PRIMARY KEY: (DocNo, GIDocNo)
+
+---
+
+TABLE: salesinvoiceh
+  COLUMNS:
+    - DocNo: VARCHAR(15), NOT NULL, PK
+    - Series: VARCHAR(3), NOT NULL
+    - DocDate: DATE, NOT NULL
+    - SODocNo: VARCHAR(15), NOT NULL
+    - GIDocNo: VARCHAR(15), NOT NULL
+    - Location: VARCHAR(5), NOT NULL
+    - PONo: VARCHAR(50), NOT NULL
+    - CustomerCode: VARCHAR(15), NOT NULL
+    - TaxToCode: VARCHAR(15), NOT NULL
+    - SalesCode: VARCHAR(10), NOT NULL
+    - TOP: INTEGER, NOT NULL
+    - Currency: VARCHAR(3), NOT NULL
+    - ExchangeRate: DECIMAL(18, 4), NOT NULL
+    - TaxStatus: VARCHAR(10), NOT NULL
+    - TaxPercent: DECIMAL(18, 4), NOT NULL
+    - TaxPrefix: VARCHAR(3), NOT NULL
+    - TaxNo: VARCHAR(25), NOT NULL
+    - DiscPercent: DECIMAL(18, 4), NOT NULL
+    - TotalGross: DECIMAL(18, 4), NOT NULL
+    - TotalDisc: DECIMAL(18, 4), NOT NULL
+    - DownPayment: DECIMAL(18, 4), NOT NULL
+    - TaxValue: DECIMAL(18, 4), NOT NULL
+    - TaxValueInTaxCur: DECIMAL(18, 4), NOT NULL
+    - TotalNetto: DECIMAL(18, 4), NOT NULL
+    - TotalCost: DECIMAL(18, 4), NOT NULL
+    - PPhStatus: VARCHAR(10), NOT NULL
+    - CutPPh: BIT, NOT NULL
+    - PPhPercent: DECIMAL(18, 4), NOT NULL
+    - PPhValue: DECIMAL(18, 4), NOT NULL
+    - Information: VARCHAR(255), NOT NULL
+    - Status: VARCHAR(20), NOT NULL
+    - PrintCounter: INTEGER, NOT NULL
+    - PrintedBy: VARCHAR(16)
+    - PrintedDate: DATETIME
+    - CreatedBy: VARCHAR(16), NOT NULL
+    - CreatedDate: DATETIME, NOT NULL
+    - ChangedBy: VARCHAR(16), NOT NULL
+    - ChangedDate: DATETIME, NOT NULL
+  PRIMARY KEY: (DocNo)
+  FOREIGN KEYS:
+    - (CustomerCode) -> mastercustomer(Code)
+    - (TaxToCode) -> mastercustomer(Code)
+    - (Currency) -> mastercurrency(Code)
+    - (SalesCode) -> mastersales(Code)
+
+---
+
+TABLE: salesinvoicerd
+  COLUMNS:
+    - DocNo: VARCHAR(15), NOT NULL, PK
+    - Number: INTEGER, NOT NULL, PK
+    - SupplierCode: VARCHAR(10), NOT NULL, PK
+    - RebateCode: VARCHAR(10), NOT NULL
+    - RebatePercent: DECIMAL(18, 4), NOT NULL
+    - DocValue: DECIMAL(18, 4), NOT NULL
+    - RebateValue: DECIMAL(18, 4), NOT NULL
+  PRIMARY KEY: (DocNo, Number, SupplierCode)
+
+---
+
+TABLE: salesinvoicers
+  COLUMNS:
+    - DocNo: VARCHAR(15), NOT NULL, PK
+    - SupplierCode: VARCHAR(10), NOT NULL, PK
+  PRIMARY KEY: (DocNo, SupplierCode)
+
+---
+
+TABLE: salesorderd
+  COLUMNS:
+    - DocNo: VARCHAR(15), NOT NULL, PK
+    - Number: INTEGER, NOT NULL, PK
+    - MaterialCode: VARCHAR(20), NOT NULL
+    - Info: VARCHAR(1024), NOT NULL
+    - Unit: VARCHAR(5), NOT NULL
+    - Qty: DECIMAL(18, 4), NOT NULL
+    - Price: DECIMAL(18, 4), NOT NULL
+    - Gross: DECIMAL(18, 4), NOT NULL
+    - DiscPercent: DECIMAL(18, 4), NOT NULL
+    - DiscPercent2: DECIMAL(18, 4), NOT NULL
+    - DiscPercent3: DECIMAL(18, 4), NOT NULL
+    - DiscValue: DECIMAL(18, 4), NOT NULL
+    - DiscNominal: DECIMAL(18, 4), NOT NULL
+    - Netto: DECIMAL(18, 4), NOT NULL
+    - QtyDelivered: DECIMAL(18, 4), NOT NULL
+    - QtyWO: DECIMAL(18, 4), NOT NULL
+    - QtyBooked: DECIMAL(18, 4), NOT NULL
+    - PromoQty: DECIMAL(18, 4), NOT NULL
+  PRIMARY KEY: (DocNo, Number)
+  FOREIGN KEYS:
+    - (MaterialCode, Unit) -> masterunitconversion(MaterialCode, Unit)
+
+---
+
+TABLE: salesorderh
+  COLUMNS:
+    - DocNo: VARCHAR(15), NOT NULL, PK
+    - Series: VARCHAR(3), NOT NULL
+    - DocDate: DATE, NOT NULL
+    - CustomerCode: VARCHAR(10), NOT NULL
+    - ShipToCode: VARCHAR(10), NOT NULL
+    - TaxToCode: VARCHAR(10), NOT NULL
+    - SalesCode: VARCHAR(10), NOT NULL
+    - DeliveryDate: DATE, NOT NULL
+    - PONo: VARCHAR(50), NOT NULL
+    - TOP: INTEGER, NOT NULL
+    - DiscPercent: DECIMAL(18, 4), NOT NULL
+    - TaxStatus: VARCHAR(10), NOT NULL
+    - TaxPercent: DECIMAL(18, 4), NOT NULL
+    - Currency: VARCHAR(3), NOT NULL
+    - ExchangeRate: DECIMAL(18, 4), NOT NULL
+    - TotalGross: DECIMAL(18, 4), NOT NULL
+    - TotalDisc: DECIMAL(18, 4), NOT NULL
+    - TaxValue: DECIMAL(18, 4), NOT NULL
+    - TotalNetto: DECIMAL(18, 4), NOT NULL
+    - PPhStatus: VARCHAR(10), NOT NULL
+    - CutPPh: BIT, NOT NULL
+    - PPhPercent: DECIMAL(18, 4), NOT NULL
+    - PPhValue: DECIMAL(18, 4), NOT NULL
+    - Information: VARCHAR(255), NOT NULL
+    - Status: VARCHAR(20), NOT NULL
+    - IsPurchaseReturn: BIT, NOT NULL
+    - IsApproved: BIT, NOT NULL
+    - ApprovedBy: VARCHAR(16)
+    - ApprovedDate: DATETIME
+    - CreatedBy: VARCHAR(16), NOT NULL
+    - CreatedDate: DATETIME, NOT NULL
+    - ChangedBy: VARCHAR(16), NOT NULL
+    - ChangedDate: DATETIME, NOT NULL
+  PRIMARY KEY: (DocNo)
+  FOREIGN KEYS:
+    - (Currency) -> mastercurrency(Code)
+
+---
+
+TABLE: salesorderrd
+  COLUMNS:
+    - DocNo: VARCHAR(15), NOT NULL, PK
+    - Number: INTEGER, NOT NULL, PK
+    - SupplierCode: VARCHAR(10), NOT NULL, PK
+    - RebateCode: VARCHAR(10), NOT NULL
+    - RebatePercent: DECIMAL(18, 4), NOT NULL
+    - DocValue: DECIMAL(18, 4), NOT NULL
+    - RebateValue: DECIMAL(18, 4), NOT NULL
+  PRIMARY KEY: (DocNo, Number, SupplierCode)
+
+---
+
+TABLE: salesorderrs
+  COLUMNS:
+    - DocNo: VARCHAR(15), NOT NULL, PK
+    - SupplierCode: VARCHAR(10), NOT NULL, PK
+  PRIMARY KEY: (DocNo, SupplierCode)
+
+---
+
+TABLE: salesordersch
+  COLUMNS:
+    - DocNo: VARCHAR(15), NOT NULL, PK
+    - Number: INTEGER, NOT NULL, PK
+    - DeliveryDate: DATE, NOT NULL, PK
+    - Qty: DECIMAL(18, 4), NOT NULL
+  PRIMARY KEY: (DocNo, Number, DeliveryDate)
+
+---
+
+TABLE: salesreturnd
+  COLUMNS:
+    - DocNo: VARCHAR(15), NOT NULL, PK
+    - Number: INTEGER, NOT NULL, PK
+    - MaterialCode: VARCHAR(20), NOT NULL, PK
+    - Info: VARCHAR(1024), NOT NULL
+    - TagNo: VARCHAR(10), NOT NULL, PK
+    - OriginalTagNo: VARCHAR(10), NOT NULL
+    - Unit: VARCHAR(5), NOT NULL
+    - Qty: DECIMAL(18, 4), NOT NULL
+    - Price: DECIMAL(18, 4), NOT NULL
+    - Gross: DECIMAL(18, 4), NOT NULL
+    - DiscPercent: DECIMAL(18, 4), NOT NULL
+    - DiscPercent2: DECIMAL(18, 4), NOT NULL
+    - DiscPercent3: DECIMAL(18, 4), NOT NULL
+    - DiscValue: DECIMAL(18, 4), NOT NULL
+    - DiscNominal: DECIMAL(18, 4), NOT NULL
+    - Netto: DECIMAL(18, 4), NOT NULL
+    - Cost: DECIMAL(18, 4), NOT NULL
+  PRIMARY KEY: (DocNo, Number, MaterialCode, TagNo)
+  FOREIGN KEYS:
+    - (MaterialCode, Unit) -> masterunitconversion(MaterialCode, Unit)
+
+---
+
+TABLE: salesreturnh
+  COLUMNS:
+    - DocNo: VARCHAR(15), NOT NULL, PK
+    - Series: VARCHAR(3), NOT NULL
+    - DocDate: DATE, NOT NULL
+    - PODocNo: VARCHAR(15), NOT NULL
+    - GRDocNo: VARCHAR(15), NOT NULL
+    - SIDocNo: VARCHAR(15), NOT NULL
+    - CustomerCode: VARCHAR(10), NOT NULL
+    - CustomerTaxTo: VARCHAR(10), NOT NULL
+    - SalesCode: VARCHAR(10), NOT NULL
+    - Currency: VARCHAR(3), NOT NULL
+    - ExchangeRate: DECIMAL(18, 4), NOT NULL
+    - TaxStatus: VARCHAR(10), NOT NULL
+    - TaxPercent: DECIMAL(18, 4), NOT NULL
+    - TaxPrefix: VARCHAR(3), NOT NULL
+    - TaxNo: VARCHAR(25), NOT NULL
+    - TaxDate: DATE, NOT NULL
+    - DiscPercent: DECIMAL(18, 4), NOT NULL
+    - TotalGross: DECIMAL(18, 4), NOT NULL
+    - TotalDisc: DECIMAL(18, 4), NOT NULL
+    - TaxValue: DECIMAL(18, 4), NOT NULL
+    - TaxValueInTaxCur: DECIMAL(18, 4), NOT NULL
+    - TotalNetto: DECIMAL(18, 4), NOT NULL
+    - TotalCost: DECIMAL(18, 4), NOT NULL
+    - Information: VARCHAR(255), NOT NULL
+    - Status: VARCHAR(20), NOT NULL
+    - PrintCounter: INTEGER, NOT NULL
+    - PrintedBy: VARCHAR(16)
+    - PrintedDate: DATETIME
+    - CreatedBy: VARCHAR(16), NOT NULL
+    - CreatedDate: DATETIME, NOT NULL
+    - ChangedBy: VARCHAR(16), NOT NULL
+    - ChangedDate: DATETIME, NOT NULL
+  PRIMARY KEY: (DocNo)
+  FOREIGN KEYS:
+    - (CustomerCode) -> mastercustomer(Code)
+    - (CustomerTaxTo) -> mastercustomer(Code)
+
+---
+
+TABLE: scheduledjournald
+  COLUMNS:
+    - DocNo: VARCHAR(15), NOT NULL, PK
+    - Number: INTEGER, NOT NULL, PK
+    - AccountNo: VARCHAR(20), NOT NULL
+    - Info: VARCHAR(255), NOT NULL
+    - Currency: VARCHAR(3), NOT NULL
+    - Debet: DECIMAL(18, 4), NOT NULL
+    - Credit: DECIMAL(18, 4), NOT NULL
+    - ExchangeRate: DECIMAL(18, 4), NOT NULL
+    - DebetLocal: DECIMAL(18, 4), NOT NULL
+    - CreditLocal: DECIMAL(18, 4), NOT NULL
+  PRIMARY KEY: (DocNo, Number)
+
+---
+
+TABLE: scheduledjournalh
+  COLUMNS:
+    - DocNo: VARCHAR(15), NOT NULL, PK
+    - Series: VARCHAR(3), NOT NULL
+    - StartDate: DATE, NOT NULL
+    - EndDate: DATE, NOT NULL
+    - IsEndOfMonth: BIT, NOT NULL
+    - DayOfMonth: INTEGER, NOT NULL
+    - TotalDebet: DECIMAL(18, 4), NOT NULL
+    - TotalCredit: DECIMAL(18, 4), NOT NULL
+    - Information: VARCHAR(255), NOT NULL
+    - Status: VARCHAR(20), NOT NULL
+    - CreatedBy: VARCHAR(16), NOT NULL
+    - CreatedDate: DATETIME, NOT NULL
+    - ChangedBy: VARCHAR(16), NOT NULL
+    - ChangedDate: DATETIME, NOT NULL
+  PRIMARY KEY: (DocNo)
+
+---
+
+TABLE: shipmentd
+  COLUMNS:
+    - DocNo: VARCHAR(15), NOT NULL, PK
+    - GIDocNo: VARCHAR(15), NOT NULL, PK
+  PRIMARY KEY: (DocNo, GIDocNo)
+
+---
+
+TABLE: shipmenth
+  COLUMNS:
+    - DocNo: VARCHAR(15), NOT NULL, PK
+    - Series: VARCHAR(3), NOT NULL
+    - DocDate: DATE, NOT NULL
+    - Location: VARCHAR(5), NOT NULL
+    - Zone: VARCHAR(10), NOT NULL
+    - VehicleNo: VARCHAR(10), NOT NULL
+    - TotalVolume: DECIMAL(18, 4), NOT NULL
+    - TotalWeight: DECIMAL(18, 4), NOT NULL
+    - Information: VARCHAR(255), NOT NULL
+    - Status: VARCHAR(20), NOT NULL
+    - PrintCounter: INTEGER, NOT NULL
+    - PrintedBy: VARCHAR(16)
+    - PrintedDate: DATETIME
+    - CreatedBy: VARCHAR(16), NOT NULL
+    - CreatedDate: DATETIME
+    - ChangedBy: VARCHAR(16), NOT NULL
+    - ChangedDate: DATETIME
+  PRIMARY KEY: (DocNo)
+
+---
+
+TABLE: shortcut
+  COLUMNS:
+    - User: VARCHAR(16), NOT NULL, PK
+    - Menu: VARCHAR(50), NOT NULL, PK
+    - Ctrl: BIT, NOT NULL
+    - Alt: BIT, NOT NULL
+    - Key: VARCHAR(20), NOT NULL
+  PRIMARY KEY: (User, Menu)
+
+---
+
+TABLE: smladjustment
+  COLUMNS:
+    - DocDate: DATE, NOT NULL, PK
+    - DocNo: VARCHAR(15), NOT NULL, PK
+    - MaterialCode: VARCHAR(20), NOT NULL, PK
+    - TagNo: VARCHAR(10), NOT NULL, PK
+    - PODocNo: VARCHAR(15), NOT NULL
+    - GRDocNo: VARCHAR(15), NOT NULL
+    - PIDocNo: VARCHAR(15), NOT NULL
+    - BaseQty: DECIMAL(18, 4), NOT NULL
+  PRIMARY KEY: (DocDate, DocNo, MaterialCode, TagNo)
+
+---
+
+TABLE: smlexcludeddocument
+  COLUMNS:
+    - DocDate: DATE, NOT NULL, PK
+    - DocNo: VARCHAR(15), NOT NULL, PK
+    - GIDocNo: VARCHAR(15), NOT NULL
+    - SODocNo: VARCHAR(15), NOT NULL
+    - TotalNetto: DECIMAL(18, 4), NOT NULL
+  PRIMARY KEY: (DocDate, DocNo)
+
+---
+
+TABLE: smlprocesslog
+  COLUMNS:
+    - DocDate: DATE, NOT NULL, PK
+    - DocNo: VARCHAR(15), NOT NULL, PK
+    - MaterialCode: VARCHAR(20), NOT NULL, PK
+    - TagNo: VARCHAR(10), NOT NULL, PK
+    - OriginalBaseQty: DECIMAL(18, 4), NOT NULL
+    - NewBaseQty: DECIMAL(18, 4), NOT NULL
+  PRIMARY KEY: (DocDate, DocNo, MaterialCode, TagNo)
+
+---
+
+TABLE: specialjournald
+  COLUMNS:
+    - DocNo: VARCHAR(15), NOT NULL, PK
+    - AccountNo: VARCHAR(20), NOT NULL, PK
+    - Info: VARCHAR(255), NOT NULL, PK
+    - Currency: VARCHAR(3), NOT NULL
+    - Debet: DECIMAL(18, 4), NOT NULL
+    - Credit: DECIMAL(18, 4), NOT NULL
+    - ExchangeRate: DECIMAL(18, 4), NOT NULL
+    - DebetLocal: DECIMAL(18, 4), NOT NULL
+    - CreditLocal: DECIMAL(18, 4), NOT NULL
+  PRIMARY KEY: (DocNo, AccountNo, Info)
+
+---
+
+TABLE: specialjournalh
+  COLUMNS:
+    - DocNo: VARCHAR(15), NOT NULL, PK
+    - Series: VARCHAR(3), NOT NULL
+    - DocDate: DATE, NOT NULL
+    - JournalType: VARCHAR(20), NOT NULL
+    - BusinessUnit: VARCHAR(20), NOT NULL
+    - TotalDebet: DECIMAL(18, 4), NOT NULL
+    - TotalCredit: DECIMAL(18, 4), NOT NULL
+    - PostedBy: VARCHAR(16), NOT NULL
+    - PostedDate: DATETIME, NOT NULL
+    - Information: VARCHAR(255), NOT NULL
+  PRIMARY KEY: (DocNo)
+
+---
+
+TABLE: stock
+  COLUMNS:
+    - TagNo: VARCHAR(10), NOT NULL, PK
+    - MaterialCode: VARCHAR(20), NOT NULL, PK
+    - DocNo: VARCHAR(15), NOT NULL, PK
+    - DocDate: DATE, NOT NULL, PK
+    - Location: VARCHAR(5), NOT NULL, PK
+    - Zone: VARCHAR(10), NOT NULL, PK
+    - Bin: VARCHAR(10), NOT NULL, PK
+    - Number: INTEGER, NOT NULL, PK
+    - Qty: DECIMAL(18, 4), NOT NULL
+    - Price: DECIMAL(18, 4), NOT NULL
+  PRIMARY KEY: (MaterialCode, TagNo, DocNo, DocDate, Location, Zone, Bin, Number)
+  FOREIGN KEYS:
+    - (Location) -> masterlocation(Code)
+    - (MaterialCode) -> mastermaterial(Code)
+
+---
+
+TABLE: stockbalance
+  COLUMNS:
+    - Periode: DATE, NOT NULL, PK
+    - TagNo: VARCHAR(10), NOT NULL, PK
+    - MaterialCode: VARCHAR(20), NOT NULL, PK
+    - Location: VARCHAR(5), NOT NULL, PK
+    - Zone: VARCHAR(10), NOT NULL, PK
+    - Bin: VARCHAR(10), NOT NULL, PK
+    - Price: DECIMAL(18, 4), NOT NULL
+    - QtyStart: DECIMAL(18, 4), NOT NULL
+    - QtyIn: DECIMAL(18, 4), NOT NULL
+    - QtyOut: DECIMAL(18, 4), NOT NULL
+    - QtyEnd: DECIMAL(18, 4), NOT NULL
+    - QtyBook: DECIMAL(18, 4), NOT NULL
+  PRIMARY KEY: (MaterialCode, Periode, Location, TagNo, Zone, Bin)
+
+---
+
+TABLE: stockpriceadjustment
+  COLUMNS:
+    - DocNo: VARCHAR(15), NOT NULL, PK
+    - Series: VARCHAR(3), NOT NULL
+    - DocDate: DATE, NOT NULL
+    - MaterialCode: VARCHAR(20), NOT NULL
+    - TotalAdjustment: DECIMAL(18, 4), NOT NULL
+    - TransactionType: VARCHAR(20), NOT NULL
+    - Information: VARCHAR(255), NOT NULL
+    - Status: VARCHAR(20), NOT NULL
+    - CreatedBy: VARCHAR(16), NOT NULL
+    - CreatedDate: DATETIME, NOT NULL
+    - ChangedBy: VARCHAR(16), NOT NULL
+    - ChangedDate: DATETIME, NOT NULL
+  PRIMARY KEY: (DocNo)
+
+---
+
+TABLE: stocktransferd
+  COLUMNS:
+    - DocNo: VARCHAR(15), NOT NULL, PK
+    - MaterialCode: VARCHAR(20), NOT NULL, PK
+    - TagNo: VARCHAR(10), NOT NULL, PK
+    - Unit: VARCHAR(5), NOT NULL
+    - Qty: DECIMAL(18, 4), NOT NULL
+    - BaseQty: DECIMAL(18, 4), NOT NULL
+  PRIMARY KEY: (DocNo, MaterialCode, TagNo)
+  FOREIGN KEYS:
+    - (MaterialCode, Unit) -> masterunitconversion(MaterialCode, Unit)
+
+---
+
+TABLE: stocktransferh
+  COLUMNS:
+    - DocNo: VARCHAR(15), NOT NULL, PK
+    - Series: VARCHAR(3), NOT NULL
+    - DocDate: DATE, NOT NULL
+    - FromLocation: VARCHAR(5), NOT NULL
+    - ToLocation: VARCHAR(5), NOT NULL
+    - RequestDocNo: VARCHAR(15), NOT NULL
+    - Information: VARCHAR(255), NOT NULL
+    - Status: VARCHAR(20), NOT NULL
+    - PrintCounter: INTEGER, NOT NULL
+    - PrintedBy: VARCHAR(16)
+    - PrintedDate: DATETIME
+    - CreatedBy: VARCHAR(16), NOT NULL
+    - CreatedDate: DATETIME, NOT NULL
+    - ChangedBy: VARCHAR(16), NOT NULL
+    - ChangedDate: DATETIME, NOT NULL
+    - Znojob: VARCHAR(15)
+  PRIMARY KEY: (DocNo)
+  FOREIGN KEYS:
+    - (FromLocation) -> masterlocation(Code)
+    - (ToLocation) -> masterlocation(Code)
+
+---
+
+TABLE: stocktransferrequestd
+  COLUMNS:
+    - DocNo: VARCHAR(15), NOT NULL, PK
+    - MaterialCode: VARCHAR(20), NOT NULL, PK
+    - Unit: VARCHAR(5), NOT NULL
+    - Qty: DECIMAL(18, 4), NOT NULL
+    - QtyTransfer: DECIMAL(18, 4), NOT NULL
+  PRIMARY KEY: (DocNo, MaterialCode)
+
+---
+
+TABLE: stocktransferrequesth
+  COLUMNS:
+    - DocNo: VARCHAR(15), NOT NULL, PK
+    - Series: VARCHAR(3), NOT NULL
+    - DocDate: DATE, NOT NULL
+    - ToLocation: VARCHAR(5), NOT NULL
+    - Information: VARCHAR(255), NOT NULL
+    - Status: VARCHAR(20), NOT NULL
+    - CreatedBy: VARCHAR(16), NOT NULL
+    - CreatedDate: DATETIME, NOT NULL
+    - ChangedBy: VARCHAR(16), NOT NULL
+    - ChangedDate: DATETIME, NOT NULL
+    - Znojob: VARCHAR(15)
+  PRIMARY KEY: (DocNo)
+
+---
+
+TABLE: supplierbalance
+  COLUMNS:
+    - Periode: DATE, NOT NULL, PK
+    - SupplierCode: VARCHAR(10), NOT NULL, PK
+    - StartBalance: DECIMAL(18, 4), NOT NULL
+    - InValue: DECIMAL(18, 4), NOT NULL
+    - OutValue: DECIMAL(18, 4), NOT NULL
+    - EndBalance: DECIMAL(18, 4), NOT NULL
+    - LocalStartBalance: DECIMAL(18, 4), NOT NULL
+    - LocalInValue: DECIMAL(18, 4), NOT NULL
+    - LocalOutValue: DECIMAL(18, 4), NOT NULL
+    - LocalEndBalance: DECIMAL(18, 4), NOT NULL
+    - ExchangeRate: DECIMAL(18, 4), NOT NULL
+    - LocalEndBalance2: DECIMAL(18, 4), NOT NULL
+    - ExchangeRateDiff: DECIMAL(18, 4), NOT NULL
+  PRIMARY KEY: (Periode, SupplierCode)
+
+---
+
+TABLE: supplierdpbalance
+  COLUMNS:
+    - Periode: DATE, NOT NULL, PK
+    - SupplierCode: VARCHAR(10), NOT NULL, PK
+    - StartBalance: DECIMAL(18, 4), NOT NULL
+    - InValue: DECIMAL(18, 4), NOT NULL
+    - OutValue: DECIMAL(18, 4), NOT NULL
+    - EndBalance: DECIMAL(18, 4), NOT NULL
+    - LocalStartBalance: DECIMAL(18, 4), NOT NULL
+    - LocalInValue: DECIMAL(18, 4), NOT NULL
+    - LocalOutValue: DECIMAL(18, 4), NOT NULL
+    - LocalEndBalance: DECIMAL(18, 4), NOT NULL
+    - ExchangeRate: DECIMAL(18, 4), NOT NULL
+    - LocalEndBalance2: DECIMAL(18, 4), NOT NULL
+    - ExchangeRateDiff: DECIMAL(18, 4), NOT NULL
+  PRIMARY KEY: (Periode, SupplierCode)
+
+---
+
+TABLE: surveyresult
+  COLUMNS:
+    - SurveyDate: DATE, NOT NULL, PK
+    - SurveyCode: VARCHAR(20), NOT NULL, PK
+    - CustomerCode: VARCHAR(10), NOT NULL, PK
+    - EmployeeNo: VARCHAR(10), NOT NULL, PK
+    - QuestionNo: INTEGER, NOT NULL, PK
+    - AnswerNo: INTEGER, NOT NULL, PK
+    - AnswerText: VARCHAR(255), NOT NULL
+  PRIMARY KEY: (SurveyDate, SurveyCode, CustomerCode, EmployeeNo, QuestionNo, AnswerNo)
+
+---
+
+TABLE: taxno
+  COLUMNS:
+    - TaxNo: VARCHAR(25), NOT NULL, PK
+    - DocNo: VARCHAR(15), NOT NULL
+  PRIMARY KEY: (TaxNo)
+
+---
+
+TABLE: transferorderd
+  COLUMNS:
+    - DocNo: VARCHAR(15), NOT NULL, PK
+    - MaterialCode: VARCHAR(20), NOT NULL, PK
+    - TagNo: VARCHAR(10), NOT NULL, PK
+    - FromBin: VARCHAR(10), NOT NULL, PK
+    - ToBin: VARCHAR(10), NOT NULL, PK
+    - Unit: VARCHAR(5), NOT NULL
+    - AskQty: DECIMAL(18, 4), NOT NULL
+    - ActualQty: DECIMAL(18, 4), NOT NULL
+  PRIMARY KEY: (DocNo, MaterialCode, TagNo, FromBin, ToBin)
+
+---
+
+TABLE: transferorderh
+  COLUMNS:
+    - DocNo: VARCHAR(15), NOT NULL, PK
+    - Series: VARCHAR(3), NOT NULL
+    - DocDate: DATE, NOT NULL
+    - RefDocNo: VARCHAR(15), NOT NULL
+    - Location: VARCHAR(5), NOT NULL
+    - FromZone: VARCHAR(10), NOT NULL
+    - ToZone: VARCHAR(10), NOT NULL
+    - Equipment: VARCHAR(10), NOT NULL
+    - TotalVolume: DECIMAL(18, 4), NOT NULL
+    - TotalWeight: DECIMAL(18, 4), NOT NULL
+    - StartTime: DATETIME
+    - EndTime: DATETIME
+    - Duration: DECIMAL(18, 4), NOT NULL
+    - Information: VARCHAR(255), NOT NULL
+    - Status: VARCHAR(20), NOT NULL
+    - PrintCounter: INTEGER, NOT NULL
+    - PrintedBy: VARCHAR(16)
+    - PrintedDate: DATETIME
+    - CreatedBy: VARCHAR(16), NOT NULL
+    - CreatedDate: DATETIME
+    - ChangedBy: VARCHAR(16), NOT NULL
+    - ChangedDate: DATETIME
+  PRIMARY KEY: (DocNo)
+
+---
+
+TABLE: transportclaimd
+  COLUMNS:
+    - DocNo: VARCHAR(15), NOT NULL, PK
+    - Coly: INTEGER, NOT NULL, PK
+    - Claim: DECIMAL(18, 4), NOT NULL
+  PRIMARY KEY: (DocNo, Coly)
+
+---
+
+TABLE: transportclaimh
+  COLUMNS:
+    - DocNo: VARCHAR(15), NOT NULL, PK
+    - Series: VARCHAR(3), NOT NULL
+    - DocDate: DATE, NOT NULL
+    - TSIDocNo: VARCHAR(15), NOT NULL
+    - CustomerCode: VARCHAR(10), NOT NULL
+    - CustomerName: VARCHAR(40), NOT NULL
+    - CustomerAddress: VARCHAR(80), NOT NULL
+    - CustomerCity: VARCHAR(20), NOT NULL
+    - CustomerPhone: VARCHAR(20), NOT NULL
+    - TransactionType: VARCHAR(20), NOT NULL
+    - TotalClaim: DECIMAL(18, 4), NOT NULL
+    - Information: VARCHAR(255), NOT NULL
+    - Status: VARCHAR(20), NOT NULL
+    - PrintCounter: INTEGER, NOT NULL
+    - PrintedBy: VARCHAR(16), NOT NULL
+    - PrintedDate: DATETIME
+    - CreatedBy: VARCHAR(16), NOT NULL
+    - CreatedDate: DATETIME, NOT NULL
+    - ChangedBy: VARCHAR(16), NOT NULL
+    - ChangedDate: DATETIME, NOT NULL
+  PRIMARY KEY: (DocNo)
+
+---
+
+TABLE: transportcoly
+  COLUMNS:
+    - TSIDocNo: VARCHAR(15), NOT NULL, PK
+    - Coly: INTEGER, NOT NULL, PK
+    - RouteCode: VARCHAR(10), NOT NULL
+    - Content: VARCHAR(100), NOT NULL
+    - Weight: DECIMAL(18, 4), NOT NULL
+    - Volume: DECIMAL(18, 4), NOT NULL
+    - VehicleCode: VARCHAR(10), NOT NULL
+    - ShipmentDocNo: VARCHAR(15), NOT NULL
+    - UnloadBy: VARCHAR(16), NOT NULL
+    - UnloadDate: DATETIME
+    - DODocNo: VARCHAR(15), NOT NULL
+    - LoadLocalBy: VARCHAR(16), NOT NULL
+    - LoadLocalDate: DATETIME
+    - UnloadLocalBy: VARCHAR(16), NOT NULL
+    - UnloadLocalDate: DATETIME
+    - ClaimDocNo: VARCHAR(15), NOT NULL
+  PRIMARY KEY: (TSIDocNo, Coly)
+
+---
+
+TABLE: transportdeliveryorderd
+  COLUMNS:
+    - DocNo: VARCHAR(15), NOT NULL, PK
+    - TSIDocNo: VARCHAR(15), NOT NULL, PK
+    - Coly: INTEGER, NOT NULL, PK
+    - Returned: BIT, NOT NULL
+  PRIMARY KEY: (DocNo, TSIDocNo, Coly)
+
+---
+
+TABLE: transportdeliveryorderh
+  COLUMNS:
+    - DocNo: VARCHAR(15), NOT NULL, PK
+    - Series: VARCHAR(3), NOT NULL
+    - DocDate: DATE, NOT NULL
+    - Vehicle: VARCHAR(10), NOT NULL
+    - Driver: VARCHAR(10), NOT NULL
+    - Location: VARCHAR(5), NOT NULL
+    - TotalColy: INTEGER, NOT NULL
+    - TotalVolume: INTEGER, NOT NULL
+    - TotalWeight: INTEGER, NOT NULL
+    - Information: VARCHAR(255), NOT NULL
+    - Status: VARCHAR(20), NOT NULL
+    - PrintCounter: INTEGER, NOT NULL
+    - PrintedBy: VARCHAR(16), NOT NULL
+    - PrintedDate: DATETIME
+    - CreatedBy: VARCHAR(16), NOT NULL
+    - CreatedDate: DATETIME, NOT NULL
+    - ChangedBy: VARCHAR(16), NOT NULL
+    - ChangedDate: DATETIME, NOT NULL
+  PRIMARY KEY: (DocNo)
+
+---
+
+TABLE: transportpickupassignment
+  COLUMNS:
+    - SRDocNo: VARCHAR(15), NOT NULL, PK
+    - AssignedDriver: VARCHAR(10), NOT NULL
+    - AssignedBy: VARCHAR(16), NOT NULL
+    - AssignedDate: DATETIME
+    - PickBy: VARCHAR(10), NOT NULL
+    - PickDate: DATETIME
+  PRIMARY KEY: (SRDocNo)
+
+---
+
+TABLE: transportsalesorderd
+  COLUMNS:
+    - DocNo: VARCHAR(15), NOT NULL, PK
+    - Coly: INTEGER, NOT NULL, PK
+    - Content: VARCHAR(100), NOT NULL, PK
+    - Weight: DECIMAL(18, 4), NOT NULL, PK
+    - Length: DECIMAL(18, 4), NOT NULL, PK
+    - Width: DECIMAL(18, 4), NOT NULL, PK
+    - Height: DECIMAL(18, 4), NOT NULL, PK
+    - Volume: DECIMAL(18, 4), NOT NULL
+    - Price: DECIMAL(18, 4), NOT NULL
+    - Surcharge: DECIMAL(18, 4), NOT NULL
+    - SurchargeInfo: VARCHAR(100), NOT NULL
+    - SubTotal: DECIMAL(18, 4), NOT NULL
+  PRIMARY KEY: (DocNo, Coly, Content, Weight, Length, Width, Height)
+
+---
+
+TABLE: transportsalesorderh
+  COLUMNS:
+    - DocNo: VARCHAR(15), NOT NULL, PK
+    - Series: VARCHAR(3), NOT NULL
+    - DocDate: DATE, NOT NULL
+    - TSRDocNo: VARCHAR(15), NOT NULL
+    - CustomerCode: VARCHAR(10), NOT NULL
+    - CustomerName: VARCHAR(40), NOT NULL
+    - CustomerAddress: VARCHAR(80), NOT NULL
+    - CustomerCity: VARCHAR(20), NOT NULL
+    - CustomerPhone: VARCHAR(20), NOT NULL
+    - Recipient: VARCHAR(40), NOT NULL
+    - RecipientAddress: VARCHAR(80), NOT NULL
+    - RecipientCity: VARCHAR(20), NOT NULL
+    - RecipientArea: VARCHAR(60), NOT NULL
+    - RecipientPhone: VARCHAR(20), NOT NULL
+    - RecipientInformation: VARCHAR(255), NOT NULL
+    - Payment: VARCHAR(10), NOT NULL
+    - TOP: INTEGER, NOT NULL
+    - ARReqListSeries: VARCHAR(3), NOT NULL
+    - ARReqListNo: VARCHAR(15), NOT NULL
+    - TSISeries: VARCHAR(3), NOT NULL
+    - TSIDocNo: VARCHAR(15), NOT NULL
+    - TransactionType: VARCHAR(20), NOT NULL
+    - PackageType: VARCHAR(10), NOT NULL
+    - ServiceType: VARCHAR(10), NOT NULL
+    - Route: VARCHAR(10), NOT NULL
+    - VehicleType: VARCHAR(10), NOT NULL
+    - IsRent: BIT, NOT NULL
+    - RentStartDate: DATE
+    - RentEndDate: DATE
+    - RentDays: INTEGER, NOT NULL
+    - TotalColy: INTEGER, NOT NULL
+    - PriceList: DECIMAL(18, 4), NOT NULL
+    - Total: DECIMAL(18, 4), NOT NULL
+    - IncomeTaxPercent: DECIMAL(18, 4), NOT NULL
+    - IncomeTax: DECIMAL(18, 4), NOT NULL
+    - Information: VARCHAR(255), NOT NULL
+    - Status: VARCHAR(20), NOT NULL
+    - PrintCounter: INTEGER, NOT NULL
+    - PrintedBy: VARCHAR(16), NOT NULL
+    - PrintedDate: DATETIME
+    - CreatedBy: VARCHAR(16), NOT NULL
+    - CreatedDate: DATETIME, NOT NULL
+    - ChangedBy: VARCHAR(16), NOT NULL
+    - ChangedDate: DATETIME, NOT NULL
+  PRIMARY KEY: (DocNo)
+
+---
+
+TABLE: transportsalesrequestd
+  COLUMNS:
+    - DocNo: VARCHAR(15), NOT NULL, PK
+    - Coly: INTEGER, NOT NULL, PK
+    - Content: VARCHAR(100), NOT NULL, PK
+  PRIMARY KEY: (DocNo, Coly, Content)
+
+---
+
+TABLE: transportsalesrequesth
+  COLUMNS:
+    - DocNo: VARCHAR(15), NOT NULL, PK
+    - Series: VARCHAR(3), NOT NULL
+    - DocDate: DATE, NOT NULL
+    - Payment: VARCHAR(10), NOT NULL
+    - CustomerCode: VARCHAR(10), NOT NULL
+    - CustomerName: VARCHAR(40), NOT NULL
+    - CustomerAddress: VARCHAR(80), NOT NULL
+    - CustomerCity: VARCHAR(20), NOT NULL
+    - CustomerPhone: VARCHAR(20), NOT NULL
+    - Pickup: BIT, NOT NULL
+    - PickupAddress: VARCHAR(80), NOT NULL
+    - PickupCity: VARCHAR(20), NOT NULL
+    - PickupPhone: VARCHAR(20), NOT NULL
+    - PickupPIC: VARCHAR(40), NOT NULL
+    - PickupInformation: VARCHAR(255), NOT NULL
+    - Recipient: VARCHAR(40), NOT NULL
+    - RecipientAddress: VARCHAR(80), NOT NULL
+    - RecipientCity: VARCHAR(20), NOT NULL
+    - RecipientArea: VARCHAR(60), NOT NULL
+    - RecipientPhone: VARCHAR(20), NOT NULL
+    - RecipientInformation: VARCHAR(255), NOT NULL
+    - PackageType: VARCHAR(10), NOT NULL
+    - ServiceType: VARCHAR(10), NOT NULL
+    - Route: VARCHAR(10), NOT NULL
+    - Information: VARCHAR(255), NOT NULL
+    - Status: VARCHAR(20), NOT NULL
+    - CreatedBy: VARCHAR(16), NOT NULL
+    - CreatedDate: DATETIME, NOT NULL
+    - ChangedBy: VARCHAR(16), NOT NULL
+    - ChangedDate: DATETIME, NOT NULL
+  PRIMARY KEY: (DocNo)
+
+---
+
+TABLE: transportsalesrequestp
+  COLUMNS:
+    - DocNo: VARCHAR(15), NOT NULL, PK
+    - Coly: INTEGER, NOT NULL, PK
+    - Content: VARCHAR(100), NOT NULL, PK
+  PRIMARY KEY: (DocNo, Coly, Content)
+
+---
+
+TABLE: transportshipmentd
+  COLUMNS:
+    - DocNo: VARCHAR(15), NOT NULL, PK
+    - TSIDocNo: VARCHAR(15), NOT NULL, PK
+    - TotalColy: INTEGER, NOT NULL
+    - Information: VARCHAR(255), NOT NULL
+  PRIMARY KEY: (DocNo, TSIDocNo)
+
+---
+
+TABLE: transportshipmenth
+  COLUMNS:
+    - DocNo: VARCHAR(15), NOT NULL, PK
+    - DocDate: DATE, NOT NULL
+    - VehicleCode: VARCHAR(10), NOT NULL
+    - RouteCode: VARCHAR(10), NOT NULL
+    - DriverCode: VARCHAR(10), NOT NULL
+    - Information: VARCHAR(255), NOT NULL
+    - Status: VARCHAR(20), NOT NULL
+    - PrintCounter: INTEGER, NOT NULL
+    - PrintedBy: VARCHAR(16), NOT NULL
+    - PrintedDate: DATETIME
+    - CreatedBy: VARCHAR(16), NOT NULL
+    - CreatedDate: DATETIME, NOT NULL
+    - ChangedBy: VARCHAR(16), NOT NULL
+    - ChangedDate: DATETIME, NOT NULL
+  PRIMARY KEY: (DocNo)
+
+---
+
+TABLE: user
+  COLUMNS:
+    - User: VARCHAR(16), NOT NULL, PK
+    - Name: VARCHAR(45), NOT NULL
+    - Password: VARCHAR(45), NOT NULL
+    - Role: VARCHAR(16), NOT NULL
+    - Language: VARCHAR(2), NOT NULL
+    - WhatsAppNo: VARCHAR(15), NOT NULL
+    - Email: VARCHAR(50), NOT NULL
+  PRIMARY KEY: (User)
+
+---
+
+TABLE: userlog
+  COLUMNS:
+    - LogDate: DATE, NOT NULL
+    - LogTime: TIME, NOT NULL
+    - User: VARCHAR(16), NOT NULL
+    - Status: VARCHAR(25), NOT NULL
+    - IP: VARCHAR(50), NOT NULL
+    - LoginDate: DATE, NOT NULL
+  PRIMARY KEY: ()
+
+---
+
+TABLE: wip
+  COLUMNS:
+    - Periode: DATE, NOT NULL, PK
+    - JODocNo: VARCHAR(15), NOT NULL, PK
+    - StartWIP: DECIMAL(18, 4), NOT NULL
+    - DirectMaterialCost: DECIMAL(18, 4), NOT NULL
+    - DirectLaborCost: DECIMAL(18, 4), NOT NULL
+    - OverheadCost: DECIMAL(18, 4), NOT NULL
+    - WIPProduced: DECIMAL(18, 4), NOT NULL
+    - QtyProduced: DECIMAL(18, 4), NOT NULL
+    - COGM: DECIMAL(18, 4), NOT NULL
+    - EndWIP: DECIMAL(18, 4), NOT NULL
+    - Variant: DECIMAL(18, 4), NOT NULL
+  PRIMARY KEY: (Periode, JODocNo)
+
+---
+
+TABLE: wmtransferind
+  COLUMNS:
+    - DocNo: VARCHAR(15), NOT NULL, PK
+    - MaterialCode: VARCHAR(20), NOT NULL, PK
+    - TagNo: VARCHAR(10), NOT NULL, PK
+    - Unit: VARCHAR(5), NOT NULL
+    - Qty: DECIMAL(18, 4), NOT NULL
+  PRIMARY KEY: (DocNo, MaterialCode, TagNo)
+
+---
+
+TABLE: wmtransferinh
+  COLUMNS:
+    - DocNo: VARCHAR(15), NOT NULL, PK
+    - Series: VARCHAR(3), NOT NULL
+    - DocDate: DATE, NOT NULL
+    - WMTODocNo: VARCHAR(15), NOT NULL
+    - Location: VARCHAR(5), NOT NULL
+    - Zone: VARCHAR(10), NOT NULL
+    - Information: VARCHAR(255), NOT NULL
+    - Status: VARCHAR(20), NOT NULL
+    - PrintCounter: INTEGER, NOT NULL
+    - PrintedBy: VARCHAR(16)
+    - PrintedDate: DATETIME
+    - CreatedBy: VARCHAR(16), NOT NULL
+    - CreatedDate: DATETIME, NOT NULL
+    - ChangedBy: VARCHAR(16), NOT NULL
+    - ChangedDate: DATETIME, NOT NULL
+  PRIMARY KEY: (DocNo)
+
+---
+
+TABLE: wmtransferoutd
+  COLUMNS:
+    - DocNo: VARCHAR(15), NOT NULL, PK
+    - MaterialCode: VARCHAR(20), NOT NULL, PK
+    - TagNo: VARCHAR(10), NOT NULL, PK
+    - Unit: VARCHAR(5), NOT NULL
+    - Qty: DECIMAL(18, 4), NOT NULL
+  PRIMARY KEY: (DocNo, MaterialCode, TagNo)
+
+---
+
+TABLE: wmtransferouth
+  COLUMNS:
+    - DocNo: VARCHAR(15), NOT NULL, PK
+    - Series: VARCHAR(3), NOT NULL
+    - DocDate: DATE, NOT NULL
+    - FromLocation: VARCHAR(5), NOT NULL
+    - ToLocation: VARCHAR(5), NOT NULL
+    - RequestDocNo: VARCHAR(15), NOT NULL
+    - Information: VARCHAR(255), NOT NULL
+    - Status: VARCHAR(20), NOT NULL
+    - PrintCounter: INTEGER, NOT NULL
+    - PrintedBy: VARCHAR(16)
+    - PrintedDate: DATETIME
+    - CreatedBy: VARCHAR(16), NOT NULL
+    - CreatedDate: DATETIME, NOT NULL
+    - ChangedBy: VARCHAR(16), NOT NULL
+    - ChangedDate: DATETIME, NOT NULL
+  PRIMARY KEY: (DocNo)
+
+---
+
+TABLE: workorderd
+  COLUMNS:
+    - DocNo: VARCHAR(15), NOT NULL, PK
+    - Number: INTEGER, NOT NULL, PK
+    - Formula: VARCHAR(40), NOT NULL
+    - MaterialCode: VARCHAR(20), NOT NULL
+    - Unit: VARCHAR(5), NOT NULL
+    - Qty: DECIMAL(18, 4), NOT NULL
+    - Series: VARCHAR(3), NOT NULL
+    - Department: VARCHAR(10), NOT NULL
+    - Location: VARCHAR(5), NOT NULL
+    - Information: VARCHAR(255), NOT NULL
+    - StartDate: DATE, NOT NULL
+    - FinishDate: DATE, NOT NULL
+    - JODocNo: VARCHAR(15), NOT NULL
+  PRIMARY KEY: (DocNo, Number)
+
+---
+
+TABLE: workorderh
+  COLUMNS:
+    - DocNo: VARCHAR(15), NOT NULL, PK
+    - Series: VARCHAR(3), NOT NULL
+    - DocDate: DATE, NOT NULL
+    - SODocNo: VARCHAR(15), NOT NULL
+    - Template: VARCHAR(40), NOT NULL
+    - Formula: VARCHAR(40), NOT NULL
+    - MaterialCode: VARCHAR(20), NOT NULL
+    - Unit: VARCHAR(5), NOT NULL
+    - Qty: DECIMAL(18, 4), NOT NULL
+    - CheckQtyOutput: BIT, NOT NULL
+    - BatchNo: VARCHAR(20), NOT NULL
+    - BatchInfo: VARCHAR(50), NOT NULL
+    - ExpiryDate: DATE
+    - Information: VARCHAR(255), NOT NULL
+    - Status: VARCHAR(20), NOT NULL
+    - IsApproved: BIT, NOT NULL
+    - ApprovedBy: VARCHAR(16), NOT NULL
+    - ApprovedDate: DATETIME
+    - PrintCounter: INTEGER, NOT NULL
+    - PrintedBy: VARCHAR(16), NOT NULL
+    - PrintedDate: DATETIME
+    - CreatedBy: VARCHAR(16), NOT NULL
+    - CreatedDate: DATETIME, NOT NULL
+    - ChangedBy: VARCHAR(16), NOT NULL
+    - ChangedDate: DATETIME, NOT NULL
+  PRIMARY KEY: (DocNo)
+
+---
+
+TABLE: zstockopname
+  COLUMNS:
+    - OpnameDate: DATE, NOT NULL, PK
+    - MaterialCode: VARCHAR(20), NOT NULL, PK
+    - Qty: DECIMAL(18, 4), NOT NULL
+    - Diff: DECIMAL(18, 4), NOT NULL
+  PRIMARY KEY: (OpnameDate, MaterialCode)
+
+---

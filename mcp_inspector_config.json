@@ -1,0 +1,11 @@
+{
+  "mcpServers": {
+    "mysql_orm_server": {
+      "command": "D:\\3_Wings_mySQL\\backend\\.venv\\Scripts\\python.exe",
+      "args": [
+        "D:\\3_Wings_mySQL\\backend\\mcp_servers\\mysql_server\\main.py"
+      ],
+      "disabled": false
+    }
+  }
+}

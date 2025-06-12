@@ -1,44 +1,34 @@
-# backend/mcp_servers/graphiti_server/main.py (Revisi Final dengan Pola yang Benar)
+# backend/app/tools/graphiti_tools.py
 
-import sys
-import os
 import json
 import uuid
-from pathlib import Path
 from typing import List, Dict, Any, Optional, AsyncIterator
 from contextlib import asynccontextmanager
 
-# --- Setup Path Mandiri (Wajib di Atas) ---
-project_root = Path(__file__).parent.parent.parent
-if str(project_root) not in sys.path:
-    sys.path.insert(0, str(project_root))
-
-# --- Impor Lokal & Library ---
+# Impor Pydantic dan config utama
 from pydantic import BaseModel, Field
+from backend.app.core.config import settings
+
+# Impor Neo4j
 from neo4j import AsyncGraphDatabase, AsyncDriver
 
-from mcp.server.fastmcp import FastMCP, Context
-# Impor dari config lokal, bukan global
-from backend.mcp_servers.graphiti_server.config import settings
-
-# --- Pydantic Models ---
-class GetRelevantSchemaInfoInput(BaseModel):
-    intent: str
+# --- Pydantic Models (Input & Output Tools) ---
+class GetRelevantSchemaInput(BaseModel): 
     entities: List[str]
 
-class ColumnMcp(BaseModel):
+class ColumnSchema(BaseModel):
     name: str
     type: Optional[str] = None
     description: Optional[str] = None
     classification: Optional[str] = None
     is_aggregatable: Optional[bool] = None
 
-class TableSchemaMcp(BaseModel):
+class TableSchema(BaseModel):
     table_name: str
     purpose: Optional[str] = None
-    columns: List[ColumnMcp]
+    columns: List[ColumnSchema]
 
-class RelationshipMcp(BaseModel):
+class RelationshipSchema(BaseModel):
     from_table: str
     from_column: str
     to_table: str
@@ -46,8 +36,8 @@ class RelationshipMcp(BaseModel):
     relationship_type: str = "FOREIGN_KEY"
 
 class RelevantSchemaOutput(BaseModel):
-    relevant_tables: List[TableSchemaMcp]
-    table_relationships: List[RelationshipMcp]
+    relevant_tables: List[TableSchema]
+    table_relationships: List[RelationshipSchema]
     success: bool = True
     error: Optional[str] = None
 
@@ -58,7 +48,6 @@ class StoreSessionDataInput(BaseModel):
 
 class DataHandle(BaseModel):
     data_handle_id: str
-    storage_location: str = "Graphiti"
     group_id: str
     data_description: str
     row_count: int
@@ -72,12 +61,7 @@ class RetrieveSessionDataInput(BaseModel):
     session_id: str
     data_handle_id: str
 
-class RetrieveSessionDataOutput(BaseModel):
-    retrieved_data: Optional[List[Dict[str, Any]]] = None
-    success: bool = True
-    error: Optional[str] = None
-
-# --- Pengelola Koneksi Neo4j ---
+# --- Pengelola Koneksi Neo4j (Pola yang Baik) ---
 @asynccontextmanager
 async def get_neo4j_driver() -> AsyncIterator[AsyncDriver]:
     if not all([settings.NEO4J_URI, settings.NEO4J_USER, settings.NEO4J_PASSWORD]):
@@ -90,42 +74,44 @@ async def get_neo4j_driver() -> AsyncIterator[AsyncDriver]:
     finally:
         await driver.close()
 
-# --- Inisialisasi & Definisi Tool MCP ---
-mcp = FastMCP(
-    name="GraphitiDataServer",
-    title="Graphiti Data & Schema Server",
-    description="Server untuk mengambil metadata skema dan mengelola data sesi sementara di Neo4j."
-)
+# --- Definisi Tool sebagai Fungsi Python Biasa ---
 
-# ... (Definisi tool get_relevant_schema, store_session_data, retrieve_session_data tetap sama persis)
-@mcp.tool()
-async def get_relevant_schema(ctx: Context, payload: GetRelevantSchemaInfoInput) -> RelevantSchemaOutput:
-    ctx.info(f"Tool 'get_relevant_schema' dipanggil untuk entitas: {payload.entities}")
+async def get_relevant_schema(payload: GetRelevantSchemaInput) -> RelevantSchemaOutput:
+    """
+    Mengambil "peta data" (skema, kolom, relasi) yang relevan dari knowledge graph.
+    Gunakan tool ini di awal untuk memahami struktur database sebelum membuat rencana query.
+    """
     try:
         async with get_neo4j_driver() as driver:
             async with driver.session(database=settings.NEO4J_DATABASE) as session:
+                # --- PERBAIKAN DI SINI ---
+                # Mengubah alias 'tableName' menjadi 'table_name' agar cocok dengan model Pydantic
                 tables_result = await session.run(
                     """
                     MATCH (t:DatabaseTable {group_id: $gid})-[:HAS_COLUMN]->(c:DatabaseColumn)
                     WHERE size($entities) = 0 OR t.table_name IN $entities
-                    RETURN t.table_name AS tableName, t.purpose AS tablePurpose, 
+                    RETURN t.table_name AS table_name, t.purpose AS tablePurpose, 
                            collect({
                                name: c.column_name, type: c.type_from_db, description: c.description, 
                                classification: c.classification, is_aggregatable: c.is_aggregatable
                            }) AS columns
-                    ORDER BY tableName
+                    ORDER BY table_name
                     """, gid=settings.SCHEMA_GROUP_ID, entities=payload.entities
                 )
-                records = await tables_result.data()
-                tables_data = [
-                    TableSchemaMcp(
-                        table_name=r["tableName"],
-                        purpose=r["tablePurpose"],
-                        columns=[ColumnMcp(**c) for c in r["columns"]]
-                    )
-                    for r in records
-                ]
+                
+                # Perlu sedikit penyesuaian untuk nama field 'tablePurpose' juga
+                # Cara paling aman adalah memprosesnya di Python
+                records_raw = await tables_result.data()
+                records_processed = []
+                for r in records_raw:
+                    records_processed.append({
+                        "table_name": r["table_name"],
+                        "purpose": r.get("tablePurpose"), # Gunakan .get() untuk keamanan
+                        "columns": r["columns"]
+                    })
+                tables_data = [TableSchema(**r) for r in records_processed]
 
+                # Query relasi sudah benar, tidak perlu diubah
                 rels_result = await session.run(
                     """
                     MATCH (c1:DatabaseColumn)-[r:REFERENCES]->(c2:DatabaseColumn)
@@ -134,16 +120,17 @@ async def get_relevant_schema(ctx: Context, payload: GetRelevantSchemaInfoInput)
                     """, gid=settings.SCHEMA_GROUP_ID, entities=payload.entities
                 )
                 rels_records = await rels_result.data()
-                rels_data = [RelationshipMcp(**r) for r in rels_records]
+                rels_data = [RelationshipSchema(**r) for r in rels_records]
 
-        return RelevantSchemaOutput(success=True, relevant_tables=tables_data, table_relationships=rels_data)
+        return RelevantSchemaOutput(relevant_tables=tables_data, table_relationships=rels_data)
     except Exception as e:
-        ctx.error(f"Error di get_relevant_schema: {e}", exc_info=True)
         return RelevantSchemaOutput(relevant_tables=[], table_relationships=[], success=False, error=str(e))
 
-@mcp.tool()
-async def store_session_data(ctx: Context, payload: StoreSessionDataInput) -> StoreSessionDataOutput:
-    ctx.info(f"Tool 'store_session_data' dipanggil untuk sesi: {payload.session_id}")
+async def store_session_data(payload: StoreSessionDataInput) -> StoreSessionDataOutput:
+    """
+    Menyimpan data hasil query ke dalam memori sesi sementara (node di Graphiti)
+    dan mengembalikan sebuah 'DataHandle' sebagai referensi.
+    """
     handle_id = str(uuid.uuid4())
     try:
         async with get_neo4j_driver() as driver:
@@ -163,12 +150,13 @@ async def store_session_data(ctx: Context, payload: StoreSessionDataInput) -> St
         )
         return StoreSessionDataOutput(data_handle=handle)
     except Exception as e:
-        ctx.error(f"Error di store_session_data: {e}", exc_info=True)
         return StoreSessionDataOutput(success=False, error=str(e))
 
-@mcp.tool()
-async def retrieve_session_data(ctx: Context, payload: RetrieveSessionDataInput) -> RetrieveSessionDataOutput:
-    ctx.info(f"Tool 'retrieve_session_data' dipanggil untuk handle: {payload.data_handle_id}")
+async def retrieve_session_data(payload: RetrieveSessionDataInput) -> List[Dict[str, Any]] | None:
+    """
+    Mengambil kembali data yang sebelumnya disimpan di memori sesi menggunakan DataHandle.
+    Mengembalikan data jika sukses, atau None jika gagal.
+    """
     try:
         async with get_neo4j_driver() as driver:
             async with driver.session(database=settings.NEO4J_DATABASE) as session:
@@ -179,14 +167,8 @@ async def retrieve_session_data(ctx: Context, payload: RetrieveSessionDataInput)
                 record = await result.single()
 
         if record and record["data"]:
-            return RetrieveSessionDataOutput(retrieved_data=json.loads(record["data"]))
+            return json.loads(record["data"])
         else:
-            return RetrieveSessionDataOutput(success=False, error="Data tidak ditemukan atau sesi tidak cocok.")
-    except Exception as e:
-        ctx.error(f"Error di retrieve_session_data: {e}", exc_info=True)
-        return RetrieveSessionDataOutput(success=False, error=str(e))
-
-# --- Main Execution & ASGI App Exposure ---
-if __name__ == "__main__":
-    print("Menjalankan Graphiti Server secara langsung tidak direkomendasikan. Gunakan uvicorn.", file=sys.stderr)
-    mcp.run()
+            return None
+    except Exception:
+        return None

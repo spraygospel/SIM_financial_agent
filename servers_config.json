@@ -1,0 +1,14 @@
+{
+  "mcpServers": {
+    "mysql_server": {
+      "command": "D:\\3_Wings_mySQL\\start_mysql_server.bat",
+      "args": [],
+      "disabled": false
+    },
+    "graphiti_server": {
+      "command": "D:\\3_Wings_mySQL\\start_graphiti_server.bat",
+      "args": [],
+      "disabled": false
+    }
+  }
+}

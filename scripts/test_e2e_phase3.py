@@ -38,7 +38,7 @@ def run_e2e_test():
 
         # 3. Kirim query lanjutan dalam sesi yang sama
         print("\n🔄 Langkah 3: Mengirim query lanjutan...")
-        query2 = "Bagus, terima kasih!"
+        query2 = "menurut anda, apakah 100jt utk customer G01 itu besar?"
         query_payload2 = { "user_query": query2, "session_id": session_id }
         
         print(f"Mengirim query: '{query2}'")
@@ -49,7 +49,6 @@ def run_e2e_test():
         print("✅ Respons kedua berhasil diterima.")
         pprint(result2)
 
-        print("\n🎉 Tes End-to-End BERHASIL! 🎉")
 
     except requests.Timeout:
         print("🔥 GAGAL: Permintaan timeout. Proses LLM atau database mungkin terlalu lama.")

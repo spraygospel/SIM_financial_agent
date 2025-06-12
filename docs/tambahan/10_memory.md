@@ -96,12 +96,14 @@
 
 ---
 
-Tentu. Sesuai rencana baru yang telah kita sepakati, berikut adalah **Bab 1** dari `backend_memory.md` yang fokus pada arsitektur *tool calling* kita yang final.
+Tentu. Saya siap. Sesuai rencana dan template yang telah kita sepakati, berikut adalah **Bab 1** dari dokumen memori untuk Fase Backend.
+
+Saya telah memeriksa kembali semua keputusan arsitektur final kita untuk memastikan bab ini akurat dan mencerminkan status proyek yang sebenarnya.
 
 ---
 
 ### **Dokumen Memori Proyek: Fase Backend**
-**Versi:** 2.0 (Arsitektur Tool Calling)
+**Versi:** 1.0
 **Tanggal:** 12 Juni 2025
 
 ### **Bab 1: Arsitektur Backend & Alur Kerja Tool Calling**
@@ -115,17 +117,17 @@ Tentu. Sesuai rencana baru yang telah kita sepakati, berikut adalah **Bab 1** da
 *   **Panduan Revisi:** Rujuk ke dokumen ini untuk memahami arsitektur dan alur kerja saat ini sebelum melakukan perubahan.
 
 #### **2. Ringkasan Arsitektur**
-Arsitektur backend final untuk MVP ini dirancang dengan prinsip **kesederhanaan dan keandalan**. Setelah melalui beberapa iterasi, diputuskan untuk beralih dari arsitektur multi-proses berbasis MCP ke arsitektur proses tunggal yang menggunakan pola **tool calling** secara langsung.
+Arsitektur backend final untuk MVP ini dirancang dengan prinsip **kesederhanaan dan keandalan**. Setelah melalui beberapa iterasi (termasuk membatalkan pendekatan `DatabaseOperationPlan` yang kompleks), diputuskan untuk mengadopsi arsitektur proses tunggal yang menggunakan pola **`search_read` yang terinspirasi dari Odoo**.
 
-Sistem ini terdiri dari tiga lapisan utama:
+Sistem ini terdiri dari tiga lapisan utama yang berjalan dalam satu aplikasi FastAPI:
 1.  **Lapisan API (FastAPI):** Bertindak sebagai gerbang masuk untuk semua permintaan dari klien (frontend).
-2.  **Lapisan Layanan (Agent Service):** Berfungsi sebagai jembatan, menerima data dari API dan mengorkestrasi alur kerja agent.
-3.  **Lapisan Agent (LangGraph):** Merupakan inti dari sistem. Ini adalah sebuah *state machine* yang secara dinamis memutuskan apakah perlu memanggil LLM untuk "berpikir" atau memanggil *tool* Python untuk "bertindak".
+2.  **Lapisan Layanan (Agent Service):** Berfungsi sebagai jembatan, menerima data dari API, mengelola memori percakapan, dan mengorkestrasi alur kerja agent.
+3.  **Lapisan Agent (LangGraph):** Merupakan inti dari sistem. Ini adalah sebuah *state machine* yang secara dinamis memutuskan apakah perlu memanggil LLM untuk "berpikir" atau memanggil *tool* Python untuk "bertindak" (misalnya, `get_relevant_schema` atau `search_read`).
 
 Pendekatan ini menghilangkan kerumitan komunikasi antar-proses dan memungkinkan debugging yang lebih mudah, sambil tetap mempertahankan pemisahan logika yang baik dengan menempatkan semua *tool* dalam direktori khusus.
 
 #### **3. Diagram Alur Kerja**
-Diagram berikut mengilustrasikan siklus hidup sebuah permintaan dalam arsitektur *tool calling* kita:
+Diagram berikut mengilustrasikan siklus hidup sebuah permintaan dalam arsitektur `search_read` kita:
 
 ```mermaid
 sequenceDiagram
@@ -137,58 +139,57 @@ sequenceDiagram
     participant Tools as Tools (Python Functions)
 
     User->>+API: POST /api/v1/query (misal: "tampilkan 2 customer")
-    API->>+Service: process_query("tampilkan 2 customer")
-    Service->>+LG: ainvoke({"messages": [{"role": "user", ...}]})
-    
-    LG-->>+LLM: Panggil LLM dengan riwayat & daftar tools
-    LLM-->>-LG: "Panggil tool 'get_relevant_schema'"
-    
-    LG-->>+Tools: Eksekusi get_relevant_schema()
-    Tools-->>-LG: Kembalikan hasil skema
-    
-    LG-->>+LLM: Panggil LLM dengan hasil skema
-    LLM-->>-LG: "Panggil tool 'execute_database_plan'"
-    
-    LG-->>+Tools: Eksekusi execute_database_plan()
-    Tools-->>-LG: Kembalikan hasil data customer
-    
-    LG-->>+LLM: Panggil LLM dengan hasil data
-    LLM-->>-LG: "Ini hasil 2 customernya: ..." (respons teks)
+    API->>+Service: process_query("tampilkan 2 customer", "session-123")
+    Service->>+LG: ainvoke({"chat_history": [...]})
 
-    LG-->>-Service: Kembalikan state akhir
-    Service-->>-API: Ekstrak respons teks
+    LG-->>+LLM: Panggil LLM dengan SOP & daftar tools
+    LLM-->>-LG: "Panggil tool 'get_relevant_schema' untuk 'customer'"
+
+    LG-->>+Tools: Eksekusi get_relevant_schema()
+    Tools-->>-LG: Kembalikan hasil skema 'mastercustomer'
+
+    LG-->>+LLM: Panggil LLM dengan hasil skema
+    LLM-->>-LG: "Panggil tool 'search_read' dengan model='mastercustomer', fields=['Name'], limit=2"
+
+    LG-->>+Tools: Eksekusi search_read()
+    Tools-->>-LG: Kembalikan data 2 nama customer
+
+    LG-->>+LLM: Panggil LLM dengan hasil data
+    LLM-->>-LG: "Ini hasil 2 customernya: ..." (respons teks final)
+
+    LG-->>-Service: Kembalikan state akhir dengan riwayat lengkap
+    Service->>Service: Ekstrak respons teks final dari riwayat
+    Service-->>-API: Kembalikan respons teks
     API-->>-User: {"response": "Ini hasil 2 customernya: ..."}
 ```
 
 #### **4. Deskripsi Komponen Inti**
 
 *   **FastAPI App (`main.py`, `endpoints/query.py`):**
-    *   Bertanggung jawab untuk mengekspos endpoint HTTP.
+    *   Bertanggung jawab untuk mengekspos endpoint HTTP (`/session/start`, `/query`).
     *   Hanya menangani validasi request/response dan mendelegasikan semua logika bisnis ke `Agent Service`.
 
 *   **Agent Service (`services/agent_service.py`):**
     *   Perantara antara dunia HTTP dan dunia agent.
-    *   Mempersiapkan `AgentState` awal yang dibutuhkan oleh LangGraph.
-    *   Memanggil alur kerja LangGraph (`langgraph_app.ainvoke`).
-    *   Setelah alur kerja selesai, ia bertugas mengekstrak respons akhir yang akan dikirim kembali ke pengguna.
+    *   **Mengelola Memori:** Menggunakan *dictionary* Python sederhana (`conversation_memory`) untuk menyimpan dan mengambil riwayat percakapan untuk setiap `session_id`.
+    *   **Menyuntikkan Konteks:** Memastikan `SYSTEM_PROMPT` disisipkan di awal setiap percakapan baru.
+    *   **Mengorkestrasi LangGraph:** Memanggil `langgraph_app.ainvoke()` dan mengekstrak respons teks final yang akan dikirim kembali ke pengguna.
 
 *   **LangGraph App (`langgraph_workflow/graph.py`):**
     *   Ini adalah "papan sirkuit" dari agent.
-    *   Menggunakan `StateGraph` untuk mendefinisikan *state machine* dua-node yang sangat efisien:
+    *   Menggunakan `StateGraph` dengan *state* yang dikelola secara manual (`AgentState`) untuk mendefinisikan *state machine* dua-node yang sangat efisien:
         1.  **`agent` (node `llm_caller`):** Bertugas memanggil LLM.
         2.  **`action` (node `tool_executor`):** Bertugas menjalankan *tool* Python.
     *   Mengelola alur bolak-balik antara "berpikir" (`agent`) dan "bertindak" (`action`) hingga tugas selesai.
 
 *   **Direktori `tools/` (`database_tools.py`, `graphiti_tools.py`):**
     *   Ini adalah "kotak perkakas" dari agent.
-    *   Setiap file berisi fungsi-fungsi Python biasa yang melakukan tugas-tugas spesifik (query database, query Neo4j).
-    *   Fungsi-fungsi ini sepenuhnya terpisah dari LangGraph dan bisa diuji secara independen. Mereka tidak tahu bahwa mereka sedang dipanggil oleh sebuah agent.
+    *   Berisi fungsi-fungsi Python biasa yang didekorasi sebagai *tool* dan melakukan tugas-tugas spesifik (query database, query Neo4j).
+    *   **`get_relevant_schema()`**: Digunakan untuk mendapatkan "peta data".
+    *   **`search_read()`**: Tool utama yang terinspirasi Odoo untuk mengambil data, menggunakan `DynamicQueryBuilder` secara internal untuk menerjemahkan parameter (`domain`, `fields`) menjadi query SQLAlchemy yang aman.
 
 ---
 
-Tentu. Sesuai rencana dan setelah memeriksa kembali struktur file akhir kita, berikut adalah **Bab 2** dari `backend_memory.md`.
-
----
 
 ### **Bab 2: Peta File & Komponen Kunci**
 
@@ -200,8 +201,8 @@ Tentu. Sesuai rencana dan setelah memeriksa kembali struktur file akhir kita, be
     3.  Setelah pengguna memberikan file-file yang relevan, barulah Anda boleh mulai menganalisis dan menulis kode.
 *   **Panduan Revisi:** Rujuk ke dokumen ini untuk memahami arsitektur dan alur kerja saat ini sebelum melakukan perubahan.
 
-#### **2. Struktur Folder Final (Arsitektur Tool Calling)**
-Struktur folder ini mencerminkan arsitektur akhir yang telah divalidasi, di mana logika MCP telah digantikan oleh direktori `tools` terpusat.
+#### **2. Struktur Folder Final (Arsitektur `search_read`)**
+Struktur folder ini mencerminkan arsitektur akhir yang telah divalidasi dan terbukti berfungsi, di mana semua logika berada dalam satu aplikasi backend.
 
 ```
 backend/
@@ -218,9 +219,11 @@ backend/
     │   └── (file-file orm_*.py)
     ├── langgraph_workflow/
     │   ├── graph.py
+    │   ├── prompts.py
     │   └── nodes/
     │       ├── __init__.py
     │       ├── llm_caller.py
+    │       ├── log_analytics.py
     │       └── tool_executor.py
     ├── schemas/
     │   └── agent_state.py
@@ -235,37 +238,63 @@ backend/
 
 #### **3. Deskripsi File & Komponen Kunci**
 
-*   **`tools/database_tools.py`**: Berisi semua tool yang berinteraksi dengan database MySQL.
-    *   `execute_database_plan(payload: ExecutePlanInput)`: Fungsi utama yang menerima `DatabaseOperationPlan` dalam bentuk Pydantic model, membangun query menggunakan `DynamicQueryBuilder`, dan mengeksekusinya ke database.
-    *   `DynamicQueryBuilder`: Kelas internal yang bertanggung jawab untuk menerjemahkan struktur JSON/Pydantic menjadi objek query SQLAlchemy 2.0 yang aman. Ini adalah "mesin penerjemah" dari rencana ke aksi.
+*   **`main.py` & `api/v1/endpoints/query.py`**: Pintu Gerbang API
+    *   **Peran:** Mengekspos endpoint HTTP ke dunia luar.
+    *   `main.py`: Menginisialisasi aplikasi FastAPI dan menyertakan router dari `query.py`.
+    *   `query.py`:
+        *   `GET /session/start`: Membuat `session_id` baru dan mereset memori percakapan untuk sesi tersebut.
+        *   `POST /query`: Menerima `user_query` dan `session_id`, mendelegasikannya ke `agent_service`, dan mengembalikan respons final.
 
-*   **`tools/graphiti_tools.py`**: Berisi semua tool yang berinteraksi dengan knowledge graph Neo4j.
-    *   `get_relevant_schema(payload: GetRelevantSchemaInput)`: Fungsi `async` yang melakukan query Cypher ke Neo4j untuk mengambil "peta data" (skema tabel dan relasi) yang relevan dengan permintaan pengguna.
-    *   `store_session_data()` dan `retrieve_session_data()`: Fungsi `async` yang berfungsi sebagai "sistem loker", menyimpan dan mengambil data hasil query sementara di Neo4j untuk menjaga `AgentState` tetap ringan.
+*   **`services/agent_service.py`**: Orkestrator & Pengelola Memori
+    *   **Peran:** Jembatan antara lapisan API dan lapisan Agent.
+    *   `conversation_memory`: Sebuah `dict` Python yang berfungsi sebagai memori jangka pendek, menyimpan `chat_history` untuk setiap `session_id`. **Penting: Memori ini akan hilang jika server di-restart.**
+    *   `process_query()`: Fungsi inti yang:
+        1.  Mengambil/menginisialisasi `chat_history` dari `conversation_memory`.
+        2.  Menyuntikkan `SYSTEM_PROMPT` jika ini adalah pesan pertama.
+        3.  Memanggil `langgraph_app.ainvoke()` untuk menjalankan seluruh alur kerja.
+        4.  Menyimpan kembali `chat_history` yang sudah diperbarui.
+        5.  Mengekstrak respons teks final yang relevan dari `chat_history` untuk dikembalikan ke API.
+        6.  Memanggil `log_analytics_node` secara manual di akhir untuk mencatat telemetri.
 
-*   **`langgraph_workflow/nodes/llm_caller.py`**: "Otak" dari agent.
-    *   `llm_caller_node(state: AgentState)`: Fungsi `async` ini menerima `state` (terutama riwayat percakapan), menyusun definisi dari semua *tool* yang tersedia secara manual, dan memanggil LLM API (DeepSeek). Ia mengembalikan respons dari LLM, yang bisa berupa pesan teks atau permintaan untuk memanggil satu atau lebih *tool*.
+*   **`langgraph_workflow/prompts.py`**: "SOP" untuk Agent
+    *   **Peran:** Mendefinisikan `SYSTEM_PROMPT`.
+    *   `SYSTEM_PROMPT`: Sebuah string panjang yang berisi instruksi sangat detail bagi LLM. Ini adalah komponen paling kritis yang mengatur perilaku agent. Isinya memaksa agent untuk mengikuti alur: **1. Panggil `get_relevant_schema` -> 2. Buat parameter untuk `search_read` -> 3. Panggil `search_read`**.
 
-*   **`langgraph_workflow/nodes/tool_executor.py`**: "Tangan" dari agent.
-    *   `tool_executor_node(state: AgentState)`: Fungsi `async` ini dipanggil jika `llm_caller_node` menghasilkan `tool_calls`. Ia memeriksa *tool* mana yang diminta, mem-parse argumennya, memanggil fungsi Python yang sesuai dari direktori `tools/`, dan mengembalikan hasilnya dalam format `ToolMessage` yang standar.
+*   **`langgraph_workflow/graph.py`**: Papan Sirkuit Agent
+    *   **Peran:** Merakit `StateGraph` dari LangGraph.
+    *   Mendefinisikan alur kerja 2-node yang simpel dan kuat (`agent` dan `action`).
+    *   Mengatur logika kondisional (`should_continue`) untuk memutuskan apakah perlu memanggil `tool` atau mengakhiri alur (melalui `analytics_logger`).
+    *   `app = workflow.compile()`: Mengkompilasi definisi menjadi objek `Runnable` yang bisa dieksekusi.
 
-*   **`langgraph_workflow/graph.py`**: "Papan Sirkuit" dari agent.
-    *   Merakit `StateGraph` dengan hanya dua node utama: `agent` (yang menunjuk ke `llm_caller_node`) dan `action` (yang menunjuk ke `tool_executor_node`).
-    *   Mendefinisikan alur kondisional: setelah `agent` berjalan, periksa apakah ada `tool_calls`. Jika ada, pergi ke `action`. Jika tidak, alur selesai (`END`). Setelah `action` berjalan, alur selalu kembali ke `agent`.
+*   **`langgraph_workflow/nodes/llm_caller.py`**: Otak Agent
+    *   **Peran:** Bertanggung jawab untuk semua interaksi dengan LLM (DeepSeek).
+    *   `llm_caller_node()`: Mengambil `chat_history` dari state, memanggil API LLM dengan `tools_definition`, dan menambahkan respons dari LLM (baik pesan teks atau `tool_calls`) kembali ke `chat_history`.
 
-*   **`services/agent_service.py`**: "Manajer" dari agent.
-    *   `process_query(user_query: str, session_id: str)`: Fungsi `async` yang menjadi jembatan antara API dan LangGraph. Ia membuat `AgentState` awal dengan pesan pengguna, memanggil `langgraph_app.ainvoke()` untuk menjalankan seluruh alur kerja, dan kemudian mengekstrak respons teks final dari *state* akhir untuk dikembalikan ke API.
+*   **`langgraph_workflow/nodes/tool_executor.py`**: Tangan Agent
+    *   **Peran:** Mengeksekusi fungsi Python (`tool`) yang diminta oleh LLM.
+    *   `available_tools`: Sebuah `dict` yang memetakan nama *tool* ke fungsi Python yang sebenarnya.
+    *   `tool_executor_node()`: Mengambil `tool_calls` dari state, mencari fungsi yang sesuai di `available_tools`, dan menjalankannya. Ia juga dengan cerdas menangani fungsi `async` (`get_relevant_schema`) dan fungsi sinkron (`search_read`).
 
-*   **`schemas/agent_state.py`**: "Memori Jangka Pendek" agent.
-    *   `AgentState(TypedDict)`: Disederhanakan menjadi sebuah `TypedDict` yang hanya berisi field-field esensial yang dibutuhkan oleh alur kerja manual kita, seperti `chat_history: List[Dict[str, Any]]` dan `tool_calls`. Ini memberi kita kontrol penuh atas state.
+*   **`langgraph_workflow/nodes/log_analytics.py`**: Pencatat Telemetri
+    *   **Peran:** Mengumpulkan metrik dari state akhir dan menuliskannya ke `logs/analytics.log`.
+    *   `log_analytics_node()`: Dieksekusi di akhir setiap alur kerja untuk memastikan setiap interaksi (sukses atau gagal) tercatat.
+
+*   **`tools/database_tools.py`**: Kotak Perkakas untuk MySQL
+    *   `SearchReadInput`: Model Pydantic yang mendefinisikan "kontrak" ketat untuk tool `search_read`.
+    *   `DynamicQueryBuilder`: Kelas internal yang sangat penting. Menerjemahkan parameter dari `SearchReadInput` (`model`, `domain`, `fields`, dll.) menjadi query SQLAlchemy 2.0 yang aman. Ini adalah "mesin penerjemah" utama dari rencana ke aksi.
+    *   `search_read()`: Fungsi tool utama. Ia memvalidasi input menggunakan `SearchReadInput`, menggunakan `DynamicQueryBuilder` untuk membuat query, mengeksekusinya, dan melakukan serialisasi hasil dari objek ORM menjadi `dict` yang bersih.
+
+*   **`tools/graphiti_tools.py`**: Kotak Perkakas untuk Neo4j
+    *   **Peran:** Menyediakan "peta data" untuk agent.
+    *   `GetRelevantSchemaInput`: Model Pydantic untuk input tool.
+    *   `get_relevant_schema()`: Fungsi tool `async` yang melakukan query Cypher ke Neo4j untuk mengambil skema tabel dan relasi yang relevan berdasarkan `entities` yang diminta.
+
+*   **`schemas/agent_state.py`**: Memori Jangka Pendek Agent
+    *   **Peran:** Mendefinisikan struktur `TypedDict` untuk `AgentState`. Karena kita mengelola state secara manual, file ini menjadi satu-satunya sumber kebenaran untuk bentuk "memori" yang digunakan oleh semua node dalam graph.
 
 ---
 
-Tentu. Sesuai rencana dan setelah memeriksa kembali status akhir proyek kita, berikut adalah **Bab 3** dari `backend_memory.md`.
-
----
-
-### **Bab 3: Pengujian, Isu yang Diketahui, dan Langkah Selanjutnya**
+### **Bab 3: Log Pembelajaran, Isu yang Diketahui, dan Langkah Selanjutnya**
 
 #### **1. Instruksi untuk LLM Pengguna Dokumen Ini**
 *   **Peran Anda:** Anda adalah AI Engineer yang melanjutkan proyek ini. Dokumen ini adalah sumber kebenaran utama Anda.
@@ -275,47 +304,46 @@ Tentu. Sesuai rencana dan setelah memeriksa kembali status akhir proyek kita, be
     3.  Setelah pengguna memberikan file-file yang relevan, barulah Anda boleh mulai menganalisis dan menulis kode.
 *   **Panduan Revisi:** Rujuk ke dokumen ini untuk memahami arsitektur dan alur kerja saat ini sebelum melakukan perubahan.
 
-#### **2. Strategi Pengujian**
-Arsitektur *tool calling* yang diadopsi memungkinkan strategi pengujian yang terstruktur dan berlapis:
+#### **2. Log Pembelajaran & Keputusan Desain**
+Bagian ini adalah rangkuman dari masalah-masalah kritis yang kita hadapi selama pengembangan backend dan keputusan arsitektur penting yang kita ambil untuk menyelesaikannya.
 
-1.  **Unit Test untuk Tools (Sangat Direkomendasikan):**
-    *   **Tujuan:** Memvalidasi logika internal dari setiap fungsi *tool* secara terisolasi, tanpa melibatkan LangGraph atau LLM.
-    *   **Contoh:** Membuat skrip tes yang mengimpor `DynamicQueryBuilder` dari `database_tools.py` dan memverifikasi bahwa ia menghasilkan SQL yang benar dari `DatabaseOperationPlan` sampel. Ini memastikan "tangan" agent bekerja dengan benar.
-    *   **Lokasi:** Idealnya di dalam direktori `backend/tests/unit/`.
+*   **Keputusan Desain 1: Pivot dari `DatabaseOperationPlan` ke Arsitektur `search_read`**
+    *   **Masalah:** Pendekatan awal dengan `DatabaseOperationPlan` memberikan terlalu banyak kebebasan pada LLM untuk menstrukturkan JSON. Hal ini menyebabkan rentetan error yang sulit di-debug (`KeyError`, `ValueError`, `NotImplementedError`) karena LLM terus "berhalusinasi" tentang format yang benar.
+    *   **Solusi & Alasan:** Kita mengadopsi arsitektur yang lebih ketat yang terinspirasi dari Odoo `search_read`. Dengan mendefinisikan "kontrak" input yang sangat spesifik (`model`, `domain`, `fields`), kita secara drastis mengurangi ruang bagi LLM untuk membuat kesalahan. Ini terbukti jauh lebih andal dan mudah dirawat.
 
-2.  **Tes Integrasi Terisolasi untuk Panggilan LLM:**
-    *   **Tujuan:** Memvalidasi bahwa prompt dan panggilan API langsung ke LLM berfungsi seperti yang diharapkan.
-    *   **Contoh:** Skrip `scripts/test_llm_call.py` yang kita buat adalah contoh sempurna. Ia menguji `llm_caller_node` secara terisolasi untuk memastikan ia bisa mendapatkan JSON yang valid dari LLM. Ini memastikan "otak" agent bisa berkomunikasi.
+*   **Pelajaran 2: Pentingnya "Contekan" dalam `SYSTEM_PROMPT`**
+    *   **Masalah:** Bahkan dengan arsitektur `search_read`, LLM awalnya masih kesulitan menghasilkan `domain` dan `fields` yang benar, menyebabkan `AttributeError` karena nama kolom yang salah.
+    *   **Solusi & Alasan:** Kita memperbarui `SYSTEM_PROMPT` tidak hanya dengan instruksi, tetapi juga dengan **contoh konkret format JSON yang diharapkan**. Ini bertindak sebagai "contekan" atau contoh *few-shot* yang sangat efektif, memungkinkan LLM untuk meniru format yang benar dengan akurasi tinggi.
 
-3.  **Tes End-to-End (E2E) untuk Alur Kerja Penuh:**
-    *   **Tujuan:** Memvalidasi seluruh sistem dari API hingga respons akhir.
-    *   **Contoh:** Skrip `scripts/test_e2e_phase3.py` (yang bisa dinamai ulang menjadi `test_agent_e2e.py`) adalah implementasi dari tes ini.
-    *   **Cara Kerja:**
-        a. Menjalankan server FastAPI utama dengan `uvicorn`.
-        b. Skrip tes bertindak sebagai klien HTTP, memanggil endpoint `/api/v1/query`.
-        c. Memvalidasi bahwa respons akhir yang diterima sesuai dengan yang diharapkan.
-    *   **Lokasi Skrip Pengujian:** `scripts/test_e2e_phase3.py`
+*   **Pelajaran 3: Agent "Buta" Tanpa `get_relevant_schema`**
+    *   **Masalah:** Pada satu titik, kita lupa memasukkan kembali `get_relevant_schema` ke dalam alur kerja `search_read`. Akibatnya, LLM tidak memiliki "peta data" dan terus menebak nama kolom yang salah.
+    *   **Solusi & Alasan:** Kita merevisi `SYSTEM_PROMPT` untuk memberlakukan SOP yang ketat: **selalu panggil `get_relevant_schema` terlebih dahulu** sebelum memanggil `search_read`. Ini memastikan agent selalu "melihat" sebelum "bertindak".
 
-#### **3. Isu yang Diketahui (Known Issues)**
-Bagian ini sangat penting untuk pengembangan selanjutnya. Ini adalah daftar perilaku yang belum sempurna pada akhir fase backend.
+*   **Pelajaran 4: Bug `async`/`await` pada `tool_executor`**
+    *   **Masalah:** Terjadi `RuntimeWarning: coroutine was never awaited` karena `tool_executor` kita tidak menangani fungsi `async` (`get_relevant_schema`) dengan benar.
+    *   **Solusi & Alasan:** Merevisi `tool_executor` untuk menggunakan `asyncio.iscoroutinefunction()` untuk memeriksa apakah sebuah tool perlu di-`await` atau tidak. Ini adalah perbaikan teknis penting untuk membuat *executor* kita bisa menangani berbagai jenis fungsi.
 
-*   **Isu Prioritas #1: Respons "No Content" atau Kosong.**
-    *   **Gejala:** Setelah beberapa siklus pemanggilan *tool*, respons akhir yang diterima oleh klien adalah string kosong atau pesan default seperti "No content from agent."
-    *   **Penyebab:** Logika di `agent_service.py` saat ini terlalu naif. Ia hanya mengambil konten dari **pesan terakhir** di `chat_history`. Jika pesan terakhir itu adalah hasil dari `tool_executor_node` (yang kontennya berupa JSON data) atau pesan `assistant` yang hanya berisi `tool_calls` (dengan `content` kosong), maka respons yang dikirim ke pengguna akan salah atau kosong.
-    *   **Rencana Perbaikan:** Merevisi `agent_service.py` atau `graph.py`. Perlu ada logika yang lebih cerdas untuk menelusuri riwayat pesan dan menemukan pesan `assistant` terakhir yang **tidak memiliki `tool_calls`**, karena itulah respons teks yang sebenarnya ditujukan untuk pengguna.
+*   **Pelajaran 5: Menjinakkan `DynamicQueryBuilder`**
+    *   **Masalah:** `DynamicQueryBuilder` kita mengalami serangkaian `AttributeError` dan `ValueError` karena tidak cukup tangguh untuk menangani berbagai variasi output LLM (misalnya, `None` vs `[]`, `field_name` vs `column`, ekspresi vs kolom biasa).
+    *   **Solusi & Alasan:** Kita merevisinya berkali-kali untuk menambahkan "jaring pengaman", seperti menggunakan `... or []`, menangani berbagai alias kunci, dan mem-parsing ekspresi dengan lebih cerdas. Ini mengajarkan bahwa komponen yang berinteraksi langsung dengan output LLM harus sangat defensif dan fleksibel.
 
-*   **Isu #2: Belum Ada Implementasi *Placeholder Strategy*.**
-    *   **Gejala:** Agent saat ini dapat melihat dan mengembalikan angka finansial secara langsung dalam narasinya, yang bertentangan dengan prinsip desain awal kita (`Zero Manual Calculation by LLM`).
-    *   **Rencana Perbaikan:** Setelah Isu #1 diselesaikan, langkah berikutnya adalah mengimplementasikan *placeholder*. Ini kemungkinan akan melibatkan pembuatan node baru di LangGraph yang berjalan setelah `tool_executor` untuk mengganti angka dengan placeholder (misalnya, `{TOTAL_SALES}`) sebelum dikirim kembali ke `llm_caller`.
+*   **Pelajaran 6: Konflik Nama `configurable` di LangGraph**
+    *   **Masalah:** Aplikasi gagal memulai dengan `ValueError: Channel names configurable are reserved`.
+    *   **Solusi & Alasan:** Mengganti nama field `configurable` di `AgentState` menjadi `session_info`. Ini adalah pelajaran bahwa kita harus berhati-hati agar tidak menggunakan nama-nama yang mungkin merupakan kata kunci yang dicadangkan oleh *framework* yang kita gunakan.
 
-*   **Isu #3: Penanganan Error yang Belum Sempurna.**
-    *   **Gejala:** Jika sebuah *tool* gagal (misal, `execute_database_plan` gagal karena query salah), pesan error teknis dari Python akan dikirim kembali ke LLM. LLM mungkin akan bingung atau mengulang pesan error tersebut ke pengguna.
-    *   **Rencana Perbaikan:** Perlu ada logika di dalam `tool_executor_node` atau node baru untuk "menangkap" error teknis dan mengubahnya menjadi pesan yang lebih netral dan dapat dimengerti oleh LLM, seperti `"Tool execution failed. Please check the plan and try again."`
+#### **3. Strategi Pengujian**
+Sistem pengujian yang telah kita kembangkan sangat efektif dan harus terus digunakan.
+*   **`scripts/test_isolated_tools.py`**: Digunakan untuk menguji setiap *tool* (`search_read`, `get_relevant_schema`) secara langsung, memastikan koneksi database dan logika internalnya berfungsi tanpa campur tangan LLM.
+*   **`scripts/test_advanced_scenario.py`**: Tes end-to-end utama. Skrip ini mensimulasikan percakapan berlapis yang menguji kemampuan kontekstual, analitis, dan *multi-step reasoning* dari agent. Ini adalah tes regresi utama kita.
 
-#### **4. Langkah Selanjutnya**
-Berdasarkan status saat ini, prioritas pengembangan berikutnya adalah:
-1.  **Memperbaiki Isu Prioritas #1:** Menyelesaikan masalah respons "No Content" agar agent selalu memberikan jawaban yang relevan kepada pengguna.
-2.  **Implementasi *Placeholder Strategy*:** Membangun mekanisme untuk mencegah LLM melihat atau memanipulasi angka finansial.
-3.  **Pengembangan Frontend:** Memulai pembangunan antarmuka pengguna (UI/UX) sesuai dengan dokumen perencanaan, yang akan berinteraksi dengan API backend yang kini sudah stabil.
+#### **4. Isu yang Diketahui (Known Issues) & Hutang Teknis**
+Pada akhir fase backend, sistem sudah sangat fungsional, tetapi ada beberapa area untuk perbaikan di masa depan:
+*   **Perhitungan Agregasi:** Agent saat ini tidak bisa meminta `SUM()` atau `AVG()` langsung dari database melalui `search_read` jika melibatkan ekspresi. Ia dengan cerdas mengakalinya dengan mengambil data mentah dan menghitungnya sendiri. Untuk masa depan, `DynamicQueryBuilder` bisa disempurnakan untuk menangani agregasi dengan lebih baik.
+*   **Memori Percakapan *In-Memory*:** `conversation_memory` saat ini akan hilang jika server di-restart. Untuk produksi nyata, ini perlu diganti dengan solusi persisten seperti Redis atau database. Namun, untuk MVP, ini sudah cukup.
+*   **Placeholder Strategy Belum Diimplementasikan:** Agent saat ini masih bisa melihat dan menyebutkan angka finansial secara langsung. Implementasi strategi *placeholder* tetap menjadi prioritas sebelum aplikasi digunakan secara luas.
+
+#### **5. Langkah Selanjutnya**
+*   **Status Fase Backend:** **SELESAI (untuk MVP).** Fondasi backend sudah stabil, cerdas, dan siap untuk diintegrasikan.
+*   **Langkah Berikutnya:** Memulai **Fase Frontend**. Semua endpoint API dan logika backend yang dibutuhkan untuk mendukung UI/UX yang telah direncanakan (termasuk streaming SSE yang akan kita implementasikan berikutnya) sudah siap untuk dibangun.
 
 ---

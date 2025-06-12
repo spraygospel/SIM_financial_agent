@@ -76,48 +76,67 @@ async def get_neo4j_driver() -> AsyncIterator[AsyncDriver]:
 
 # --- Definisi Tool sebagai Fungsi Python Biasa ---
 
-async def get_relevant_schema(payload: GetRelevantSchemaInput) -> RelevantSchemaOutput:
+async def get_relevant_schema(payload: Dict[str, Any]) -> RelevantSchemaOutput:
     """
     Mengambil "peta data" (skema, kolom, relasi) yang relevan dari knowledge graph.
-    Gunakan tool ini di awal untuk memahami struktur database sebelum membuat rencana query.
+    Tool ini WAJIB dipanggil dengan daftar entitas (nama tabel) yang spesifik.
     """
+    try:
+        validated_input = GetRelevantSchemaInput(**payload)
+    except Exception as e:
+        error_msg = f"Gagal memvalidasi input untuk get_relevant_schema. Error: {e}"
+        print(f"\n🔥 [ERROR] {error_msg}")
+        return RelevantSchemaOutput(relevant_tables=[], table_relationships=[], success=False, error=error_msg)
+
+    # --- PERBAIKAN PENTING DI SINI ---
+    # Tambahkan jaring pengaman untuk mencegah panggilan dengan entities kosong
+    if not validated_input.entities:
+        error_msg = "Error: `get_relevant_schema` tidak boleh dipanggil dengan daftar entitas kosong. Identifikasi dulu tabel yang relevan."
+        print(f"\n🔥 [ERROR] {error_msg}")
+        # Kembalikan daftar nama tabel yang tersedia sebagai petunjuk untuk LLM
+        try:
+            async with get_neo4j_driver() as driver:
+                async with driver.session(database=settings.NEO4J_DATABASE) as session:
+                    result = await session.run("MATCH (t:DatabaseTable {group_id: $gid}) RETURN t.table_name as name", gid=settings.SCHEMA_GROUP_ID)
+                    available_tables = [record["name"] for record in await result.data()]
+            hint = f"Tabel yang tersedia: {', '.join(available_tables[:20])}..." # Beri petunjuk sebagian tabel
+            return RelevantSchemaOutput(relevant_tables=[], table_relationships=[], success=False, error=f"{error_msg}. {hint}")
+        except Exception as e_hint:
+            return RelevantSchemaOutput(relevant_tables=[], table_relationships=[], success=False, error=f"{error_msg}. Gagal mengambil daftar tabel: {e_hint}")
+    # -------------------------------------
+    
     try:
         async with get_neo4j_driver() as driver:
             async with driver.session(database=settings.NEO4J_DATABASE) as session:
-                # --- PERBAIKAN DI SINI ---
-                # Mengubah alias 'tableName' menjadi 'table_name' agar cocok dengan model Pydantic
                 tables_result = await session.run(
                     """
                     MATCH (t:DatabaseTable {group_id: $gid})-[:HAS_COLUMN]->(c:DatabaseColumn)
-                    WHERE size($entities) = 0 OR t.table_name IN $entities
+                    WHERE t.table_name IN $entities
                     RETURN t.table_name AS table_name, t.purpose AS tablePurpose, 
                            collect({
                                name: c.column_name, type: c.type_from_db, description: c.description, 
                                classification: c.classification, is_aggregatable: c.is_aggregatable
                            }) AS columns
                     ORDER BY table_name
-                    """, gid=settings.SCHEMA_GROUP_ID, entities=payload.entities
+                    """, gid=settings.SCHEMA_GROUP_ID, entities=validated_input.entities
                 )
                 
-                # Perlu sedikit penyesuaian untuk nama field 'tablePurpose' juga
-                # Cara paling aman adalah memprosesnya di Python
                 records_raw = await tables_result.data()
                 records_processed = []
                 for r in records_raw:
                     records_processed.append({
                         "table_name": r["table_name"],
-                        "purpose": r.get("tablePurpose"), # Gunakan .get() untuk keamanan
+                        "purpose": r.get("tablePurpose"),
                         "columns": r["columns"]
                     })
                 tables_data = [TableSchema(**r) for r in records_processed]
 
-                # Query relasi sudah benar, tidak perlu diubah
                 rels_result = await session.run(
                     """
                     MATCH (c1:DatabaseColumn)-[r:REFERENCES]->(c2:DatabaseColumn)
-                    WHERE r.group_id = $gid AND (size($entities) = 0 OR (r.from_table IN $entities AND r.to_table IN $entities))
+                    WHERE r.group_id = $gid AND r.from_table IN $entities AND r.to_table IN $entities
                     RETURN r.from_table AS from_table, r.from_column AS from_column, r.to_table AS to_table, r.to_column AS to_column
-                    """, gid=settings.SCHEMA_GROUP_ID, entities=payload.entities
+                    """, gid=settings.SCHEMA_GROUP_ID, entities=validated_input.entities
                 )
                 rels_records = await rels_result.data()
                 rels_data = [RelationshipSchema(**r) for r in rels_records]

@@ -69,10 +69,21 @@ class AgentService:
             await send_plan_update(4) # Langkah 4: Menyusun laporan...
 
             # Format dan kirim hasil akhir
-            last_message = final_state.get("chat_history", [])[-1]
-            content_str = last_message.get("content", "{}")
-            try: response_data = json.loads(content_str.strip().strip("```json").strip())
-            except json.JSONDecodeError: response_data = {"final_narrative": content_str}
+            final_assistant_message = next(
+                (msg for msg in reversed(final_state.get("chat_history", [])) if msg.get("role") == "assistant"),
+                None
+            )
+
+            if final_assistant_message and final_assistant_message.get("content"):
+                content_str = final_assistant_message.get("content", "{}")
+                try:
+                    response_data = json.loads(content_str.strip().strip("```json").strip())
+                except (json.JSONDecodeError, AttributeError):
+                    response_data = {"final_narrative": content_str}
+            else:
+                # Fallback jika tidak ada respons dari asisten (seharusnya tidak terjadi)
+                response_data = {"final_narrative": "Maaf, saya tidak dapat memberikan respons saat ini."}
+            
             await send_event("FINAL_RESULT", response_data)
 
             # Logging
@@ -86,5 +97,5 @@ class AgentService:
             await send_event("WORKFLOW_ERROR", {"user_message": "Terjadi kesalahan."})
         finally:
             await send_event("STREAM_END", {})
-            
+
 agent_service = AgentService()

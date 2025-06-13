@@ -18,11 +18,17 @@ workflow.set_entry_point("agent")
 def should_continue(state: AgentState):
     """
     Setelah agent (LLM) berjalan, putuskan langkah selanjutnya.
-    Apakah ada tool yang dipanggil? Jika ya, eksekusi. Jika tidak, selesai.
+    - Jika intent ACKNOWLEDGE, langsung selesai.
+    - Jika ada tool yang dipanggil, eksekusi tool.
+    - Jika tidak ada tool call (respons final), selesai.
     """
+    if state.get("intent") == "ACKNOWLEDGE":
+        return END
+    
     if state.get("tool_calls"):
         return "action"
-    return END # Langsung berakhir jika tidak ada tool call
+        
+    return END
 
 # 4. Tambahkan semua edge
 workflow.add_conditional_edges(

@@ -14,7 +14,8 @@ from neo4j import AsyncGraphDatabase, AsyncDriver
 
 # --- Pydantic Models (Input & Output Tools) ---
 class GetRelevantSchemaInput(BaseModel): 
-    entities: List[str]
+    entities: List[str] = Field(default_factory=list, description="Daftar nama tabel teknis yang pasti untuk dicari.")
+    business_concepts: List[str] = Field(default_factory=list, description="Daftar kata kunci atau konsep bisnis untuk dicari, misal ['hutang', 'penjualan customer']")
 
 class ColumnSchema(BaseModel):
     name: str
@@ -79,64 +80,83 @@ async def get_neo4j_driver() -> AsyncIterator[AsyncDriver]:
 async def get_relevant_schema(payload: Dict[str, Any]) -> RelevantSchemaOutput:
     """
     Mengambil "peta data" (skema, kolom, relasi) yang relevan dari knowledge graph.
-    Tool ini WAJIB dipanggil dengan daftar entitas (nama tabel) yang spesifik.
+    Tool ini bisa mencari berdasarkan nama tabel (entities) atau konsep bisnis (business_concepts).
     """
     try:
         validated_input = GetRelevantSchemaInput(**payload)
     except Exception as e:
         error_msg = f"Gagal memvalidasi input untuk get_relevant_schema. Error: {e}"
-        print(f"\n🔥 [ERROR] {error_msg}")
         return RelevantSchemaOutput(relevant_tables=[], table_relationships=[], success=False, error=error_msg)
 
-    # --- PERBAIKAN PENTING DI SINI ---
-    # Tambahkan jaring pengaman untuk mencegah panggilan dengan entities kosong
-    if not validated_input.entities:
-        error_msg = "Error: `get_relevant_schema` tidak boleh dipanggil dengan daftar entitas kosong. Identifikasi dulu tabel yang relevan."
-        print(f"\n🔥 [ERROR] {error_msg}")
-        # Kembalikan daftar nama tabel yang tersedia sebagai petunjuk untuk LLM
+    # Jika tidak ada input sama sekali, berikan petunjuk
+    if not validated_input.entities and not validated_input.business_concepts:
+        error_msg = "Error: `get_relevant_schema` harus dipanggil dengan `entities` atau `business_concepts`."
         try:
             async with get_neo4j_driver() as driver:
                 async with driver.session(database=settings.NEO4J_DATABASE) as session:
                     result = await session.run("MATCH (t:DatabaseTable {group_id: $gid}) RETURN t.table_name as name", gid=settings.SCHEMA_GROUP_ID)
                     available_tables = [record["name"] for record in await result.data()]
-            hint = f"Tabel yang tersedia: {', '.join(available_tables[:20])}..." # Beri petunjuk sebagian tabel
+            hint = f"Tabel yang tersedia: {', '.join(available_tables[:20])}..."
             return RelevantSchemaOutput(relevant_tables=[], table_relationships=[], success=False, error=f"{error_msg}. {hint}")
         except Exception as e_hint:
             return RelevantSchemaOutput(relevant_tables=[], table_relationships=[], success=False, error=f"{error_msg}. Gagal mengambil daftar tabel: {e_hint}")
-    # -------------------------------------
-    
+
+    # Bangun query Cypher secara dinamis
+    query_tables = ""
+    params = {"gid": settings.SCHEMA_GROUP_ID}
+
+    if validated_input.entities:
+        query_tables = "MATCH (t:DatabaseTable {group_id: $gid}) WHERE t.table_name IN $entities "
+        params['entities'] = validated_input.entities
+    elif validated_input.business_concepts:
+        # Membuat klausa WHERE dinamis untuk setiap kata kunci
+        where_clauses = []
+        for i, concept in enumerate(validated_input.business_concepts):
+            param_name = f'concept{i}'
+            where_clauses.append(f"t.purpose CONTAINS ${param_name} OR t.description CONTAINS ${param_name}")
+            params[param_name] = concept.lower() # Pencarian case-insensitive
+        
+        query_tables = f"MATCH (t:DatabaseTable {{group_id: $gid}}) WHERE {' OR '.join(where_clauses)} "
+
+    full_query = query_tables + """
+    WITH t
+    MATCH (t)-[:HAS_COLUMN]->(c:DatabaseColumn)
+    RETURN t.table_name AS table_name, t.purpose AS tablePurpose, 
+           collect({
+               name: c.column_name, type: c.type_from_db, description: c.description, 
+               classification: c.classification, is_aggregatable: c.is_aggregatable
+           }) AS columns
+    ORDER BY table_name
+    """
+
     try:
         async with get_neo4j_driver() as driver:
             async with driver.session(database=settings.NEO4J_DATABASE) as session:
-                tables_result = await session.run(
-                    """
-                    MATCH (t:DatabaseTable {group_id: $gid})-[:HAS_COLUMN]->(c:DatabaseColumn)
-                    WHERE t.table_name IN $entities
-                    RETURN t.table_name AS table_name, t.purpose AS tablePurpose, 
-                           collect({
-                               name: c.column_name, type: c.type_from_db, description: c.description, 
-                               classification: c.classification, is_aggregatable: c.is_aggregatable
-                           }) AS columns
-                    ORDER BY table_name
-                    """, gid=settings.SCHEMA_GROUP_ID, entities=validated_input.entities
-                )
+                tables_result = await session.run(full_query, **params)
                 
                 records_raw = await tables_result.data()
                 records_processed = []
+                found_tables = []
                 for r in records_raw:
+                    table_name = r["table_name"]
+                    if table_name not in found_tables: found_tables.append(table_name)
                     records_processed.append({
-                        "table_name": r["table_name"],
+                        "table_name": table_name,
                         "purpose": r.get("tablePurpose"),
                         "columns": r["columns"]
                     })
                 tables_data = [TableSchema(**r) for r in records_processed]
 
+                if not found_tables:
+                    return RelevantSchemaOutput(relevant_tables=[], table_relationships=[], success=True) # Sukses, tapi tidak ada yang ditemukan
+
+                # Ambil relasi untuk tabel yang ditemukan
                 rels_result = await session.run(
                     """
                     MATCH (c1:DatabaseColumn)-[r:REFERENCES]->(c2:DatabaseColumn)
-                    WHERE r.group_id = $gid AND r.from_table IN $entities AND r.to_table IN $entities
+                    WHERE r.group_id = $gid AND (r.from_table IN $found_tables OR r.to_table IN $found_tables)
                     RETURN r.from_table AS from_table, r.from_column AS from_column, r.to_table AS to_table, r.to_column AS to_column
-                    """, gid=settings.SCHEMA_GROUP_ID, entities=validated_input.entities
+                    """, gid=settings.SCHEMA_GROUP_ID, found_tables=found_tables
                 )
                 rels_records = await rels_result.data()
                 rels_data = [RelationshipSchema(**r) for r in rels_records]

@@ -11,6 +11,7 @@ class AgentState(TypedDict, total=False):
     session_info: Dict[str, Any]
 
     # --- BAGIAN ALUR KERJA ---
+    intent: str # 'EXECUTE_QUERY', 'REQUEST_MODIFICATION', 'ACKNOWLEDGE', 'UNKNOWN'
     tool_calls: Optional[List[Dict[str, Any]]]
     workflow_status: str
 

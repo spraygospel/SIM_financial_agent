@@ -1,66 +1,77 @@
 # backend/app/langgraph_workflow/nodes/tool_executor.py
 import json
-from typing import Dict, Any
 import asyncio
+from typing import Dict, Any, List
 from backend.app.schemas.agent_state import AgentState
 from backend.app.tools import database_tools, graphiti_tools
 
-# Hanya ada satu tool sekarang
+# Daftar tool yang tersedia tidak berubah
 available_tools = {
     "search_read": database_tools.search_read,
     "get_relevant_schema": graphiti_tools.get_relevant_schema,
 }
 
-# Fungsi tool_executor_node tidak perlu diubah, karena ia generik
-
 async def tool_executor_node(state: AgentState) -> Dict[str, Any]:
     """
-    Mengeksekusi tool yang diminta oleh LLM.
-    Sekarang bisa menangani fungsi sinkron dan asinkron (async).
+    Mengeksekusi SEMUA tool yang diminta oleh LLM secara paralel dan
+    mengembalikan hasilnya secara individual.
     """
     print("--- Executing Tools ---")
     
     last_message = state["chat_history"][-1]
     tool_calls = last_message.get("tool_calls", [])
     
-    new_messages_to_add = []
-
+    tasks = []
     for tool_call in tool_calls:
         tool_name = tool_call["function"]["name"]
         tool_args_str = tool_call["function"]["arguments"]
-        tool_call_id = tool_call["id"]
         
         print(f"  -> Preparing to call tool: {tool_name}")
-        print(f"  -> [DEBUG] Argumen mentah dari LLM (string):\n{tool_args_str}")
-
+        
         tool_to_call = available_tools.get(tool_name)
         
         if not tool_to_call:
-            tool_output = f"Error: Tool '{tool_name}' is not a valid tool."
-        else:
-            try:
-                tool_args = json.loads(tool_args_str)
-                
-                # --- PERBAIKAN UTAMA DI SINI ---
-                # Cek apakah tool yang akan dipanggil adalah fungsi async
-                if asyncio.iscoroutinefunction(tool_to_call):
-                    # Jika ya, gunakan await
-                    tool_output = await tool_to_call(**tool_args)
-                else:
-                    # Jika tidak, panggil seperti biasa
-                    tool_output = tool_to_call(**tool_args)
-                # -------------------------------
+            # Buat coroutine placeholder untuk tool yang tidak valid
+            async def invalid_tool_coro():
+                return f"Error: Tool '{tool_name}' is not a valid tool."
+            tasks.append(invalid_tool_coro())
+            continue
 
-            except Exception as e:
-                print(f"  🔥 [ERROR] GAGAL saat memproses tool '{tool_name}': {type(e).__name__}: {e}")
-                tool_output = f"Error executing tool '{tool_name}': {type(e).__name__}: {e}"
+        try:
+            tool_args = json.loads(tool_args_str)
+            
+            if asyncio.iscoroutinefunction(tool_to_call):
+                tasks.append(tool_to_call(tool_args.get('payload', tool_args)))
+            else:
+                loop = asyncio.get_running_loop()
+                tasks.append(loop.run_in_executor(None, tool_to_call, tool_args.get('payload', tool_args)))
+
+        except Exception as e:
+            async def error_coro():
+                return f"Error processing tool '{tool_name}': {e}"
+            tasks.append(error_coro())
+
+    # Jalankan semua task secara paralel
+    results = await asyncio.gather(*tasks, return_exceptions=True)
+
+    # Siapkan pesan untuk ditambahkan ke history
+    new_messages_to_add = []
+    for i, tool_call in enumerate(tool_calls):
+        tool_output = results[i]
         
+        # Tangani jika ada exception saat eksekusi task
+        if isinstance(tool_output, Exception):
+            tool_output_str = f"Error executing tool {tool_call['function']['name']}: {tool_output}"
+        else:
+            tool_output_str = json.dumps(tool_output, default=str)
+
         new_messages_to_add.append({
             "role": "tool",
-            "tool_call_id": tool_call_id,
-            "name": tool_name,
-            "content": json.dumps(tool_output, default=str)
+            "tool_call_id": tool_call["id"],
+            "name": tool_call["function"]["name"],
+            "content": tool_output_str
         })
         
     new_history = state["chat_history"] + new_messages_to_add
-    return {"chat_history": new_history}
+    # Reset tool_calls karena sudah dieksekusi
+    return {"chat_history": new_history, "tool_calls": None}

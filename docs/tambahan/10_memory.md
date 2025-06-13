@@ -96,11 +96,6 @@
 
 ---
 
-Tentu. Saya siap. Sesuai rencana dan template yang telah kita sepakati, berikut adalah **Bab 1** dari dokumen memori untuk Fase Backend.
-
-Saya telah memeriksa kembali semua keputusan arsitektur final kita untuk memastikan bab ini akurat dan mencerminkan status proyek yang sebenarnya.
-
----
 
 ### **Dokumen Memori Proyek: Fase Backend**
 **Versi:** 1.0
@@ -190,7 +185,6 @@ sequenceDiagram
 
 ---
 
-
 ### **Bab 2: Peta File & Komponen Kunci**
 
 #### **1. Instruksi untuk LLM Pengguna Dokumen Ini**
@@ -240,54 +234,46 @@ backend/
 
 *   **`main.py` & `api/v1/endpoints/query.py`**: Pintu Gerbang API
     *   **Peran:** Mengekspos endpoint HTTP ke dunia luar.
-    *   `main.py`: Menginisialisasi aplikasi FastAPI dan menyertakan router dari `query.py`.
-    *   `query.py`:
-        *   `GET /session/start`: Membuat `session_id` baru dan mereset memori percakapan untuk sesi tersebut.
-        *   `POST /query`: Menerima `user_query` dan `session_id`, mendelegasikannya ke `agent_service`, dan mengembalikan respons final.
+    *   **File Kunci & Fungsinya:**
+        *   `main.py`: Menginisialisasi aplikasi FastAPI, mengkonfigurasi CORS, dan menyertakan router dari `query.py`.
+        *   `query.py`:
+            *   `GET /session/start`: Membuat `session_id` baru dan mereset memori percakapan untuk sesi tersebut.
+            *   `POST /query`: Menerima `user_query` dan `session_id`, mendelegasikannya ke `agent_service`, dan mengembalikan respons final.
 
 *   **`services/agent_service.py`**: Orkestrator & Pengelola Memori
     *   **Peran:** Jembatan antara lapisan API dan lapisan Agent.
-    *   `conversation_memory`: Sebuah `dict` Python yang berfungsi sebagai memori jangka pendek, menyimpan `chat_history` untuk setiap `session_id`. **Penting: Memori ini akan hilang jika server di-restart.**
-    *   `process_query()`: Fungsi inti yang:
-        1.  Mengambil/menginisialisasi `chat_history` dari `conversation_memory`.
-        2.  Menyuntikkan `SYSTEM_PROMPT` jika ini adalah pesan pertama.
-        3.  Memanggil `langgraph_app.ainvoke()` untuk menjalankan seluruh alur kerja.
-        4.  Menyimpan kembali `chat_history` yang sudah diperbarui.
-        5.  Mengekstrak respons teks final yang relevan dari `chat_history` untuk dikembalikan ke API.
-        6.  Memanggil `log_analytics_node` secara manual di akhir untuk mencatat telemetri.
+    *   **File Kunci & Fungsinya:**
+        *   `agent_service.py`:
+            *   `conversation_memory`: Sebuah `dict` Python yang berfungsi sebagai memori jangka pendek, menyimpan `chat_history` untuk setiap `session_id`. **Penting: Memori ini akan hilang jika server di-restart.**
+            *   `process_query()`: Fungsi inti yang:
+                1.  Mengambil/menginisialisasi `chat_history` dari `conversation_memory`.
+                2.  Menyuntikkan `SYSTEM_PROMPT` jika ini adalah pesan pertama.
+                3.  Memanggil `langgraph_app.ainvoke()` untuk menjalankan seluruh alur kerja.
+                4.  Menyimpan kembali `chat_history` yang sudah diperbarui.
+                5.  Mengekstrak respons teks final yang relevan dari `chat_history` untuk dikembalikan ke API.
+                6.  Memanggil `log_analytics_node` secara manual di akhir untuk mencatat telemetri.
 
 *   **`langgraph_workflow/prompts.py`**: "SOP" untuk Agent
     *   **Peran:** Mendefinisikan `SYSTEM_PROMPT`.
-    *   `SYSTEM_PROMPT`: Sebuah string panjang yang berisi instruksi sangat detail bagi LLM. Ini adalah komponen paling kritis yang mengatur perilaku agent. Isinya memaksa agent untuk mengikuti alur: **1. Panggil `get_relevant_schema` -> 2. Buat parameter untuk `search_read` -> 3. Panggil `search_read`**.
+    *   **File Kunci & Fungsinya:**
+        *   `prompts.py`: Berisi sebuah string panjang (`SYSTEM_PROMPT`) yang berisi instruksi sangat detail bagi LLM. Ini adalah komponen paling kritis yang mengatur perilaku agent. Isinya memaksa agent untuk mengikuti alur: **1. Panggil `get_relevant_schema` -> 2. Buat parameter untuk `search_read` -> 3. Panggil `search_read`**.
 
-*   **`langgraph_workflow/graph.py`**: Papan Sirkuit Agent
-    *   **Peran:** Merakit `StateGraph` dari LangGraph.
-    *   Mendefinisikan alur kerja 2-node yang simpel dan kuat (`agent` dan `action`).
-    *   Mengatur logika kondisional (`should_continue`) untuk memutuskan apakah perlu memanggil `tool` atau mengakhiri alur (melalui `analytics_logger`).
-    *   `app = workflow.compile()`: Mengkompilasi definisi menjadi objek `Runnable` yang bisa dieksekusi.
+*   **`langgraph_workflow/graph.py` & `nodes/`**: Papan Sirkuit Agent
+    *   **Peran:** Merakit `StateGraph` dari LangGraph dan mendefinisikan logika setiap langkahnya.
+    *   **File Kunci & Fungsinya:**
+        *   `graph.py`: Merakit `StateGraph` dengan alur 2-node (`agent` dan `action`) dan mengatur logika kondisional (`should_continue`) untuk memutuskan kapan harus memanggil `tool` atau mengakhiri alur.
+        *   `nodes/llm_caller.py`: Bertanggung jawab untuk semua interaksi dengan LLM (DeepSeek), termasuk mengirim `chat_history` dan `tools_definition`.
+        *   `nodes/tool_executor.py`: Bertanggung jawab untuk mengeksekusi fungsi Python (`tool`) yang diminta oleh LLM.
+        *   `nodes/log_analytics.py`: Mengumpulkan metrik dari state akhir dan menuliskannya ke `logs/analytics.log`.
 
-*   **`langgraph_workflow/nodes/llm_caller.py`**: Otak Agent
-    *   **Peran:** Bertanggung jawab untuk semua interaksi dengan LLM (DeepSeek).
-    *   `llm_caller_node()`: Mengambil `chat_history` dari state, memanggil API LLM dengan `tools_definition`, dan menambahkan respons dari LLM (baik pesan teks atau `tool_calls`) kembali ke `chat_history`.
-
-*   **`langgraph_workflow/nodes/tool_executor.py`**: Tangan Agent
-    *   **Peran:** Mengeksekusi fungsi Python (`tool`) yang diminta oleh LLM.
-    *   `available_tools`: Sebuah `dict` yang memetakan nama *tool* ke fungsi Python yang sebenarnya.
-    *   `tool_executor_node()`: Mengambil `tool_calls` dari state, mencari fungsi yang sesuai di `available_tools`, dan menjalankannya. Ia juga dengan cerdas menangani fungsi `async` (`get_relevant_schema`) dan fungsi sinkron (`search_read`).
-
-*   **`langgraph_workflow/nodes/log_analytics.py`**: Pencatat Telemetri
-    *   **Peran:** Mengumpulkan metrik dari state akhir dan menuliskannya ke `logs/analytics.log`.
-    *   `log_analytics_node()`: Dieksekusi di akhir setiap alur kerja untuk memastikan setiap interaksi (sukses atau gagal) tercatat.
-
-*   **`tools/database_tools.py`**: Kotak Perkakas untuk MySQL
-    *   `SearchReadInput`: Model Pydantic yang mendefinisikan "kontrak" ketat untuk tool `search_read`.
-    *   `DynamicQueryBuilder`: Kelas internal yang sangat penting. Menerjemahkan parameter dari `SearchReadInput` (`model`, `domain`, `fields`, dll.) menjadi query SQLAlchemy 2.0 yang aman. Ini adalah "mesin penerjemah" utama dari rencana ke aksi.
-    *   `search_read()`: Fungsi tool utama. Ia memvalidasi input menggunakan `SearchReadInput`, menggunakan `DynamicQueryBuilder` untuk membuat query, mengeksekusinya, dan melakukan serialisasi hasil dari objek ORM menjadi `dict` yang bersih.
-
-*   **`tools/graphiti_tools.py`**: Kotak Perkakas untuk Neo4j
-    *   **Peran:** Menyediakan "peta data" untuk agent.
-    *   `GetRelevantSchemaInput`: Model Pydantic untuk input tool.
-    *   `get_relevant_schema()`: Fungsi tool `async` yang melakukan query Cypher ke Neo4j untuk mengambil skema tabel dan relasi yang relevan berdasarkan `entities` yang diminta.
+*   **`tools/`**: Kotak Perkakas Agent
+    *   **Peran:** Menyediakan fungsi-fungsi Python yang bisa dipanggil oleh LLM untuk berinteraksi dengan dunia luar (database, Neo4j).
+    *   **File Kunci & Fungsinya:**
+        *   `database_tools.py`:
+            *   `search_read()`: Tool utama yang terinspirasi Odoo. Menerima parameter seperti `model`, `domain`, `fields`, lalu menggunakan `DynamicQueryBuilder` untuk membuat dan mengeksekusi query SQLAlchemy yang aman.
+            *   `DynamicQueryBuilder`: Kelas internal yang sangat penting. Ini adalah "mesin penerjemah" yang mengubah parameter dari `search_read` menjadi query SQLAlchemy 2.0.
+        *   `graphiti_tools.py`:
+            *   `get_relevant_schema()`: Tool `async` yang melakukan query Cypher ke Neo4j untuk mengambil "peta data" (skema tabel dan relasi) yang relevan berdasarkan `entities` yang diminta.
 
 *   **`schemas/agent_state.py`**: Memori Jangka Pendek Agent
     *   **Peran:** Mendefinisikan struktur `TypedDict` untuk `AgentState`. Karena kita mengelola state secara manual, file ini menjadi satu-satunya sumber kebenaran untuk bentuk "memori" yang digunakan oleh semua node dalam graph.
@@ -345,5 +331,211 @@ Pada akhir fase backend, sistem sudah sangat fungsional, tetapi ada beberapa are
 #### **5. Langkah Selanjutnya**
 *   **Status Fase Backend:** **SELESAI (untuk MVP).** Fondasi backend sudah stabil, cerdas, dan siap untuk diintegrasikan.
 *   **Langkah Berikutnya:** Memulai **Fase Frontend**. Semua endpoint API dan logika backend yang dibutuhkan untuk mendukung UI/UX yang telah direncanakan (termasuk streaming SSE yang akan kita implementasikan berikutnya) sudah siap untuk dibangun.
+
+---
+
+### **Dokumen Memori Proyek: Fase Frontend**
+**Versi:** 1.0
+**Tanggal:** 12 Juni 2025
+
+#### **1. Instruksi untuk LLM Pengguna Dokumen Ini**
+*   **Peran Anda:** Anda adalah AI Engineer yang melanjutkan proyek ini. Dokumen ini adalah sumber kebenaran utama Anda.
+*   **Tugas Anda:**
+    1.  Baca dan pahami seluruh dokumen ini untuk mendapatkan konteks penuh tentang apa yang telah dibangun.
+    2.  Saat pengguna meminta Anda untuk memulai tugas baru, tugas pertama Anda adalah menganalisis permintaan tersebut dan membuat daftar file spesifik yang Anda perlukan untuk menyelesaikan tugas itu. Gunakan "Peta File & Direktori" di bab berikutnya sebagai referensi.
+    3.  Setelah pengguna memberikan file-file yang relevan, barulah Anda boleh mulai menganalisis dan menulis kode.
+*   **Panduan Revisi:** Saat melakukan revisi, selalu rujuk ke "Log Pembelajaran & Keputusan Desain" untuk memahami mengapa keputusan tertentu dibuat. Jika Anda mengusulkan perubahan, jelaskan dampaknya terhadap komponen lain berdasarkan "Diagram Ketergantungan Komponen".
+
+#### **2. Visi dan Filosofi Desain Frontend**
+
+##### **2.1. Pendahuluan**
+Bab ini menetapkan visi dan prinsip-prinsip desain fundamental yang menjadi panduan dalam pengembangan antarmuka pengguna (UI) dan pengalaman pengguna (UX) untuk MVP AI Agent. Tujuannya bukan hanya menciptakan aplikasi yang fungsional, tetapi sebuah pengalaman yang terasa **canggih, profesional, dan dapat dipercaya**.
+
+##### **2.2. Visi Utama Pengalaman Pengguna**
+Visi kita adalah memberikan pengguna perasaan bahwa mereka sedang **berkolaborasi dengan seorang analis AI pribadi yang transparan, cerdas, dan sangat efisien.** Setiap interaksi harus memperkuat kepercayaan pengguna terhadap kemampuan dan akurasi agent. Setelah melalui beberapa iterasi, diputuskan bahwa untuk MVP, keandalan dan kejelasan penyajian data lebih diutamakan daripada animasi streaming yang kompleks.
+
+##### **2.3. Ilustrasi Konsep Tata Letak Utama (Final)**
+Arsitektur antarmuka final mengadopsi tata letak tiga bagian yang fleksibel, di mana panel kiri dan kanan dapat diatur untuk memaksimalkan area kerja.
+
+```ascii
++-----------------------------++------------------------------------------------------++-----------------------------------------------+
+| PANEL KIRI (LOG PERFORMA)   ||           PANEL TENGAH (AREA INTERAKSI)              || PANEL KANAN (DATA & DETAIL)                   |
+| (Bisa di-minimize)          ||                                                      || (Bisa di-resize & minimize)                   |
++=============================++======================================================++===============================================+
+|                             ||  [AI] Selamat datang!                                ||                                               |
+|  [<<]                       ||                                                      ||  [ Data Mentah ]                              |
+|                             ||                                                      ||  -----------------                            |
+|  Log Performa               ||                                                      ||                                               |
+|  -----------------          ||  [You] tunjukkan daftar invoice                      ||  +-------------------------------------------+  |
+|  Total Durasi.. 00:04.371   ||                                                      ||  | | Kode   | Nama   | Alamat   | Kota     | |  |
+|  Panggilan LLM..... N/A     ||  [AI] 📊 Analisis Hasil...                           ||  | |--------|--------|----------|----------| |  |
+|                             ||  ... (Konten respons agent) ...                      ||  | | C-001  | PT...  | Jl. SQL..| Jakarta  | |  |
+|                             ||                                                      ||  | | C-002  | CV...  | Jl. Pyd..| Surabaya | |  |
+|                             ||                                                      ||  +-------------------------------------------+  |
+|                             ||  [> Ketik pertanyaan Anda di sini...  ]              ||                                               |
++-----------------------------++------------------------------------------------------++-----------------------------------------------+
+```
+
+##### **2.4. Filosofi Desain Fundamental**
+Empat pilar filosofi menopang desain UI/UX final kita:
+
+1.  **Profesional & Modern:**
+    *   **Tema Gelap:** Menggunakan latar belakang gelap dengan teks kontras tinggi untuk memberikan kesan premium dan fokus pada data.
+    *   **Tipografi Jelas:** Penggunaan font sans-serif yang modern dan mudah dibaca.
+    *   **Tata Letak Terstruktur:** Penggunaan panel dan ruang putih yang efisien untuk menghindari antarmuka yang terasa berantakan.
+
+2.  **Transparansi Radikal (No Black Box):**
+    *   **KEPUTUSAN DESAIN PENTING:** Setelah mengalami kesulitan dengan implementasi streaming, fitur **Rencana Aksi (To-do list) yang dinamis ditunda pasca-MVP**.
+    *   Transparansi untuk MVP dicapai melalui **Panel Kanan sebagai "Ruang Bukti"**. Setiap analisis naratif yang dihasilkan LLM di panel tengah harus didukung oleh **data mentah yang dapat diakses dan diverifikasi** di panel kanan. Ini adalah pilar utama dalam membangun kepercayaan pengguna.
+
+3.  **Fokus pada Data & Fleksibilitas:**
+    *   **Prioritas Visual:** Ringkasan eksekutif dan narasi analisis menjadi pusat perhatian di panel tengah.
+    *   **Akses Data Mudah:** Tabel data mentah di panel kanan bersifat interaktif, mendukung *sorting* dan ekspor ke CSV.
+    *   **Fleksibilitas Tampilan:** Pengguna dapat **mengubah ukuran panel kanan** dan **me-minimize/maximize panel kiri**, memberikan kontrol penuh atas ruang kerja mereka.
+
+4.  **Interaksi yang Jelas dan Responsif:**
+    *   **Umpan Balik Status:** Selama agent memproses permintaan, kotak input dan tombol kirim akan dinonaktifkan (`disabled`), memberikan umpan balik visual yang jelas bahwa sistem sedang bekerja.
+    *   **Stopwatch Real-time:** Panel kiri menampilkan *stopwatch* yang berjalan, memberikan indikasi visual bahwa proses sedang berlangsung dan berapa lama waktu yang telah dihabiskan.
+
+---
+
+### **Bab 2: Peta File & Komponen Kunci Frontend**
+
+#### **1. Instruksi untuk LLM Pengguna Dokumen Ini**
+*   **Peran Anda:** Anda adalah AI Engineer yang melanjutkan proyek ini. Dokumen ini adalah sumber kebenaran utama Anda.
+*   **Tugas Anda:**
+    1.  Baca dan pahami seluruh dokumen ini untuk mendapatkan konteks penuh tentang apa yang telah dibangun.
+    2.  Saat pengguna meminta Anda untuk memulai tugas baru, tugas pertama Anda adalah menganalisis permintaan tersebut dan membuat daftar file spesifik yang Anda perlukan untuk menyelesaikan tugas itu, berdasarkan "Peta File & Direktori" ini.
+    3.  Setelah pengguna memberikan file-file yang relevan, barulah Anda boleh mulai menganalisis dan menulis kode.
+*   **Panduan Revisi:** Rujuk ke dokumen ini untuk memahami arsitektur dan alur kerja saat ini sebelum melakukan perubahan.
+
+#### **2. Struktur Folder Final Frontend**
+Struktur folder ini mencerminkan arsitektur komponen React yang telah kita bangun untuk MVP.
+
+```
+frontend/
+└── src/
+    ├── components/
+    │   ├── chat/
+    │   │   ├── ConversationDisplay.jsx
+    │   │   ├── ErrorDisplay.jsx
+    │   │   └── QueryInput.jsx
+    │   ├── details/
+    │   │   ├── InteractiveDataTable.jsx
+    │   │   └── TabbedDetailsPanel.jsx
+    │   ├── layout/
+    │   │   ├── LeftSidebar.jsx
+    │   │   ├── MainContent.jsx
+    │   │   ├── MainLayout.jsx
+    │   │   └── RightSidebar.jsx
+    │   └── results/
+    │       ├── AnalysisNarrative.jsx
+    │       ├── DataQualityPanel.jsx
+    │       ├── ExecutiveSummary.jsx
+    │       └── ResultsDisplay.jsx
+    ├── hooks/
+    │   └── useStopwatch.js
+    ├── services/
+    │   └── apiService.js
+    ├── styles/
+    │   ├── Chat.css
+    │   ├── DataTable.css
+    │   ├── DetailsPanel.css
+    │   ├── global.css
+    │   ├── Layout.css
+    │   └── Results.css
+    └── App.jsx
+```
+
+#### **3. Deskripsi File & Komponen Kunci**
+
+*   **`App.jsx`**: Otak Aplikasi
+    *   **Peran:** Komponen stateful paling atas yang mengelola seluruh state aplikasi, termasuk `sessionId`, `conversation`, `isProcessing`, dan data untuk panel kanan (`activeResult`).
+    *   **Fungsi Kunci:**
+        *   `useEffect()`: Untuk melakukan panggilan API awal (`createSession`) saat aplikasi pertama kali dimuat.
+        *   `handleSendMessage()`: Logika inti yang dipicu saat pengguna mengirim query. Fungsi ini mengelola state `isProcessing`, memulai/menghentikan *stopwatch*, memanggil API backend, dan memperbarui state `conversation` dengan hasil yang diterima.
+
+*   **`services/apiService.js`**: Jembatan ke Backend
+    *   **Peran:** Mengisolasi semua logika panggilan `fetch` API.
+    *   **Fungsi Kunci:**
+        *   `createSession()`: Melakukan `POST` ke `/create_session`.
+        *   `submitQuery()`: Melakukan `POST` ke `/query` dengan `sessionId` dan `user_query`.
+        *   **KEPUTUSAN DESAIN PENTING:** Fungsi `listenToStream` yang kompleks telah **dihapus/ditunda** untuk MVP demi stabilitas, digantikan oleh pola `Request-Response` sederhana pada `submitQuery`.
+
+*   **`hooks/useStopwatch.js`**: Logika Timer
+    *   **Peran:** Sebuah *custom hook* yang mengenkapsulasi semua logika untuk stopwatch (start, stop, reset, format waktu). Ini memisahkan logika dari tampilan.
+
+*   **Direktori `components/layout/`**: Kerangka Visual
+    *   **Peran:** Mendefinisikan struktur visual utama aplikasi.
+    *   **File Kunci & Fungsinya:**
+        *   `MainLayout.jsx`: Komponen utama yang mengatur tata letak tiga bagian menggunakan `div` Flexbox untuk panel kiri dan `react-resizable-panels` untuk panel tengah dan kanan. Juga mengelola state *minimize/maximize* untuk `LeftSidebar`.
+        *   `LeftSidebar.jsx`: Panel kiri yang berisi `PerformanceLogger` dan tombol *toggle*.
+        *   `MainContent.jsx`: Panel tengah yang berisi `ConversationDisplay` dan `QueryInput`.
+        *   `RightSidebar.jsx`: Panel kanan yang berisi `TabbedDetailsPanel`.
+
+*   **Direktori `components/chat/`**: Komponen Interaksi
+    *   **Peran:** Menangani semua elemen yang terkait dengan alur percakapan di Panel Tengah.
+    *   **File Kunci & Fungsinya:**
+        *   `ConversationDisplay.jsx`: Me-render daftar blok percakapan (`user_query`, `assistant_response`, `error`). Ia secara dinamis memilih komponen mana yang akan ditampilkan.
+        *   `QueryInput.jsx`: Formulir input di bagian bawah untuk pengguna mengetik dan mengirim pesan.
+        *   `ErrorDisplay.jsx`: Kartu UI yang ditampilkan saat terjadi error, memberikan pesan yang ramah kepada pengguna.
+
+*   **Direktori `components/results/`**: Komponen Tampilan Hasil
+    *   **Peran:** Komponen yang didedikasikan untuk menampilkan respons terstruktur dari agent.
+    *   **File Kunci & Fungsinya:**
+        *   `ResultsDisplay.jsx`: Komponen "pembungkus" utama untuk sebuah respons agent. Ia secara kondisional menampilkan sub-komponen lainnya.
+        *   `ExecutiveSummary.jsx`: Menampilkan metrik-metrik kunci di bagian atas kartu hasil.
+        *   `AnalysisNarrative.jsx`: Menggunakan `react-markdown` untuk me-render narasi dari LLM, mendukung format teks seperti *bold* dan *bullet points*.
+        *   `DataQualityPanel.jsx`: Menampilkan skor kualitas dan peringatan data.
+
+*   **Direktori `components/details/`**: Komponen Panel Kanan
+    *   **Peran:** Menampilkan informasi pendukung yang mendalam.
+    *   **File Kunci & Fungsinya:**
+        *   `TabbedDetailsPanel.jsx`: Mengatur antarmuka bertab di panel kanan. **KEPUTUSAN DESAIN PENTING:** Tab "Rencana Eksekusi" dan "Log & Performa" telah dihapus untuk MVP agar fokus pada tab "Data Mentah".
+        *   `InteractiveDataTable.jsx`: Menggunakan **`@tanstack/react-table`** untuk menampilkan tabel data yang interaktif, lengkap dengan fitur *sorting* per kolom dan ekspor ke CSV menggunakan **`papaparse`**.
+
+---
+
+### **Bab 3: Log Pembelajaran, Isu yang Diketahui, dan Langkah Selanjutnya (Frontend)**
+
+#### **1. Instruksi untuk LLM Pengguna Dokumen Ini**
+*   **Peran Anda:** Anda adalah AI Engineer yang melanjutkan proyek ini. Dokumen ini adalah sumber kebenaran utama Anda.
+*   **Tugas Anda:**
+    1.  Baca dan pahami seluruh dokumen ini untuk mendapatkan konteks penuh tentang apa yang telah dibangun.
+    2.  Saat pengguna meminta Anda untuk memulai tugas baru, tugas pertama Anda adalah menganalisis permintaan tersebut dan membuat daftar file spesifik yang Anda perlukan untuk menyelesaikan tugas itu, berdasarkan "Peta File & Direktori" di bab sebelumnya.
+    3.  Setelah pengguna memberikan file-file yang relevan, barulah Anda boleh mulai menganalisis dan menulis kode.
+*   **Panduan Revisi:** Rujuk ke dokumen ini untuk memahami arsitektur dan alur kerja saat ini sebelum melakukan perubahan.
+
+#### **2. Log Pembelajaran & Keputusan Desain (Frontend)**
+Bagian ini merangkum masalah-masalah kritis yang kita hadapi selama pengembangan frontend dan keputusan arsitektur penting yang kita ambil untuk menyelesaikannya.
+
+*   **Keputusan Desain 1: Menunda Implementasi Streaming SSE untuk MVP**
+    *   **Masalah:** Implementasi awal Server-Sent Events (SSE) untuk menampilkan animasi "Rencana Aksi" secara real-time terbukti sangat rumit dan rentan terhadap *race condition*. Proses backend yang sangat cepat seringkali selesai sebelum koneksi SSE frontend siap, menyebabkan koneksi ditutup secara prematur dan UI "terjebak" dalam status *loading*.
+    *   **Solusi & Alasan:** Untuk menjamin **stabilitas dan keandalan MVP**, diputuskan untuk **kembali ke pola `Request-Response` yang lebih sederhana dan teruji**. Frontend sekarang mengirim query dan menunggu (`await`) respons JSON yang lengkap. Fitur streaming Rencana Aksi ditandai sebagai peningkatan potensial untuk pasca-MVP setelah fungsionalitas inti terbukti solid.
+
+*   **Pelajaran 2: Penanganan Error CORS di Level Backend**
+    *   **Masalah:** Frontend tidak dapat terhubung ke backend dan console browser menampilkan error `CORS policy`.
+    *   **Solusi & Alasan:** Masalah ini 100% berada di sisi backend. Solusinya adalah dengan menambahkan `CORSMiddleware` di file `main.py` FastAPI untuk secara eksplisit mengizinkan permintaan dari origin frontend (`http://localhost:5173`). Ini adalah pelajaran penting bahwa komunikasi antar domain (misal, port `:5173` ke `:8000`) memerlukan konfigurasi CORS di server.
+
+*   **Pelajaran 3: Fleksibilitas "Kontrak" Data dengan Pydantic & React**
+    *   **Masalah:** Terjadi `ResponseValidationError` di backend karena LLM menghasilkan respons JSON untuk pertanyaan sosial (misal: "halo") yang hanya berisi `final_narrative`, sementara model Pydantic di `query.py` mewajibkan semua field (seperti `executive_summary`, `data_table_headers`) ada.
+    *   **Solusi & Alasan:** Model Pydantic `StructuredResponse` di `query.py` direvisi untuk menggunakan `Optional` dan `Field(default_factory=list)`. Ini membuat "kontrak" data menjadi lebih fleksibel, mampu menerima baik respons data yang lengkap maupun respons narasi yang sederhana tanpa error. Ini mengajarkan pentingnya merancang skema data yang mampu menangani berbagai jenis output dari LLM.
+
+*   **Pelajaran 4: Pengelolaan State untuk Panel yang Dapat Diubah Ukurannya**
+    *   **Masalah:** Setelah mengimplementasikan tombol minimize untuk `LeftSidebar`, tombol tersebut ikut menghilang saat panel di-minimize karena menjadi bagian dari elemen yang disembunyikan.
+    *   **Solusi & Alasan:** Logika state untuk `isMinimized` dan komponen `<button>` itu sendiri **dipindahkan ke komponen induk (`MainLayout.jsx`)**. Ini memastikan bahwa tombol *toggle* berada di luar elemen yang disembunyikan dan dapat terus mengontrol visibilitas panel. Ini adalah pelajaran kunci dalam komposisi komponen dan *state lifting* di React.
+
+*   **Pelajaran 5: Pentingnya `overflow: auto` untuk Layout yang Tangguh**
+    *   **Masalah:** Konten yang panjang di panel tengah atau panel kanan (seperti narasi atau tabel lebar) "mendorong" dan merusak tata letak tiga panel.
+    *   **Solusi & Alasan:** Menerapkan `overflow: auto` pada kontainer yang tepat (`.conversation-wrapper` dan `.tab-content`). Ini adalah praktik CSS fundamental untuk memastikan bahwa konten yang melebihi batas kontainernya akan dapat di-scroll, bukan merusak layout keseluruhan.
+
+#### **3. Isu yang Diketahui (Known Issues) & Hutang Teknis (Frontend)**
+*   **Animasi Rencana Aksi Ditunda:** Seperti yang disebutkan, fitur unggulan berupa "to-do list" yang berjalan secara real-time saat ini tidak aktif dan digantikan oleh status "Agent is thinking..." yang sederhana. Ini adalah kandidat utama untuk peningkatan pasca-MVP.
+*   **Fokus Panel Kanan:** Saat ini, panel kanan menampilkan data dari respons terakhir. Belum ada logika untuk menampilkan data dari blok percakapan lama jika pengguna scroll ke atas dan berinteraksi dengannya.
+*   **Saran Query Statis:** `suggested_queries` saat ini hanya muncul saat sesi dimulai. Fitur ini bisa dikembangkan agar lebih dinamis dan kontekstual.
+
+#### **4. Langkah Selanjutnya**
+*   **Status Fase Frontend:** **SELESAI (untuk MVP).** Fondasi antarmuka pengguna telah dibangun, teruji, stabil, dan mampu menyajikan hasil dari backend dengan cara yang profesional dan informatif.
+*   **Langkah Berikutnya:** **Pengujian End-to-End & Persiapan Demo.** Dengan backend dan frontend yang sekarang berfungsi, langkah selanjutnya adalah melakukan pengujian menyeluruh, memperbaiki bug-bug kecil, dan mempersiapkan skenario demo yang kuat untuk menunjukkan kemampuan produk kepada pemangku kepentingan.
 
 ---

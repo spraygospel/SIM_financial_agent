@@ -1,9 +1,13 @@
 # backend/app/api/v1/endpoints/query.py
-import uuid
-from fastapi import APIRouter, HTTPException
-from pydantic import BaseModel, Field
-from typing import List, Dict, Any, Optional, Union
-from backend.app.services.agent_service import agent_service, conversation_memory
+import asyncio
+import json
+from fastapi import APIRouter, HTTPException, Request
+from fastapi.responses import StreamingResponse
+from pydantic import BaseModel
+from typing import Dict
+
+from backend.app.core.session_manager import session_manager
+from backend.app.services.agent_service import agent_service
 
 router = APIRouter()
 
@@ -11,57 +15,48 @@ class QueryRequest(BaseModel):
     user_query: str
     session_id: str
 
-# Definisikan model yang lebih detail untuk respons JSON kita
-class ExecutiveSummaryItem(BaseModel):
-    value: Union[str, int, float]
-    label: str
+@router.post("/create_session")
+async def create_session():
+    session_id = await session_manager.create_session()
+    return {"session_id": session_id, "greeting_message": "Selamat datang!"}
 
-class DataTableHeader(BaseModel):
-    accessorKey: str
-    header: str
-
-class StructuredResponse(BaseModel):
-    # Field ini bisa ada atau tidak. Jika tidak ada, defaultnya adalah list kosong.
-    executive_summary: Optional[List[ExecutiveSummaryItem]] = Field(default_factory=list)
+@router.post("/query")
+async def submit_query(request: QueryRequest):
+    queue = await session_manager.get_queue(request.session_id)
+    if not queue:
+        raise HTTPException(status_code=404, detail="Sesi tidak valid.")
     
-    # Field ini sekarang juga opsional, untuk menangani kasus error total.
-    final_narrative: Optional[str] = "Tidak ada narasi yang dihasilkan."
-    
-    data_quality_score: Optional[int] = None
-    warnings_for_display: Optional[List[str]] = Field(default_factory=list)
-    
-    # Field tabel juga dibuat opsional
-    data_table_headers: Optional[List[DataTableHeader]] = Field(default_factory=list)
-    data_table_for_display: Optional[List[Dict[str, Any]]] = Field(default_factory=list)
+    # Hanya taruh pesan query di queue
+    await queue.put({"type": "USER_QUERY", "content": request.user_query})
+    return {"status": "diterima"}
 
-# Model respons utama sekarang mengharapkan objek StructuredResponse
-class QueryResponse(BaseModel):
-    response: StructuredResponse
-
-@router.post("/query", response_model=QueryResponse)
-async def process_user_query(request: QueryRequest):
-    try:
-        # Panggilan ini sekarang akan berhasil
-        result = await agent_service.process_query(
-            user_query=request.user_query,
-            session_id=request.session_id,
+@router.get("/stream_updates/{session_id}")
+async def stream_updates(session_id: str, request: Request):
+    queue = await session_manager.get_queue(session_id)
+    if not queue:
+        raise HTTPException(status_code=404, detail="Sesi tidak ditemukan.")
+        
+    async def event_generator():
+        # Langkah 1: Tunggu pesan query pertama dari pengguna
+        user_query_event = await queue.get()
+        if user_query_event.get("type") != "USER_QUERY":
+            # Jika pesan pertama bukan query, tutup koneksi
+            return
+        
+        # Langkah 2: Setelah query diterima, jalankan proses agent
+        # Proses agent sekarang berjalan di dalam generator ini, bukan di background task
+        await agent_service.process_query_and_stream_updates(
+            session_id=session_id,
+            user_query=user_query_event["content"]
         )
-        return result
-    except Exception as e:
-        if isinstance(e, HTTPException):
-            raise e
-        raise HTTPException(status_code=500, detail="Internal Server Error")
 
-@router.get("/session/start")
-async def start_session():
-    session_id = str(uuid.uuid4())
-    conversation_memory[session_id] = []
-    
-    return {
-        "session_id": session_id,
-        "greeting_message": "Selamat datang di AI Financial Analyst! Apa yang bisa saya bantu analisis hari ini?",
-        "suggested_queries": [
-          "Tampilkan 5 customer yang piutangnya belum lunas",
-          "Berapa total piutang dari semua customer?"
-        ]
-    }
+        # Langkah 3: Kirim sisa pesan dari queue (jika ada)
+        while not queue.empty():
+            if await request.is_disconnected():
+                break
+            message = await queue.get()
+            yield f"data: {json.dumps(message)}\n\n"
+            if message.get("event_type") == "STREAM_END":
+                break
+
+    return StreamingResponse(event_generator(), media_type="text/event-stream")

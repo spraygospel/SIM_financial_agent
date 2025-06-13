@@ -61,15 +61,26 @@
 
 .conversation-block {
     margin-bottom: 1.5rem;
+    /* TAMBAHAN BARU: Pastikan blok tidak melebihi lebar kontainernya */
+    max-width: 100%;
+    box-sizing: border-box;
 }
-.error-display-block {
-  display: flex;
-  align-items: center;
-  background-color: rgba(255, 82, 82, 0.1);
-  border: 1px solid #ff5252;
-  border-radius: 8px;
-  padding: 1rem;
-  color: #ff8a80;
+.results-display, .planning-phase, .error-display-block {
+    text-align: left;
+    background-color: rgba(255, 255, 255, 0.03);
+    padding: 1.2rem;
+    border-radius: 12px;
+    border: 1px solid var(--border-color);
+    margin-right: auto; /* Dorong ke kiri */
+    max-width: 95%; /* Batasi lebar maksimum */
+    word-wrap: break-word; /* Paksa teks panjang untuk pindah baris */
+    box-sizing: border-box;
+}
+
+.results-display.narrative-only {
+    background-color: transparent;
+    border: none;
+    padding: 0.5rem 0;
 }
 
 .error-icon {
@@ -85,4 +96,11 @@
 
 .error-message {
   margin: 0;
+}
+.agent-thinking-block {
+    background-color: rgba(255, 255, 255, 0.05);
+    padding: 1rem;
+    border-radius: 8px;
+    white-space: pre-wrap; /* Agar baris baru ditampilkan */
+    font-family: 'Courier New', Courier, monospace;
 }

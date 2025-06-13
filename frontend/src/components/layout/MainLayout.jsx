@@ -1,5 +1,5 @@
 // frontend/src/components/layout/MainLayout.jsx
-import React, { useState } from 'react'; // Impor useState
+import React, { useState } from 'react';
 import { Panel, PanelGroup, PanelResizeHandle } from 'react-resizable-panels';
 import LeftSidebar from './LeftSidebar.jsx';
 import MainContent from './MainContent.jsx';
@@ -7,7 +7,6 @@ import RightSidebar from './RightSidebar.jsx';
 import '../../styles/Layout.css';
 
 const MainLayout = ({ stopwatch, conversation, onSendMessage, isProcessing, activeResult }) => {
-  // Pindahkan state dan fungsi toggle ke sini
   const [isSidebarMinimized, setIsSidebarMinimized] = useState(false);
 
   const toggleSidebar = () => {
@@ -16,30 +15,33 @@ const MainLayout = ({ stopwatch, conversation, onSendMessage, isProcessing, acti
 
   return (
     <div className="main-layout">
-      {/* Gunakan state untuk mengubah class CSS */}
-      <div className={`left-sidebar-container ${isSidebarMinimized ? 'minimized' : ''}`}>
+      <div className={`left-sidebar-wrapper ${isSidebarMinimized ? 'minimized' : ''}`}>
         <LeftSidebar stopwatch={stopwatch} />
       </div>
       
-      {/* Tombol toggle sekarang bagian dari MainLayout */}
-      <button onClick={toggleSidebar} className="minimize-button">
+      <button 
+        onClick={toggleSidebar} 
+        className="minimize-button"
+        style={{ left: isSidebarMinimized ? '-15px' : '245px' }}
+      >
         {isSidebarMinimized ? '»' : '«'}
       </button>
 
-      <PanelGroup direction="horizontal">
-        {/* Hapus panel kiri dari sini */}
-        <Panel>
-          <MainContent 
-            conversation={conversation} 
-            onSendMessage={onSendMessage}
-            isProcessing={isProcessing}
-          />
-        </Panel>
-        <PanelResizeHandle className="resize-handle" />
-        <Panel defaultSize={30} minSize={20} collapsible={true}>
-          <RightSidebar activeResult={activeResult} />
-        </Panel>
-      </PanelGroup>
+      <div className="content-panel-group-wrapper">
+        <PanelGroup direction="horizontal">
+          <Panel>
+            <MainContent 
+              conversation={conversation} 
+              onSendMessage={onSendMessage}
+              isProcessing={isProcessing}
+            />
+          </Panel>
+          <PanelResizeHandle className="resize-handle" />
+          <Panel defaultSize={40} minSize={25} collapsible={true}>
+            <RightSidebar activeResult={activeResult} />
+          </Panel>
+        </PanelGroup>
+      </div>
     </div>
   );
 };

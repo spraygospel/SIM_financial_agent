@@ -23,7 +23,7 @@ const PlanningPhaseDisplay = ({ title, steps }) => {
         {steps.map((step, index) => (
           <li key={index} className={`step-item ${step.status}`}>
             {getStatusIcon(step.status)}
-            <span className="step-text">{step.step_text}</span>
+            <span className="step-text">{step.text}</span>
           </li>
         ))}
       </ul>

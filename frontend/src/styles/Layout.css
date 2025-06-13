@@ -4,68 +4,38 @@
   display: flex;
   height: 100vh;
   width: 100vw;
-  background-color: var(--background-color); /* Pastikan background diterapkan */
-}
-
-/* Handle untuk panel resizable */
-.resize-handle {
-  width: 4px;
-  background-color: var(--border-color);
-  cursor: col-resize;
-  transition: background-color 0.2s ease;
-}
-
-.resize-handle:hover {
-  background-color: var(--accent-color);
-}
-
-/* --- PERBAIKAN UTAMA UNTUK SEMUA PANEL --- */
-
-/* Ini akan diterapkan pada LeftSidebar, MainContent, dan RightSidebar
-   karena mereka semua adalah anak langsung dari komponen Panel.
-   Ini memastikan mereka mengisi ruang panelnya dan memiliki overflow jika perlu. */
-[data-panel-id] {
-  display: flex;
-  flex-direction: column;
-  height: 100%;
-  overflow: auto; /* Fallback scroll */
-  box-sizing: border-box;
-}
-
-/* Style spesifik untuk setiap panel */
-.left-sidebar-container {
-  position: relative; /* Diperlukan untuk positioning tombol */
-  width: 260px;
-  background-color: var(--panel-background);
-  padding: 1rem;
-  transition: width 0.3s ease, padding 0.3s ease;
-  flex-shrink: 0; /* Mencegah panel menyusut */
-  display: flex; /* Untuk memastikan konten bisa diatur */
-  flex-direction: column;
-}
-.left-sidebar-container.minimized {
-  width: 0;
-  padding: 1rem 0;
+  background-color: var(--background-color);
   overflow: hidden;
 }
 
-.sidebar-content {
-  opacity: 1;
-  transition: opacity 0.3s ease;
+.left-sidebar-wrapper {
+  flex-shrink: 0; /* Mencegah panel menyusut saat window kecil */
+  width: 260px;
+  background-color: var(--panel-background);
+  transition: width 0.3s ease;
+  overflow: hidden; /* Sembunyikan konten saat menyusut */
+  position: relative;
 }
 
-.left-sidebar-container.minimized .sidebar-content {
-  opacity: 0;
+.left-sidebar-wrapper.minimized {
+  width: 0;
 }
-.left-sidebar-container.minimized + .minimize-button {
-  left: -15px;
+
+.sidebar-content {
+  padding: 1rem;
+  height: 100%;
+  box-sizing: border-box;
+  opacity: 1;
+  transition: opacity 0.2s ease;
+}
+
+.left-sidebar-wrapper.minimized .sidebar-content {
+  opacity: 0;
 }
 
 .minimize-button {
   position: absolute;
   top: 10px;
-  /* Sesuaikan 'left' agar tombol selalu terlihat */
-  left: 245px; /* (Lebar sidebar 260px) - (lebar tombol 30px / 2) - padding */
   width: 30px;
   height: 30px;
   border-radius: 50%;
@@ -79,7 +49,36 @@
   justify-content: center;
   font-size: 1.2rem;
   line-height: 1;
-  transition: left 0.3s ease; /* Tambahkan transisi */
+  transition: left 0.3s ease;
+}
+
+.content-panel-group-wrapper {
+  flex-grow: 1;
+  display: flex; /* Penting agar PanelGroup mengisi sisa ruang */
+}
+
+/* Selector untuk PanelGroup dari react-resizable-panels */
+[data-panel-group-id] {
+  width: 100%; /* Pastikan ia mengisi wrapper-nya */
+}
+
+.resize-handle {
+  width: 4px;
+  background-color: var(--border-color);
+  cursor: col-resize;
+  transition: background-color 0.2s ease;
+}
+
+.resize-handle:hover {
+  background-color: var(--accent-color);
+}
+
+[data-panel-id] {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  overflow: auto;
+  box-sizing: border-box;
 }
 
 .right-sidebar {
@@ -87,24 +86,20 @@
   background-color: var(--panel-background);
 }
 
-/* --- PERBAIKAN UTAMA UNTUK MAIN CONTENT --- */
-/* Ini adalah kontainer di dalam panel tengah */
 .main-content-container {
   display: flex;
   flex-direction: column;
-  height: 100%; /* Mengisi seluruh tinggi Panel */
+  height: 100%;
   padding: 1rem;
   box-sizing: border-box;
 }
 
-/* Wrapper untuk area chat yang bisa di-scroll */
 .conversation-wrapper {
-  flex-grow: 1; /* Akan mengisi semua ruang yang tersedia */
-  overflow-y: auto; /* HANYA area ini yang akan scroll vertikal */
+  flex-grow: 1;
+  overflow-y: auto;
   padding-right: 10px;
 }
 
-/* Wrapper untuk kotak input, tetap di bawah */
 .input-wrapper {
   flex-shrink: 0;
   padding-top: 1rem;

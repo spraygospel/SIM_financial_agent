@@ -1,0 +1,79 @@
+/* frontend/src/styles/Results.css */
+
+.results-display {
+  background-color: rgba(255, 255, 255, 0.03);
+  padding: 1.2rem;
+  border-radius: 8px;
+  border: 1px solid var(--border-color);
+}
+
+/* Executive Summary */
+.executive-summary {
+  display: flex;
+  gap: 2rem;
+  padding-bottom: 1rem;
+  border-bottom: 1px solid var(--border-color);
+  margin-bottom: 1rem;
+}
+
+.summary-item {
+  text-align: left;
+}
+
+.summary-value {
+  font-size: 1.75rem;
+  font-weight: bold;
+  color: var(--text-color);
+}
+
+.summary-label {
+  font-size: 0.9rem;
+  color: var(--text-color-secondary);
+}
+
+/* Analysis Narrative */
+.analysis-narrative {
+  line-height: 1.6;
+}
+
+/* Atur format yang dihasilkan oleh ReactMarkdown */
+.analysis-narrative p {
+  margin: 0 0 1rem 0;
+}
+
+.analysis-narrative ul, .analysis-narrative ol {
+  padding-left: 20px;
+  margin-bottom: 1rem;
+}
+
+.analysis-narrative strong {
+  color: var(--accent-color);
+}
+
+/* Data Quality Panel */
+.data-quality-panel {
+  margin-top: 1.5rem;
+  padding-top: 1rem;
+  border-top: 1px dashed var(--border-color);
+  font-size: 0.85rem;
+  color: var(--text-color-secondary);
+}
+
+.quality-score {
+  margin-bottom: 0.5rem;
+}
+
+.quality-warning {
+  margin-bottom: 0.25rem;
+}
+.results-display.data-report {
+  background-color: rgba(255, 255, 255, 0.03);
+  padding: 1.2rem;
+  border-radius: 8px;
+  border: 1px solid var(--border-color);
+}
+
+/* Style untuk respons narasi sederhana (tanpa bingkai) */
+.results-display.narrative-only {
+  padding: 0.5rem 0;
+}

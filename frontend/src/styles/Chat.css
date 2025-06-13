@@ -1,0 +1,88 @@
+/* frontend/src/styles/Chat.css */
+
+.conversation-display {
+  flex-grow: 1;
+  overflow-y: auto;
+  padding-bottom: 1rem;
+}
+
+.query-input-form {
+  display: flex;
+  margin-top: 1rem;
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+  background-color: var(--background-color);
+}
+
+.query-input {
+  flex-grow: 1;
+  background: none;
+  border: none;
+  outline: none;
+  color: var(--text-color);
+  padding: 0.8rem 1rem;
+  font-size: 1rem;
+}
+
+.query-input:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.send-button {
+  background-color: var(--accent-color);
+  color: white;
+  border: none;
+  padding: 0 1.5rem;
+  border-radius: 0 7px 7px 0;
+  cursor: pointer;
+  font-weight: bold;
+}
+
+.send-button:hover:not(:disabled) {
+  opacity: 0.9;
+}
+
+.send-button:disabled {
+  background-color: var(--border-color);
+  cursor: not-allowed;
+}
+.user-query-block {
+    text-align: right;
+    margin: 1rem 0;
+    padding: 0.8rem 1.2rem;
+    background-color: var(--accent-color);
+    color: white;
+    border-radius: 12px 12px 0 12px;
+    margin-left: auto;
+    max-width: 70%;
+    word-wrap: break-word;
+}
+
+.conversation-block {
+    margin-bottom: 1.5rem;
+}
+.error-display-block {
+  display: flex;
+  align-items: center;
+  background-color: rgba(255, 82, 82, 0.1);
+  border: 1px solid #ff5252;
+  border-radius: 8px;
+  padding: 1rem;
+  color: #ff8a80;
+}
+
+.error-icon {
+  font-size: 1.5rem;
+  margin-right: 1rem;
+}
+
+.error-title {
+  font-weight: bold;
+  margin: 0 0 0.25rem 0;
+  color: #ff5252;
+}
+
+.error-message {
+  margin: 0;
+}

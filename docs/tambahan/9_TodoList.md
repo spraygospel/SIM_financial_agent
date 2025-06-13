@@ -305,12 +305,10 @@ Setelah menyelesaikan fase ini, kita akan memiliki fondasi UI yang kokoh: aplika
 
 ---
 
+
 ### **Dokumen Perencanaan: To-do List - Pembangunan Frontend (v1.0)**
 
-**Versi:** 1.0
-**Status:** Not Started
-
-**Filosofi:** Membangun antarmuka pengguna secara bertahap, dimulai dengan kerangka visual dan konektivitas, lalu menambahkan lapisan interaktivitas dan fitur. Setiap fase diakhiri dengan pengujian untuk memastikan fondasi UI kokoh.
+**Filosofi:** Membangun antarmuka pengguna secara bertahap, dimulai dengan kerangka visual dan konektivitas (chassis & kabel), lalu menambahkan alur kerja utama (mesin), diikuti oleh skenario alternatif (interior & kontrol), dan diakhiri dengan penyempurnaan (cat & detail).
 
 ---
 
@@ -363,7 +361,7 @@ Setelah menyelesaikan fase ini, kita akan memiliki fondasi UI yang kokoh: aplika
             *   Ketik pesan di `QueryInput` dan tekan kirim.
             *   Di tab "Network", verifikasi bahwa ada panggilan `POST` ke `/api/v1/query`.
             *   Periksa payload request untuk memastikan `session_id` dan teks query dikirim dengan benar.
-            *   **Kriteria Sukses:** Tidak harus ada respons yang "cantik" di UI saat ini. Cukup pastikan panggilan API terjadi dan backend (jika sedang berjalan dalam mode "skeleton") memberikan respons `200 OK`. Jika kita menjalankan backend "skeleton", kita bisa melihat log "pong" di konsol browser.
+    *   **Kriteria Sukses:** Aplikasi dapat dijalankan, menampilkan layout dasar, dan berhasil melakukan panggilan API untuk memulai sesi dan mengirim query. "Kerangka berjalan" kita sudah siap.
 
 ---
 
@@ -408,12 +406,12 @@ Setelah menyelesaikan fase ini, kita akan memiliki fondasi UI yang kokoh: aplika
     *   **File yang Diubah:** `frontend/src/components/layout/RightSidebar.js` (untuk menampilkan tabel ini).
 
 *   **2.5. Pengujian Fase 2: Validasi Alur "Happy Path"**
-    *   **Aktivitas:** Lakukan pengujian end-to-end dengan backend yang sudah menyelesaikan Fase 3 (Perencanaan Cerdas).
+    *   **Aktivitas:** Lakukan pengujian end-to-end dengan backend yang sudah fungsional.
     *   **Langkah Pengujian:**
         *   a. **Uji Koneksi SSE:** Jalankan aplikasi. Setelah sesi dimulai, verifikasi di tab "Network" bahwa koneksi SSE berhasil dibuat dan tetap `pending`.
         *   b. **Uji Visualisasi Perencanaan:**
             *   Kirim query baru yang valid (misal: "tampilkan 5 customer").
-            *   **Amati dengan saksama:** UI harus menampilkan Daftar Rencana Aksi. Verifikasi bahwa status setiap langkah berubah dari 'pending' -> 'active' (dengan animasi denyut) -> 'completed' (dengan centang hijau) secara *real-time* sesuai dengan event SSE yang masuk.
+            *   Amati dengan saksama: UI harus menampilkan Daftar Rencana Aksi. Verifikasi bahwa status setiap langkah berubah dari 'pending' -> 'active' (dengan animasi denyut) -> 'completed' (dengan centang hijau) secara *real-time* sesuai dengan event SSE yang masuk.
         *   c. **Uji Tampilan Hasil:**
             *   Setelah proses selesai, verifikasi bahwa "Daftar Rencana Aksi" menghilang dan digantikan oleh blok `ResultsDisplay`.
             *   Periksa apakah Ringkasan Eksekutif, Narasi, dan Skor Kualitas ditampilkan dengan benar sesuai data dari payload `FINAL_RESULT`.
@@ -421,10 +419,7 @@ Setelah menyelesaikan fase ini, kita akan memiliki fondasi UI yang kokoh: aplika
             *   Verifikasi bahwa tabel data mentah muncul di Panel Kanan.
             *   Klik header kolom untuk menguji fungsionalitas sorting.
             *   Klik tombol "Ekspor CSV" dan pastikan file CSV yang benar berhasil diunduh.
-        *   e. **Kriteria Sukses:** Pengguna dapat mengajukan query dan mendapatkan laporan lengkap dengan pengalaman "live" yang transparan, dari awal hingga akhir, tanpa ada error.
-
----
-Setelah Fase 2 selesai, kita akan memiliki produk inti yang fungsional dan mengesankan. Pengguna sudah bisa merasakan nilai utama dari AI Agent ini. Fase-fase berikutnya akan fokus pada penyempurnaan dan penanganan skenario yang lebih beragam.
+    *   **Kriteria Sukses:** Pengguna dapat mengajukan query dan mendapatkan laporan lengkap dengan pengalaman "live" yang transparan, dari awal hingga akhir. "Mesin utama" aplikasi sudah berfungsi.
 
 ---
 
@@ -441,8 +436,8 @@ Setelah Fase 2 selesai, kita akan memiliki produk inti yang fungsional dan menge
 *   **3.2. Implementasi Tampilan "Mode Revisi" (`REQUEST_MODIFICATION`)**
     *   **Aktivitas:** Buat logika di frontend untuk menangani `intent: REQUEST_MODIFICATION` dengan benar, sesuai yang telah kita rencanakan.
         *   a. Saat pengguna mengirim query lanjutan (misal: "filter untuk Jakarta"), frontend akan mengirimnya ke backend seperti biasa.
-        *   b. Backend (jika sudah diimplementasikan) akan merespons dengan event SSE yang menandakan `intent` adalah `REQUEST_MODIFICATION`.
-        *   c. Frontend harus menampilkan **Daftar Rencana Aksi yang lebih singkat** (misal: "Memperbarui rencana...", "Mengeksekusi ulang..."). Komponen `PlanningPhaseDisplay.js` mungkin perlu diadaptasi agar bisa menerima daftar langkah yang berbeda.
+        *   b. Backend akan merespons dengan event SSE yang menandakan `intent` adalah `REQUEST_MODIFICATION`.
+        *   c. Frontend harus menampilkan **Daftar Rencana Aksi yang lebih singkat** (misal: "Memperbarui rencana...", "Mengeksekusi ulang...").
         *   d. **Penting:** Setelah menerima `FINAL_RESULT` untuk modifikasi, UI harus **menemukan blok respons asli dan memperbaruinya**, bukan membuat blok baru. Ini bisa dilakukan dengan animasi *fade out/fade in* untuk menunjukkan pembaruan.
     *   **File yang Diubah:** `frontend/src/App.js` (logika untuk memperbarui blok), `frontend/src/components/chat/ConversationBlock.js`.
 
@@ -464,21 +459,11 @@ Setelah Fase 2 selesai, kita akan memiliki produk inti yang fungsional dan menge
 *   **3.5. Pengujian Fase 3: Validasi Semua Alur Percakapan**
     *   **Aktivitas:** Lakukan pengujian manual yang komprehensif untuk semua skenario yang mungkin terjadi.
     *   **Langkah Pengujian:**
-        *   a. **Uji Alur Modifikasi:**
-            *   Kirim query awal (misal: "tampilkan semua customer").
-            *   Setelah hasil muncul, kirim query modifikasi (misal: "hanya dari Jakarta").
-            *   **Verifikasi:** Daftar rencana aksi yang muncul harus lebih singkat. Hasil yang ditampilkan harus **memperbarui blok sebelumnya**, bukan membuat yang baru.
-        *   b. **Uji Alur Sosial:**
-            *   Kirim pesan "terima kasih".
-            *   **Verifikasi:** Respons harus muncul secara instan tanpa ada "Fase Perencanaan".
-        *   c. **Uji Alur Error:**
-            *   Kirim query yang sengaja dibuat ambigu (misal: "tunjukkan data").
-            *   **Verifikasi:** Komponen `ErrorDisplay` harus muncul dengan pesan yang ramah. Klik "Lihat Detail Teknis" dan pastikan detail error muncul di Panel Kanan.
-        *   d. **Uji Regresi:** Pastikan alur "happy path" dari Fase 2 masih berfungsi dengan sempurna setelah semua perubahan ini.
-        *   e. **Kriteria Sukses:** Aplikasi terasa cerdas, dapat diandalkan, dan mampu menangani berbagai jenis dialog secara berbeda dan tepat, sesuai dengan konteks.
-
----
-Setelah menyelesaikan fase ini, frontend kita akan jauh lebih matang. Ia tidak hanya bisa menangani kasus ideal, tetapi juga siap menghadapi kompleksitas dan ketidakpastian dari interaksi pengguna di dunia nyata.
+        *   a. **Uji Alur Modifikasi:** Kirim query awal, lalu kirim query modifikasi. Verifikasi UI memperbarui blok sebelumnya.
+        *   b. **Uji Alur Sosial:** Kirim pesan "terima kasih". Verifikasi respons muncul instan.
+        *   c. **Uji Alur Error:** Kirim query ambigu. Verifikasi komponen `ErrorDisplay` muncul.
+        *   d. **Uji Regresi:** Pastikan alur "happy path" dari Fase 2 masih berfungsi dengan sempurna.
+    *   **Kriteria Sukses:** Aplikasi terasa cerdas, dapat diandalkan, dan mampu menangani berbagai jenis dialog secara berbeda dan tepat, sesuai dengan konteks.
 
 ---
 
@@ -486,14 +471,7 @@ Setelah menyelesaikan fase ini, frontend kita akan jauh lebih matang. Ia tidak h
 
 **Tujuan:** Menyempurnakan pengalaman pengguna dengan menambahkan fitur pemantauan kinerja, detail UI yang lebih kaya, dan interaktivitas yang lebih baik. Ini adalah fase "pemasangan interior mewah dan dashboard canggih" pada mobil kita.
 
-*   **4.1. Implementasi Komponen Pemantauan Kinerja**
-    *   **Aktivitas:** Buat komponen-komponen UI untuk menampilkan metrik kinerja yang diterima dari backend.
-        *   a. **Meteran Penggunaan Konteks:** Buat komponen `ContextUsageMeter.js` (misalnya, sebuah *progress bar* atau *gauge*) yang menampilkan persentase penggunaan token. Data ini perlu disediakan oleh backend pada setiap respons. Komponen ini bisa ditempatkan di header atau footer aplikasi.
-        *   b. **Pelacak Sistem Fallback:** Buat komponen `FallbackIndicator.js`. Ini bisa berupa ikon kecil atau *badge* (misal: 🛡️ atau "Fallback Used") yang muncul di `ConversationBlock` jika backend menandakan `was_fallback_used: true`. Saat di-hover atau diklik, ia bisa menampilkan *tooltip* dengan penjelasan singkat.
-    *   **File yang Dibuat:** `frontend/src/components/monitoring/ContextUsageMeter.js`, `frontend/src/components/monitoring/FallbackIndicator.js`.
-    *   **File yang Diubah:** `frontend/src/components/layout/MainLayout.js` (untuk menempatkan meteran), `frontend/src/components/chat/ConversationBlock.js` (untuk menampilkan indikator).
-
-*   **4.2. Implementasi Panel Detail Bertab yang Lengkap**
+*   **4.1. Implementasi Panel Detail Bertab yang Lengkap**
     *   **Aktivitas:** Lengkapi Panel Kanan dengan semua tab yang telah direncanakan.
         *   a. Buat komponen `TabbedDetailsPanel.js` yang akan menjadi kontainer untuk tab-tab.
         *   b. Buat komponen `ExecutionPlanDisplay.js` untuk menampilkan `DatabaseOperationPlan`. Gunakan library *syntax highlighter* (seperti `react-syntax-highlighter`) agar JSON mudah dibaca.
@@ -501,26 +479,17 @@ Setelah menyelesaikan fase ini, frontend kita akan jauh lebih matang. Ia tidak h
     *   **File yang Dibuat:** `frontend/src/components/details/TabbedDetailsPanel.js`, `ExecutionPlanDisplay.js`, `PerformanceLog.js`.
     *   **File yang Diubah:** `frontend/src/components/layout/RightSidebar.js` (untuk menggunakan `TabbedDetailsPanel`).
 
-*   **4.3. Implementasi Detail UI & Interaktivitas (Polishing)**
+*   **4.2. Implementasi Detail UI & Interaktivitas (Polishing)**
     *   **Aktivitas:** Tambahkan sentuhan-sentuhan kecil yang meningkatkan kualitas pengalaman pengguna.
-        *   a. **Sapaan Kontekstual:** Buat fungsi utilitas kecil untuk menghasilkan sapaan ("Selamat Pagi", "Selamat Siang") berdasarkan waktu di browser klien, dan tampilkan di pesan pembuka sesi.
-        *   b. **Animasi Mikro:** Tambahkan transisi CSS yang halus (misalnya, `transition: all 0.3s ease;`) pada elemen-elemen UI seperti saat blok respons baru muncul (*fade-in*), atau saat panel samping di-minimize.
+        *   a. **Sapaan & Saran Query Kontekstual:** Tampilkan `greeting_message` dan `suggested_queries` dari backend saat sesi dimulai.
+        *   b. **Animasi Mikro:** Tambahkan transisi CSS yang halus (misalnya, `transition: all 0.3s ease;`) pada elemen-elemen UI seperti saat blok respons baru muncul (*fade-in*).
         *   c. **Tombol Minimize Panel:** Implementasikan logika `useState` untuk mengontrol visibilitas Panel Kiri dan Kanan. Tambahkan tombol ikon (misal: `<<` dan `>>`) untuk memicu perubahan state ini.
 
-*   **4.4. Pengujian Fase 4: Validasi Fitur Lanjutan dan Kualitas UI**
+*   **4.3. Pengujian Fase 4: Validasi Fitur Lanjutan dan Kualitas UI**
     *   **Aktivitas:** Lakukan pengujian menyeluruh pada semua fitur baru dan pastikan tidak ada regresi pada fungsionalitas yang sudah ada.
     *   **Langkah Pengujian:**
-        *   a. **Uji Pemantauan:**
-            *   Jalankan beberapa query secara berurutan. Verifikasi bahwa `ContextUsageMeter` meningkat secara akurat (ini memerlukan backend untuk mengirim data penggunaan token).
-            *   (Memerlukan mock dari backend) Uji skenario di mana backend mengembalikan `was_fallback_used: true`. Pastikan `FallbackIndicator` muncul dengan benar di UI.
-        *   b. **Uji Panel Detail:**
-            *   Setelah mendapatkan hasil, buka Panel Kanan.
-            *   Klik setiap tab ("Data Mentah", "Rencana Eksekusi", "Log & Performa"). Pastikan konten yang ditampilkan di setiap tab benar, rapi, dan sesuai dengan data dari respons backend. Verifikasi bahwa JSON di tab "Rencana Eksekusi" memiliki *syntax highlighting*.
-        *   c. **Uji Interaktivitas:**
-            *   Klik tombol minimize pada panel samping. Pastikan panel tersebut menyusut/menghilang dengan animasi yang halus dan area konten utama melebar.
-            *   Muat ulang aplikasi pada waktu yang berbeda (pagi/siang/malam) dan verifikasi bahwa sapaan pembuka berubah.
-        *   d. **Uji Regresi Penuh:** Lakukan kembali pengujian dari Fase 2 dan 3 untuk memastikan semua alur utama (query baru, modifikasi, error) masih berfungsi dengan sempurna setelah penambahan fitur-fitur baru ini.
-        *   e. **Kriteria Sukses:** Aplikasi terasa lengkap, profesional, dan informatif. Semua fitur yang direncanakan di dokumen UI/UX telah terimplementasi dan berfungsi dengan baik.
-
----
-Setelah menyelesaikan fase terakhir ini, frontend kita akan siap sepenuhnya, tidak hanya sebagai alat yang fungsional tetapi juga sebagai sebuah produk demo yang mengesankan dan siap ditunjukkan kepada pemangku kepentingan atau investor.
+        *   a. **Uji Panel Detail:** Klik setiap tab ("Data Mentah", "Rencana Eksekusi", "Log & Performa"). Pastikan konten yang ditampilkan di setiap tab benar dan rapi.
+        *   b. **Uji Interaktivitas:** Klik tombol minimize pada panel samping. Pastikan panel menyusut/menghilang dengan animasi yang halus.
+        *   c. **Uji Onboarding:** Refresh aplikasi. Verifikasi bahwa sapaan pembuka dan tombol saran query muncul dengan benar.
+        *   d. **Uji Regresi Penuh:** Lakukan kembali pengujian dari Fase 2 dan 3 untuk memastikan semua alur utama masih berfungsi dengan sempurna.
+    *   **Kriteria Sukses:** Aplikasi terasa lengkap, profesional, dan informatif. Semua fitur yang direncanakan di dokumen UI/UX telah terimplementasi dan berfungsi dengan baik.

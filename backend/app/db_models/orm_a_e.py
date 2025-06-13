@@ -337,6 +337,8 @@ class Arbook(Base):
     PaymentValueLocal = Column(DECIMAL(18, 4), nullable=False)
     ExchangeRateDiff = Column(DECIMAL(18, 4), nullable=False)
 
+    
+
 class Arclearinggirod(Base):
     __tablename__ = 'arclearinggirod'
 

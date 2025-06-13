@@ -1,104 +1,74 @@
-# File: backend/app/core/config.py
-
-import os
-from dotenv import load_dotenv
+# backend/app/core/config.py
+import sys
 from pathlib import Path
-import sys 
-from typing import Optional 
 
-# Menggunakan Path untuk membuat path ke .env menjadi lebih robust
-# Ini akan mencari file .env di root proyek (satu level di atas folder 'backend')
-env_path = Path(__file__).resolve().parent.parent.parent / '.env'
-load_dotenv(dotenv_path=env_path)
+def load_config_from_txt() -> dict:
+    """
+    Mencari dan mem-parsing config.txt, lalu mengembalikannya sebagai dictionary.
+    """
+    # Mencari file config.txt di root folder 'backend'
+    config_path = Path(__file__).resolve().parent.parent.parent / 'config.txt'
+    
+    if not config_path.is_file():
+        print("KRITIS: File 'backend/config.txt' tidak ditemukan!", file=sys.stderr)
+        return {}
+
+    print(f"--- [CONFIG] Membaca konfigurasi dari: {config_path} ---")
+    config = {}
+    with open(config_path, 'r') as f:
+        for line in f:
+            # Abaikan baris kosong atau baris komentar
+            if line.strip() and not line.strip().startswith('#'):
+                try:
+                    key, value = line.strip().split('=', 1)
+                    # Hapus tanda kutip jika ada
+                    if value.startswith('"') and value.endswith('"'):
+                        value = value[1:-1]
+                    config[key.strip()] = value.strip()
+                except ValueError:
+                    # Abaikan baris yang tidak memiliki format KEY=VALUE
+                    pass
+    return config
+
+# --- Muat konfigurasi sekali saja saat modul ini diimpor ---
+_config_data = load_config_from_txt()
 
 class Settings:
     PROJECT_NAME: str = "AI Agent SQL Query"
     PROJECT_VERSION: str = "0.1.0"
 
-    # --- Konfigurasi LLM ---
-    LLM_API_KEY: Optional[str] = os.getenv("DEEPSEEK_API_KEY")
-    LLM_API_BASE_URL: Optional[str] = os.getenv("DEEPSEEK_API_BASE_URL") 
-    LLM_MODEL_NAME: Optional[str] = os.getenv("DEEPSEEK_MODEL", "deepseek-chat")
+    # Ambil nilai dari dictionary yang sudah dimuat
+    LLM_API_KEY: str | None = _config_data.get("DEEPSEEK_API_KEY")
+    LLM_API_BASE_URL: str | None = _config_data.get("DEEPSEEK_API_BASE_URL")
+    LLM_MODEL_NAME: str | None = _config_data.get("DEEPSEEK_MODEL", "deepseek-chat")
 
-    # --- Konfigurasi Database Utama (Development/Production) ---
-    DB_HOST: Optional[str] = os.getenv("MYSQL_HOST")
-    DB_USER: Optional[str] = os.getenv("MYSQL_USER")
-    DB_PASSWORD: Optional[str] = os.getenv("MYSQL_PASSWORD")
-    DB_NAME: Optional[str] = os.getenv("MYSQL_DATABASE")
-    DB_PORT: int = int(os.getenv("MYSQL_PORT", 3306))
+    DB_HOST: str | None = _config_data.get("MYSQL_HOST")
+    DB_USER: str | None = _config_data.get("MYSQL_USER")
+    DB_PASSWORD: str | None = _config_data.get("MYSQL_PASSWORD")
+    DB_NAME: str | None = _config_data.get("MYSQL_DATABASE")
+    DB_PORT: int = int(_config_data.get("MYSQL_PORT", 3306))
 
     @property
     def DATABASE_URL(self) -> str:
-        """Mendapatkan URL koneksi database utama secara dinamis."""
-        # Pastikan kita punya semua bagian sebelum mencoba membuat URL
         if all([self.DB_HOST, self.DB_USER, self.DB_PASSWORD, self.DB_NAME]):
             return f"mysql+pymysql://{self.DB_USER}:{self.DB_PASSWORD}@{self.DB_HOST}:{self.DB_PORT}/{self.DB_NAME}"
-        return "" # Kembalikan string kosong jika ada yang kurang
+        return ""
 
-    # --- Konfigurasi Database Testing ---
-    TEST_DB_HOST: Optional[str] = os.getenv("TEST_MYSQL_HOST", DB_HOST)
-    TEST_DB_USER: Optional[str] = os.getenv("TEST_MYSQL_USER", DB_USER)
-    TEST_DB_PASSWORD: Optional[str] = os.getenv("TEST_MYSQL_PASSWORD", DB_PASSWORD)
-    TEST_DB_NAME: Optional[str] = os.getenv("TEST_MYSQL_DATABASE")
-    TEST_DB_PORT: int = int(os.getenv("TEST_MYSQL_PORT", DB_PORT))
+    # --- PENAMBAHAN KEMBALI VARIABEL YANG HILANG ---
+    NEO4J_URI: str | None = _config_data.get("NEO4J_URI", "bolt://localhost:7687")
+    NEO4J_USER: str | None = _config_data.get("NEO4J_USER", "neo4j")
+    NEO4J_PASSWORD: str | None = _config_data.get("NEO4J_PASSWORD")
+    NEO4J_DATABASE: str | None = _config_data.get("NEO4J_DATABASE", "neo4j")
+    SCHEMA_GROUP_ID: str | None = _config_data.get("SCHEMA_GROUP_ID", "sim_testgeluran_schema")
+    # -----------------------------------------------
 
-    @property
-    def TEST_DATABASE_URL(self) -> str:
-        """Mendapatkan URL koneksi database tes secara dinamis."""
-        # Pastikan kita punya semua bagian sebelum mencoba membuat URL
-        if all([self.TEST_DB_HOST, self.TEST_DB_USER, self.TEST_DB_PASSWORD, self.TEST_DB_NAME]):
-            return f"mysql+pymysql://{self.TEST_DB_USER}:{self.TEST_DB_PASSWORD}@{self.TEST_DB_HOST}:{self.TEST_DB_PORT}/{self.TEST_DB_NAME}"
-        return "" # Kembalikan string kosong jika ada yang kurang
-
-    # --- Konfigurasi Neo4j / Graphiti ---
-    NEO4J_URI: Optional[str] = os.getenv("NEO4J_URI", "bolt://localhost:7687")
-    NEO4J_USER: Optional[str] = os.getenv("NEO4J_USER", "neo4j")
-    NEO4J_PASSWORD: Optional[str] = os.getenv("NEO4J_PASSWORD")
-    NEO4J_DATABASE: Optional[str] = os.getenv("NEO4J_DATABASE", "neo4j") 
-    SCHEMA_GROUP_ID: Optional[str] = os.getenv("SCHEMA_GROUP_ID", "sim_testgeluran_schema")
-
-    # --- Konfigurasi URL Server MCP ---
-    MYSQL_MCP_SERVER_URL: Optional[str] = os.getenv("MYSQL_MCP_SERVER_URL", "http://localhost:8001") 
-    GRAPHITI_MCP_SERVER_URL: Optional[str] = os.getenv("GRAPHITI_MCP_SERVER_URL", "http://localhost:8002") 
-    # Placeholder server ditiadakan karena fungsionalitasnya akan diintegrasikan
-    # ke dalam node LangGraph `replace_placeholders`
-    # PLACEHOLDER_MCP_SERVER_URL: Optional[str] = os.getenv("PLACEHOLDER_MCP_SERVER_URL", "http://localhost:8003") 
-
-# Buat satu instance dari Settings untuk diimpor di seluruh aplikasi
+# Buat satu instance untuk diimpor di seluruh aplikasi
 settings = Settings()
 
-# --- Pengecekan Variabel Penting Saat Startup ---
-# Ini akan memberi peringatan saat aplikasi dimulai jika ada konfigurasi yang hilang.
-
-def check_env_vars():
-    print("--- Memeriksa Variabel Lingkungan ---")
-    warnings = []
-    
-    # Cek LLM
-    if not settings.LLM_API_KEY or not settings.LLM_API_BASE_URL:
-        warnings.append("Koneksi LLM (DEEPSEEK_*) tidak lengkap. Agent mungkin tidak bisa berpikir.")
-    
-    # Cek DB Utama
-    if not settings.DATABASE_URL:
-        warnings.append("Koneksi Database Utama (MYSQL_*) tidak lengkap. Aplikasi utama mungkin gagal.")
-    
-    # Cek DB Tes
-    if not settings.TEST_DATABASE_URL:
-        warnings.append("Koneksi Database Tes (TEST_MYSQL_*) tidak lengkap. Skrip validasi akan gagal.")
-    elif settings.TEST_DB_NAME == settings.DB_NAME:
-        warnings.append(f"PENTING: TEST_MYSQL_DATABASE ('{settings.TEST_DB_NAME}') sama dengan MYSQL_DATABASE ('{settings.DB_NAME}'). Berisiko merusak data!")
-
-    # Cek Neo4j
-    if not all([settings.NEO4J_URI, settings.NEO4J_USER, settings.NEO4J_PASSWORD]):
-        warnings.append("Koneksi Neo4j/Graphiti (NEO4J_*) tidak lengkap. Agent mungkin tidak bisa mengakses skema.")
-    
-    if warnings:
-        print("PERINGATAN KONFIGURASI:", file=sys.stderr)
-        for i, warning in enumerate(warnings, 1):
-            print(f"  {i}. {warning}", file=sys.stderr)
-    else:
-        print("Semua variabel lingkungan penting terdeteksi.")
-    print("------------------------------------")
-
-# Anda bisa memanggil check_env_vars() di main.py nanti jika perlu,
-# atau cukup jalankan file ini langsung untuk mengecek (`python backend/app/core/config.py`)
+# Verifikasi saat startup
+if not settings.LLM_API_KEY:
+    print("PERINGATAN: DEEPSEEK_API_KEY tidak ditemukan di config.txt", file=sys.stderr)
+if not settings.DATABASE_URL:
+     print("PERINGATAN: Konfigurasi MYSQL_* tidak lengkap di config.txt", file=sys.stderr)
+if not settings.NEO4J_PASSWORD:
+     print("PERINGATAN: NEO4J_PASSWORD tidak ditemukan di config.txt", file=sys.stderr)

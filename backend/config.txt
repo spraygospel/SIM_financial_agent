@@ -1,0 +1,26 @@
+# backend/config.txt
+
+# --- Konfigurasi LLM (Ganti dengan key asli Anda) ---
+DEEPSEEK_API_KEY="sk-a09781b3537c44e98e8294affb78d221"
+DEEPSEEK_API_BASE_URL="https://api.deepseek.com/v1"
+DEEPSEEK_MODEL="deepseek-chat"
+
+# --- Konfigurasi Database Utama ---
+MYSQL_HOST=localhost
+MYSQL_USER=root
+MYSQL_PASSWORD="SKripsifelina123//"
+MYSQL_DATABASE="sim_testgeluran"
+MYSQL_PORT=3306 
+
+TEST_MYSQL_HOST=localhost
+TEST_MYSQL_USER=root
+TEST_MYSQL_PASSWORD="SKripsifelina123//"
+TEST_MYSQL_DATABASE="sim_testgeluran_test"
+TEST_MYSQL_PORT=3306
+
+# --- Konfigurasi Neo4j / Graphiti ---
+NEO4J_URI=bolt://localhost:7687
+NEO4J_USER=alex
+NEO4J_PASSWORD="WIngsfood123//"
+NEO4J_DATABASE="neo4j" 
+SCHEMA_GROUP_ID="sim_testgeluran_schema"

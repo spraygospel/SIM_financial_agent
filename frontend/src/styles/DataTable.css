@@ -1,0 +1,64 @@
+/* frontend/src/styles/DataTable.css */
+
+.data-table-container {
+  width: 100%;
+  /* Perubahan Kunci: Tambahkan overflow: auto */
+  overflow: auto;
+  max-height: 80vh; 
+}
+
+.table-actions {
+  display: flex;
+  justify-content: flex-end;
+  margin-bottom: 1rem;
+}
+
+.export-button {
+  background-color: var(--accent-color);
+  color: white;
+  border: 1px solid var(--accent-color);
+  padding: 0.5rem 1rem;
+  border-radius: 5px;
+  cursor: pointer;
+  font-weight: 500;
+}
+
+.export-button:hover {
+  opacity: 0.9;
+}
+
+.data-table-placeholder {
+  color: var(--text-color-secondary);
+  text-align: center;
+  padding: 2rem;
+}
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.9rem;
+}
+
+th, td {
+  border: 1px solid var(--border-color);
+  padding: 0.6rem;
+  text-align: left;
+}
+
+thead {
+  background-color: rgba(255, 255, 255, 0.1);
+}
+
+th {
+  cursor: pointer;
+  user-select: none;
+}
+
+tbody tr:nth-child(even) {
+  background-color: rgba(0, 0, 0, 0.2);
+}
+
+tbody tr:hover {
+  background-color: var(--accent-color);
+  color: white;
+}

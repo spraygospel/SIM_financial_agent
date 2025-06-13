@@ -1,0 +1,58 @@
+/* frontend/src/styles/DetailsPanel.css */
+.tabbed-details-panel {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+}
+
+.tab-buttons {
+  display: flex;
+  border-bottom: 1px solid var(--border-color);
+  flex-shrink: 0;
+}
+
+.tab-buttons button {
+  padding: 0.8rem 1rem;
+  border: none;
+  background-color: transparent;
+  color: var(--text-color-secondary);
+  cursor: pointer;
+  border-bottom: 2px solid transparent;
+}
+
+.tab-buttons button:hover {
+  background-color: rgba(255, 255, 255, 0.05);
+}
+
+.tab-buttons button.active {
+  color: var(--accent-color);
+  border-bottom-color: var(--accent-color);
+  font-weight: bold;
+}
+
+.tab-content {
+  padding-top: 1rem;
+  flex-grow: 1;
+  overflow: auto; /* Memastikan konten tab bisa di-scroll */
+}
+
+.details-placeholder, .json-placeholder {
+  color: var(--text-color-secondary);
+  text-align: center;
+  padding: 2rem;
+}
+
+.performance-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+.performance-list li {
+  display: flex;
+  justify-content: space-between;
+  padding: 0.5rem 0;
+  border-bottom: 1px solid var(--border-color);
+}
+.performance-list li span:first-child {
+  color: var(--text-color-secondary);
+}

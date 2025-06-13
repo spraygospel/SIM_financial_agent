@@ -1,0 +1,33 @@
+/* frontend/src/styles/Performance.css */
+.performance-logger {
+  color: var(--text-color);
+}
+
+.performance-logger h4 {
+  margin-top: 0;
+  border-bottom: 1px solid var(--border-color);
+  padding-bottom: 0.5rem;
+  color: var(--text-color-secondary);
+  font-weight: 500;
+}
+
+.performance-grid {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 0.5rem 1rem;
+  font-size: 0.9rem;
+}
+
+.metric-label {
+  color: var(--text-color-secondary);
+}
+
+.metric-value {
+  text-align: right;
+  font-weight: bold;
+}
+
+.stopwatch {
+  font-family: 'Courier New', Courier, monospace;
+  color: #2ecc71; /* Warna hijau untuk status aktif */
+}
